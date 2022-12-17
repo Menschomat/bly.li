@@ -1,0 +1,1 @@
+echo $(htpasswd -nbB traefik "traefik") | sed -e s/\\$/\\$\\$/g

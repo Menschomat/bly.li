@@ -1,16 +1,47 @@
 version: '3.8'
 services:
-  blyli:
-    build: .
+  reverse-proxy:
+    image: traefik:v3.0
+    command:
+      - --api
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+    labels:
+      - "traefik.enable=true"    
+      - "traefik.port=80"
+      - "traefik.http.routers.api.rule=Host(`traefik.localhost`)"
+      - "traefik.http.routers.api.service=api@internal"
+      - "traefik.http.routers.api.middlewares=auth"
+      - "traefik.http.middlewares.auth.basicauth.users=traefik:$$2y$$05$$0o2x40VTfE3kHlqVDtk8AOuQQUZXRHTWz9yfq907708wESsdBjBMS"
     ports:
-      - "8080:8080"
+      - "80:80"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+  shortn:
+    build:
+      context: src/.
+      dockerfile: Shortn.Dockerfile
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.services.shortn.loadbalancer.server.port=8080"
+      - "traefik.http.routers.shortn.rule=Host(`blyli.localhost`) && PathPrefix(`/shortn`)"
+      - "traefik.http.routers.shortn.middlewares=shortn-rewrite"
+      - "traefik.http.middlewares.shortn-rewrite.stripprefix.prefixes=/shortn"
+  blowup:
+    build:
+      context: src/.
+      dockerfile: Blowup.Dockerfile
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.services.blowup.loadbalancer.server.port=8080"
+      - "traefik.http.routers.blowup.rule=Host(`blyli.localhost`)"
   redis:
     image: redis:7-alpine
     restart: always
     ports:
       - '6379:6379'
     command: redis-server --save 20 1 --loglevel warning
-    volumes: 
+    volumes:
       - redis_data:/data
 volumes:
   redis_data:

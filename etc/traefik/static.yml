@@ -1,0 +1,9 @@
+entryPoints:
+  web:
+    address: :80
+
+providers:
+  file:
+    directory: /path/to/dynamic/config
+
+api: {}
