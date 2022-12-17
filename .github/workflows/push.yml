@@ -48,7 +48,7 @@ jobs:
           file: "Blowup.Dockerfile"
           push: true
           tags: |
-            ${{env.LASTEST_TAG}}
+            mensch0mat/bly.li/blowup:latest
           build-args: |
             ${{steps.version_step.outputs.version}}
       - name: Build and push Shortn
@@ -59,6 +59,6 @@ jobs:
           file: "Shortn.Dockerfile"
           push: true
           tags: |
-            ${{env.LASTEST_TAG}}
+            mensch0mat/bly.li/shortn:latest
           build-args: |
             ${{steps.version_step.outputs.version}}
