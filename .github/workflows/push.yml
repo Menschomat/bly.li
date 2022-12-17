@@ -44,7 +44,6 @@ jobs:
         id: docker_build_blowup
         uses: docker/build-push-action@v3
         with:
-          load: true
           context: service
           file: src/Blowup.Dockerfile
           push: true
@@ -57,10 +56,9 @@ jobs:
         id: docker_build_shortn
         uses: docker/build-push-action@v3
         with:
-          load: true
           context: service
           file: src/Shortn.Dockerfile
-          push: false
+          push: true
           tags: |
             ${{env.VERSION_TAG}}
             ${{env.LASTEST_TAG}}
