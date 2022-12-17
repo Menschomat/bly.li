@@ -40,23 +40,23 @@ jobs:
         run: |
           echo VERSION_TAG=$(echo ${{ steps.version_step.outputs.version_tag }} | tr '[:upper:]' '[:lower:]') >> $GITHUB_ENV
           echo LASTEST_TAG=$(echo ${{ steps.version_step.outputs.latest_tag  }} | tr '[:upper:]' '[:lower:]') >> $GITHUB_ENV
-      #- name: Build and push BlowUp
-      #  id: docker_build_blowup
-      #  uses: docker/build-push-action@v3
-      #  with:
-      #    context: "{{defaultContext}}:src/."
-      #    file: "src/Blowup.Dockerfile"
-      #    push: true
-      #    tags: |
-      #      ${{env.LASTEST_TAG}}
-      #    build-args: |
-      #      ${{steps.version_step.outputs.version}}
+      - name: Build and push BlowUp
+        id: docker_build_blowup
+        uses: docker/build-push-action@v3
+        with:
+          context: "{{defaultContext}}:src/."
+          file: "Blowup.Dockerfile"
+          push: true
+          tags: |
+            ${{env.LASTEST_TAG}}
+          build-args: |
+            ${{steps.version_step.outputs.version}}
       - name: Build and push Shortn
         id: docker_build_shortn
         uses: docker/build-push-action@v3
         with:
           context: "{{defaultContext}}:src/."
-          file: "src/Shortn.Dockerfile"
+          file: "Shortn.Dockerfile"
           push: true
           tags: |
             ${{env.LASTEST_TAG}}
