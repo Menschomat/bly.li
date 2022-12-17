@@ -18,9 +18,10 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
   shortn:
-    build:
-      context: src/.
-      dockerfile: Shortn.Dockerfile
+    #build:
+    #  context: src/.
+    #  dockerfile: Shortn.Dockerfile
+    image: mensch0mat/bly.li:shortn
     labels:
       - "traefik.enable=true"
       - "traefik.http.services.shortn.loadbalancer.server.port=8080"
@@ -28,9 +29,10 @@ services:
       - "traefik.http.routers.shortn.middlewares=shortn-rewrite"
       - "traefik.http.middlewares.shortn-rewrite.stripprefix.prefixes=/shortn"
   blowup:
-    build:
-      context: src/.
-      dockerfile: Blowup.Dockerfile
+    #build:
+    #  context: src/.
+    #  dockerfile: Blowup.Dockerfile
+    image: mensch0mat/bly.li:blowup
     labels:
       - "traefik.enable=true"
       - "traefik.http.services.blowup.loadbalancer.server.port=8080"
