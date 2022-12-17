@@ -45,7 +45,7 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           context: "{{defaultContext}}:src/."
-          file: src/Blowup.Dockerfile
+          file: "{{defaultContext}}:src/Blowup.Dockerfile"
           push: true
           tags: |
             ${{env.LASTEST_TAG}}
@@ -56,7 +56,7 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           context: "{{defaultContext}}:src/."
-          file: src/Shortn.Dockerfile
+          file: "{{defaultContext}}:src/Shortn.Dockerfile"
           push: true
           tags: |
             ${{env.LASTEST_TAG}}
