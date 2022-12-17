@@ -41,7 +41,7 @@ jobs:
           echo VERSION_TAG=$(echo ${{ steps.version_step.outputs.version_tag }} | tr '[:upper:]' '[:lower:]') >> $GITHUB_ENV
           echo LASTEST_TAG=$(echo ${{ steps.version_step.outputs.latest_tag  }} | tr '[:upper:]' '[:lower:]') >> $GITHUB_ENV
       - name: Build and push BlowUp
-        id: docker_build
+        id: docker_build_blowup
         uses: docker/build-push-action@v2
         with:
           load: true
@@ -54,7 +54,7 @@ jobs:
           build-args: |
             ${{steps.version_step.outputs.version}}
       - name: Build and push Shortn
-        id: docker_build
+        id: docker_build_shortn
         uses: docker/build-push-action@v2
         with:
           load: true
