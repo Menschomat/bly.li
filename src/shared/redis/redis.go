@@ -37,7 +37,7 @@ func GetUrl(short string) string {
 	return url
 }
 func ShortExists(short string) bool {
-	exists := cacheClient.Exists(ctx, short)
+	exists := cacheClient.Exists(ctx, "url:"+short)
 	if exists.Val() > 0 {
 		return true
 	}
