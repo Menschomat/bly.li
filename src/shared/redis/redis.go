@@ -33,7 +33,7 @@ func StoreUrl(short string, url string) {
 func GetUrl(short string) string {
 	url, err := cacheClient.HGet(ctx, "url:"+short, "url").Result()
 	if err != nil {
-		log.Panicln(err)
+		log.Println("Warning: Could not fetch url from redis!")
 	}
 	return url
 }
