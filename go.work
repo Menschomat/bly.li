@@ -1,7 +1,7 @@
 go 1.19
 
 use (
-	./src/blowup
+	./src/services/blowup
+	./src/services/shortn
 	./src/shared
-	./src/shortn
 )
