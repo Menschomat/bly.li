@@ -3,6 +3,7 @@ package redis
 import (
 	"context"
 	"log"
+	"strconv"
 
 	"github.com/go-redis/redis/v9"
 )
@@ -21,7 +22,7 @@ func getRedisClient() *redis.Client {
 
 func StoreUrl(short string, url string) {
 	errs := [...]error{
-		cacheClient.Set(ctx, "url:"+short, url, 0).Err(),
+		cacheClient.HSet(ctx, "url:"+short, "url", url, "count", 0).Err(),
 	}
 	for _, err := range errs {
 		if err != nil {
@@ -30,7 +31,7 @@ func StoreUrl(short string, url string) {
 	}
 }
 func GetUrl(short string) string {
-	url, err := cacheClient.Get(ctx, "url:"+short).Result()
+	url, err := cacheClient.HGet(ctx, "url:"+short, "url").Result()
 	if err != nil {
 		log.Panicln(err)
 	}
@@ -42,4 +43,15 @@ func ShortExists(short string) bool {
 		return true
 	}
 	return false
+}
+
+func RegisterClick(short string) {
+	count, err1 := strconv.Atoi(cacheClient.HGet(ctx, "url:"+short, "count").Val())
+	if err1 != nil {
+		log.Println(cacheClient.HGet(ctx, "url:"+short, "url").Val(), err1)
+	}
+	err2 := cacheClient.HSet(ctx, "url:"+short, "count", count+1).Err()
+	if err2 != nil {
+		log.Println(err2)
+	}
 }
