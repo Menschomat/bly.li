@@ -3,9 +3,7 @@ package main
 import (
 	"encoding/json"
 	"log"
-	"math/rand"
 	"net/http"
-	"time"
 
 	u "github.com/Menschomat/bly.li/services/shortn/utils"
 	m "github.com/Menschomat/bly.li/shared/model"
@@ -37,7 +35,6 @@ func store(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	log.Println("*_-_-_-BlyLi-Shortn-_-_-_*")
-	rand.Seed(time.Now().UnixNano())
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Post("/", store)
