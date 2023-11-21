@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -33,11 +34,22 @@ func store(w http.ResponseWriter, r *http.Request) {
 	w.Write(payload)
 }
 
+func getAll(w http.ResponseWriter, r *http.Request) {
+	user := r.Header.Get("X-Auth-User")
+	w.Header().Set("Content-Type", "text/plain")
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprintf(w, "Hello")
+	log.Println(user)
+	log.Println(r.Header)
+	log.Println("HURZ")
+}
+
 func main() {
 	log.Println("*_-_-_-BlyLi-Shortn-_-_-_*")
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Post("/", store)
+	r.Get("/", getAll)
 	err := http.ListenAndServe(":8080", r)
 	if err != nil {
 		log.Fatalln("There's an error with the server", err)
