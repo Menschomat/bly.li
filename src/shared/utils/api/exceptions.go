@@ -9,5 +9,5 @@ func InternalServerError(w http.ResponseWriter, r *http.Request) {
 
 func BadRequestError(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusBadRequest)
-	w.Write([]byte("bar request error"))
+	w.Write([]byte("bad request error"))
 }

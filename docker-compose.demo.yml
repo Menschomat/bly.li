@@ -1,7 +1,6 @@
-version: "3.8"
 services:
   reverse-proxy:
-    image: traefik:v2.10
+    image: traefik:v3.1
     environment:
       - TZ=CET
     command:
@@ -15,52 +14,35 @@ services:
       - "traefik.http.routers.api.service=api@internal"
       - "traefik.http.routers.api.middlewares=auth"
       - "traefik.http.middlewares.auth.basicauth.users=traefik:$$2y$$05$$0o2x40VTfE3kHlqVDtk8AOuQQUZXRHTWz9yfq907708wESsdBjBMS"
-      # ForwardAuth Middleware Configuration
-      - "traefik.http.middlewares.auth-forward.forwardauth.address=http://traefik-forward-auth:4181" # ForwardAuth to traefik-forward-auth service
-      - "traefik.http.middlewares.auth-forward.forwardauth.authResponseHeaders=X-Forwarded-User,X-Forwarded-Email"
-      - "traefik.http.middlewares.auth-forward.forwardauth.trustForwardHeader=true"
     ports:
       - "80:80"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
 
-  traefik-forward-auth:
-    image: thomseddon/traefik-forward-auth:latest
-    environment:
-      - TZ=CET
-      - DEFAULT_PROVIDER=oidc
-      - PROVIDERS_OIDC_ISSUER_URL=https://auth.base.menscho.space/realms/menscho.space
-      - PROVIDERS_OIDC_USER_URL=https://auth.base.menscho.space/realms/master/protocol/openid-connect/userinfo
-      - PROVIDERS_OIDC_CLIENT_ID=bly_li
-      - PROVIDERS_OIDC_CLIENT_SECRET=<SECRETE_TO_CHANGE>
-      - SECRET=squishy-<SECRETE_TO_CHANGE>
-      - COOKIE_DOMAINS=blyli.localhost
-      - INSECURE_COOKIE=true # Only for testing; use secure cookies in production
-      - AUTH_HOST=auth.blyli.localhost
-      - URL_PATH=/_oauth
-      - LOG_LEVEL=debug
-      - USER_ID_PATH=username
-      - LIFETIME=3600 # Token lifetime in seconds
-      #- COOKIE_SECURE=false # Set to false if not using HTTPS
-      - LOGOUT_REDIRECT=https://auth.base.menscho.space/realms/menscho.space/protocol/openid-connect/logout?post_logout_redirect_uri=http://blyli.localhost/shortn&client_id=bly_li
-      - PROVIDERS_OIDC_SCOPES=email,profile # Adjust scopes as needed
+  #hello_world service can be used for load-testing without flooding public apis
+  hello_world:
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.traefik-forward-auth.rule=Host(`auth.blyli.localhost`)"
-      #- "traefik.http.routers.traefik-forward-auth.rule=Host(`auth.base.menscho.space`)"
-      - "traefik.http.services.traefik-forward-auth.loadbalancer.server.port=4181"
-      - "traefik.http.routers.traefik-forward-auth.middlewares=auth-forward"
+      - "traefik.http.services.hello_world.loadbalancer.server.port=80"
+      - "traefik.http.routers.hello_world.rule=Host(`blyli.localhost`) && PathPrefix(`/hello_world`)"
+      - "traefik.http.routers.hello_world.middlewares=hello_world-rewrite"
+      - "traefik.http.middlewares.hello_world-rewrite.stripprefix.prefixes=/hello_world"
+    image: nginxdemos/hello
 
   shortn:
     build:
       context: src/.
       dockerfile: Shortn.Dockerfile
     #image: mensch0mat/bly.li.shortn:latest
+    environment:
+      # Add your own OIDC-Stuff in here!
+      - OIDC_URL=https://auth.example.com/application/o/bly_li/
+      - OIDC_CLIENT_ID=k3dYMpcohEinbEaTpaJEb2ZsHKs7ouRkRYFtx4QM
     labels:
       - "traefik.enable=true"
       - "traefik.http.services.shortn.loadbalancer.server.port=8080"
-      - "traefik.http.routers.shortn.rule=Host(`blyli.localhost`) && PathPrefix(`/shortn`) || PathPrefix(`/`)"
-      - "traefik.http.routers.shortn.middlewares=shortn-rewrite,auth-forward"
+      - "traefik.http.routers.shortn.rule=Host(`blyli.localhost`) && PathPrefix(`/shortn`)"
+      - "traefik.http.routers.shortn.middlewares=shortn-rewrite"
       - "traefik.http.middlewares.shortn-rewrite.stripprefix.prefixes=/shortn"
 
   blowup:
@@ -72,6 +54,7 @@ services:
       - "traefik.enable=true"
       - "traefik.http.services.blowup.loadbalancer.server.port=8080"
       - "traefik.http.routers.blowup.rule=Host(`blyli.localhost`)"
+
   redis:
     image: redis:7-alpine
     restart: always
@@ -80,6 +63,7 @@ services:
     command: redis-server --save 20 1 --loglevel warning
     volumes:
       - redis_data:/data
+
 volumes:
   redis_data:
     driver: local
