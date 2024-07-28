@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/Menschomat/bly.li/shared/mongo"
 	redis "github.com/Menschomat/bly.li/shared/redis"
 )
 
@@ -14,7 +15,7 @@ var alphabet []rune = []rune("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwx
 
 func GetUniqueShort() string {
 	short := randomString(5, alphabet)
-	if redis.ShortExists(short) {
+	if redis.ShortExists(short) || mongo.ShortExists(short) {
 		return GetUniqueShort()
 	}
 	return short

@@ -14,6 +14,8 @@ import (
 
 var client *mongo.Client
 
+const DATABASE string = "short_url_db"
+
 func GetMongoClient() (*mongo.Client, error) {
 	if client != nil {
 		return client, nil
@@ -45,13 +47,31 @@ func CloseClientDB() {
 	log.Println("Connection to MongoDB closed.")
 }
 
+// Check if a short URL exists in MongoDB
+func ShortExists(short string) bool {
+	_client, _err := GetMongoClient()
+	if _err != nil {
+		log.Fatal(_err)
+		return false
+	}
+	collection := _client.Database(DATABASE).Collection("urls")
+
+	filter := bson.M{"short": short}
+	count, err := collection.CountDocuments(context.Background(), filter)
+	if err != nil {
+		log.Println("Error checking short URL in MongoDB:", err)
+		return false
+	}
+	return count > 0
+}
+
 func StoreShortURL(shortURL m.ShortURL) (interface{}, error) {
 	_client, _err := GetMongoClient()
 	if _err != nil {
 		log.Fatal(_err)
 		return nil, _err
 	}
-	collection := _client.Database("short_url_db").Collection("urls")
+	collection := _client.Database(DATABASE).Collection("urls")
 
 	// Create an index on the short field to ensure uniqueness
 	indexModel := mongo.IndexModel{
@@ -77,7 +97,7 @@ func GetShortURLByShort(short string) (*m.ShortURL, error) {
 		log.Fatal(_err)
 		return nil, _err
 	}
-	collection := _client.Database("short_url_db").Collection("urls")
+	collection := _client.Database(DATABASE).Collection("urls")
 	var result m.ShortURL
 	filter := bson.M{"short": short}
 
