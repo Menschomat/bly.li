@@ -2,10 +2,10 @@ package main
 
 import (
 	"log"
-	"math/rand"
 	"net/http"
-	"time"
 
+	"github.com/Menschomat/bly.li/shared/model"
+	"github.com/Menschomat/bly.li/shared/mongo"
 	redis "github.com/Menschomat/bly.li/shared/redis"
 	utils "github.com/Menschomat/bly.li/shared/utils"
 	apiUtils "github.com/Menschomat/bly.li/shared/utils/api"
@@ -17,20 +17,26 @@ import (
 func blowUpShortToUrl(w http.ResponseWriter, r *http.Request) {
 	var short string = chi.URLParam(r, "short")
 	if utils.IsValidShort(short) {
-		url := redis.GetUrl(short)
-		if len(url) > 0 {
+		url, err := redis.GetUrl(short)
+		if err != nil || len(url) == 0 {
+			var shortInfo *model.ShortURL
+			shortInfo, err = mongo.GetShortURLByShort(short)
+			url = shortInfo.URL
+			if err == nil {
+				redis.StoreUrl(shortInfo.Short, shortInfo.URL)
+			}
+		}
+		if err == nil && len(url) > 0 {
 			go redis.RegisterClick(short)
 			w.Header().Set("Location", url)
 			w.WriteHeader(http.StatusTemporaryRedirect)
 		}
 	}
 	apiUtils.BadRequestError(w, r)
-
 }
 
 func main() {
 	log.Println("*_-_-_-BlyLi-Blowup-_-_-_*")
-	rand.Seed(time.Now().UnixNano())
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Get("/{short}", blowUpShortToUrl)

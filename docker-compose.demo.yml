@@ -55,6 +55,13 @@ services:
       - "traefik.http.services.blowup.loadbalancer.server.port=8080"
       - "traefik.http.routers.blowup.rule=Host(`blyli.localhost`)"
 
+  mongodb:
+    image: mongo:7
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
   redis:
     image: redis:7-alpine
     restart: always
@@ -65,5 +72,7 @@ services:
       - redis_data:/data
 
 volumes:
+  mongo_data:
+    driver: local
   redis_data:
     driver: local

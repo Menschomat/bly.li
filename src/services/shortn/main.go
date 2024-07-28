@@ -9,6 +9,7 @@ import (
 
 	u "github.com/Menschomat/bly.li/services/shortn/utils"
 	m "github.com/Menschomat/bly.li/shared/model"
+	"github.com/Menschomat/bly.li/shared/mongo"
 	redis "github.com/Menschomat/bly.li/shared/redis"
 	apiUtils "github.com/Menschomat/bly.li/shared/utils/api"
 	cfgUtils "github.com/Menschomat/bly.li/shared/utils/config"
@@ -24,6 +25,7 @@ var (
 )
 
 func store(w http.ResponseWriter, r *http.Request) {
+
 	w.Header().Set("Content-Type", "application/json")
 	var shortn m.ShortnReq
 	json.NewDecoder(r.Body).Decode(&shortn)
@@ -39,6 +41,7 @@ func store(w http.ResponseWriter, r *http.Request) {
 		apiUtils.InternalServerError(w, r)
 		return
 	}
+	mongo.StoreShortURL(m.ShortURL{URL: url, Short: short})
 	w.Write(payload)
 }
 
@@ -92,4 +95,5 @@ func main() {
 	if err != nil {
 		log.Fatalln("There's an error with the server", err)
 	}
+	defer mongo.CloseClientDB()
 }

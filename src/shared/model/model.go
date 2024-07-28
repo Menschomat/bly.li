@@ -7,6 +7,13 @@ type OidcConfig struct {
 }
 
 // SHORTN
+
+type ShortURL struct {
+	Short string `bson:"short"`
+	URL   string `bson:"url"`
+	Owner string `bson:"owner,omitempty"`
+}
+
 type ShortnReq struct {
 	Url string
 	//Short string

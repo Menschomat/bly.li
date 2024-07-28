@@ -30,12 +30,13 @@ func StoreUrl(short string, url string) {
 		}
 	}
 }
-func GetUrl(short string) string {
+func GetUrl(short string) (u string, e error) {
 	url, err := cacheClient.HGet(ctx, "url:"+short, "url").Result()
 	if err != nil {
 		log.Println("Warning: Could not fetch url from redis!")
+		return "", err
 	}
-	return url
+	return url, nil
 }
 func ShortExists(short string) bool {
 	exists := cacheClient.Exists(ctx, "url:"+short)
