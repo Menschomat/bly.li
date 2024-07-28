@@ -50,7 +50,7 @@ jobs:
         id: docker_build_blowup
         uses: docker/build-push-action@v6
         with:
-          context: "./src/blowup"
+          context: "{{defaultContext}}:src/."
           file: "Blowup.Dockerfile"
           push: true
           tags: |
@@ -62,7 +62,7 @@ jobs:
         id: docker_build_shortn
         uses: docker/build-push-action@v6
         with:
-          context: "./src/shortn"
+          context: "{{defaultContext}}:src/."
           file: "Shortn.Dockerfile"
           push: true
           tags: |
