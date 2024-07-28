@@ -1,11 +1,11 @@
 name: golang-pipeline
 
-on:
+on: 
   push:
     branches:
       - main
     tags:
-      - "*"
+      - '*'
 
 jobs:
   extract_version:
@@ -20,12 +20,12 @@ jobs:
         run: |
           if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
             VERSION=${GITHUB_REF#refs/tags/}
-            echo "##[set-output name=version;]${VERSION}"
-            echo "##[set-output name=version_tag;]${VERSION}"
-            echo "##[set-output name=latest_tag;]latest"
+            echo "version=${VERSION}" >> $GITHUB_OUTPUT
+            echo "version_tag=${VERSION}" >> $GITHUB_OUTPUT
+            echo "latest_tag=latest" >> $GITHUB_OUTPUT
           elif [[ "${GITHUB_REF}" == refs/heads/main ]]; then
-            echo "##[set-output name=version;]main"
-            echo "##[set-output name=version_tag;]main"
+            echo "version=main" >> $GITHUB_OUTPUT
+            echo "version_tag=main" >> $GITHUB_OUTPUT
           fi
       - name: Print Version
         run: |
@@ -49,9 +49,9 @@ jobs:
       - name: Prepare Docker Image Identifiers
         id: read-docker-image-identifiers
         run: |
-          echo VERSION_TAG=$(echo ${{ needs.extract_version.outputs.version_tag }} | tr '[:upper:]' '[:lower:]') >> $GITHUB_ENV
+          echo "VERSION_TAG=$(echo ${{ needs.extract_version.outputs.version_tag }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
           if [ -n "${{ needs.extract_version.outputs.latest_tag }}" ]; then
-            echo LATEST_TAG=$(echo ${{ needs.extract_version.outputs.latest_tag }} | tr '[:upper:]' '[:lower:]') >> $GITHUB_ENV
+            echo "LATEST_TAG=$(echo ${{ needs.extract_version.outputs.latest_tag }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
           fi
 
   build_and_push_blowup:
@@ -63,6 +63,7 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_HUB_USER }}
           password: ${{ secrets.DOCKER_HUB }}
+
       - name: Build and push BlowUp
         uses: docker/build-push-action@v6
         with:
@@ -84,6 +85,7 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_HUB_USER }}
           password: ${{ secrets.DOCKER_HUB }}
+
       - name: Build and push Shortn
         uses: docker/build-push-action@v6
         with:
