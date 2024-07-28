@@ -17,11 +17,11 @@ jobs:
           if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
             VERSION=${GITHUB_REF#refs/tags/}
             echo "##[set-output name=version;]${VERSION}"
-            echo "##[set-output name=version_tag;]$GITHUB_REPOSITORY:${VERSION}"
-            echo "##[set-output name=latest_tag;]$GITHUB_REPOSITORY:latest"
+            echo "##[set-output name=version_tag;]${VERSION}"
+            echo "##[set-output name=latest_tag;]latest"
           elif [[ "${GITHUB_REF}" == refs/heads/main ]]; then
             echo "##[set-output name=version;]main"
-            echo "##[set-output name=version_tag;]$GITHUB_REPOSITORY:main"
+            echo "##[set-output name=version_tag;]main"
           fi
       - name: Print Version
         run: |
@@ -50,23 +50,23 @@ jobs:
         id: docker_build_blowup
         uses: docker/build-push-action@v6
         with:
-          context: "{{defaultContext}}:src/."
+          context: "./src/blowup"
           file: "Blowup.Dockerfile"
           push: true
           tags: |
-            ${{ env.VERSION_TAG }}
-            ${{ env.LATEST_TAG || '' }}
+            mensch0mat/bly.li.blowup:${{ steps.version_step.outputs.version_tag }}
+            ${{ env.LATEST_TAG && 'mensch0mat/bly.li.blowup:latest' || '' }}
           build-args: |
-            ${{steps.version_step.outputs.version}}
+            VERSION=${{steps.version_step.outputs.version}}
       - name: Build and push Shortn
         id: docker_build_shortn
         uses: docker/build-push-action@v6
         with:
-          context: "{{defaultContext}}:src/."
+          context: "./src/shortn"
           file: "Shortn.Dockerfile"
           push: true
           tags: |
-            ${{ env.VERSION_TAG }}
-            ${{ env.LATEST_TAG || '' }}
+            mensch0mat/bly.li.shortn:${{ steps.version_step.outputs.version_tag }}
+            ${{ env.LATEST_TAG && 'mensch0mat/bly.li.shortn:latest' || '' }}
           build-args: |
-            ${{steps.version_step.outputs.version}}
+            VERSION=${{steps.version_step.outputs.version}}
