@@ -12,8 +12,12 @@ COPY shared/ /shared/
 RUN CGO_ENABLED=0 go build -o /bin/blyli
 
 FROM scratch
+
 COPY --from=build /usr/share/zoneinfo /usr/share/zoneinfo
+ENV TZ=Europe/Berlin
+
 COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+
 COPY --from=build /bin/blyli /bin/blyli
-ENV TZ Europe/Berlin
+
 ENTRYPOINT ["/bin/blyli"]
