@@ -22,3 +22,15 @@ With bly.li, you can easily create and share short, memorable links to any webpa
     │   └──blowup
     └──shared
 ```
+
+### Deployment
+
+Deployment works via docker.
+Images are hosted on dockerhub. Feel free to use the docker-compose.demo.yml as a blueprint for your deployment.
+
+| Service                  | URL                                                                                  | Tag    | Description                     |
+| ------------------------ | ------------------------------------------------------------------------------------ | ------ | ------------------------------- |
+| mensch0mat/bly.li.blowup | [hub.docker.com](https://hub.docker.com/repository/docker/mensch0mat/bly.li.blowup/) | latest | latest stable version           |
+| "                        | [hub.docker.com](https://hub.docker.com/repository/docker/mensch0mat/bly.li.blowup/) | main   | on push builds from main-branch |
+| mensch0mat/bly.li.shortn | [hub.docker.com](https://hub.docker.com/repository/docker/mensch0mat/bly.li.blowup/) | latest | latest stable version           |
+| "                        | [hub.docker.com](https://hub.docker.com/repository/docker/mensch0mat/bly.li.blowup/) | main   | on push builds from main-branch |
