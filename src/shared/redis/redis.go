@@ -4,11 +4,13 @@ import (
 	"context"
 	"log"
 	"strconv"
+	"time"
 
 	"github.com/redis/go-redis/v9"
 )
 
 var cacheClient *redis.Client
+var targetTtl = 1 * time.Minute
 var ctx = context.Background()
 
 func getRedisClient() *redis.Client {
@@ -28,7 +30,7 @@ func StoreUrl(short string, url string) {
 	key := "url:" + short
 	errs := [...]error{
 		_cache.HSet(ctx, key, "url", url, "count", 0).Err(),
-		_cache.Expire(ctx, key, 10).Err(),
+		_cache.Expire(ctx, key, targetTtl).Err(),
 	}
 	for _, err := range errs {
 		if err != nil {
@@ -38,8 +40,9 @@ func StoreUrl(short string, url string) {
 }
 func GetUrl(short string) (u string, e error) {
 	_cache := getRedisClient()
-	url, err := _cache.HGet(ctx, "url:"+short, "url").Result()
-	if err != nil {
+	key := "url:" + short
+	url, err := _cache.HGet(ctx, key, "url").Result()
+	if err != nil || _cache.Expire(ctx, key, targetTtl).Err() != nil {
 		log.Println("Warning: Could not fetch url from redis!")
 		return "", err
 	}
