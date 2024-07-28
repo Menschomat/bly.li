@@ -8,8 +8,12 @@ on:
       - '*'
 
 jobs:
-  deploy:
+  extract_version:
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version_step.outputs.version }}
+      version_tag: ${{ steps.version_step.outputs.version_tag }}
+      latest_tag: ${{ steps.version_step.outputs.latest_tag }}
     steps:
       - name: Extract Version
         id: version_step
@@ -25,8 +29,17 @@ jobs:
           fi
       - name: Print Version
         run: |
-          echo ${{steps.version_step.outputs.version_tag}}
-          echo ${{steps.version_step.outputs.latest_tag}}
+          echo ${{ steps.version_step.outputs.version_tag }}
+          echo ${{ steps.version_step.outputs.latest_tag }}
+
+  setup_docker:
+    runs-on: ubuntu-latest
+    needs: extract_version
+    outputs:
+      version: ${{ needs.extract_version.outputs.version }}
+      version_tag: ${{ needs.extract_version.outputs.version_tag }}
+      latest_tag: ${{ needs.extract_version.outputs.latest_tag }}
+    steps:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
@@ -42,31 +55,39 @@ jobs:
       - name: Prepare Docker Image Identifiers
         id: read-docker-image-identifiers
         run: |
-          echo VERSION_TAG=$(echo ${{ steps.version_step.outputs.version_tag }} | tr '[:upper:]' '[:lower:]') >> $GITHUB_ENV
-          if [ -n "${{ steps.version_step.outputs.latest_tag }}" ]; then
-            echo LATEST_TAG=$(echo ${{ steps.version_step.outputs.latest_tag }} | tr '[:upper:]' '[:lower:]') >> $GITHUB_ENV
+          echo VERSION_TAG=$(echo ${{ needs.extract_version.outputs.version_tag }} | tr '[:upper:]' '[:lower:]') >> $GITHUB_ENV
+          if [ -n "${{ needs.extract_version.outputs.latest_tag }}" ]; then
+            echo LATEST_TAG=$(echo ${{ needs.extract_version.outputs.latest_tag }} | tr '[:upper:]' '[:lower:]') >> $GITHUB_ENV
           fi
+
+  build_and_push_blowup:
+    runs-on: ubuntu-latest
+    needs: setup_docker
+    steps:
       - name: Build and push BlowUp
-        id: docker_build_blowup
         uses: docker/build-push-action@v6
         with:
           context: "{{defaultContext}}:src/."
           file: "Blowup.Dockerfile"
           push: true
           tags: |
-            mensch0mat/bly.li.blowup:${{ steps.version_step.outputs.version_tag }}
+            mensch0mat/bly.li.blowup:${{ needs.setup_docker.outputs.version_tag }}
             ${{ env.LATEST_TAG && 'mensch0mat/bly.li.blowup:latest' || '' }}
           build-args: |
-            VERSION=${{steps.version_step.outputs.version}}
+            VERSION=${{ needs.setup_docker.outputs.version }}
+
+  build_and_push_shortn:
+    runs-on: ubuntu-latest
+    needs: setup_docker
+    steps:
       - name: Build and push Shortn
-        id: docker_build_shortn
         uses: docker/build-push-action@v6
         with:
           context: "{{defaultContext}}:src/."
           file: "Shortn.Dockerfile"
           push: true
           tags: |
-            mensch0mat/bly.li.shortn:${{ steps.version_step.outputs.version_tag }}
+            mensch0mat/bly.li.shortn:${{ needs.setup_docker.outputs.version_tag }}
             ${{ env.LATEST_TAG && 'mensch0mat/bly.li.shortn:latest' || '' }}
           build-args: |
-            VERSION=${{steps.version_step.outputs.version}}
+            VERSION=${{ needs.setup_docker.outputs.version }}
