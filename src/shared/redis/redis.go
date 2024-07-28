@@ -25,8 +25,10 @@ func getRedisClient() *redis.Client {
 
 func StoreUrl(short string, url string) {
 	_cache := getRedisClient()
+	key := "url:" + short
 	errs := [...]error{
-		_cache.HSet(ctx, "url:"+short, "url", url, "count", 0).Err(),
+		_cache.HSet(ctx, key, "url", url, "count", 0).Err(),
+		_cache.Expire(ctx, key, 60*60*60*24).Err(),
 	}
 	for _, err := range errs {
 		if err != nil {
