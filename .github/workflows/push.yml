@@ -67,7 +67,7 @@ jobs:
           push: true
           tags: |
             mensch0mat/bly.li.${{ matrix.service }}:${{ needs.extract_version.outputs.version_tag }}
-            ${{ env.LATEST_TAG && 'mensch0mat/bly.li.'${{ matrix.service }}':latest' || '' }}
+            ${{ env.LATEST_TAG && 'mensch0mat/bly.li.${{ matrix.service }}:latest' || '' }}
           build-args: |
             VERSION=${{ needs.extract_version.outputs.version }}
             SERVICE=${{ matrix.service }}
