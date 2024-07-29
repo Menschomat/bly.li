@@ -10,7 +10,7 @@ RUN go install github.com/deepmap/oapi-codegen/cmd/oapi-codegen@latest
 
 COPY services/blowup/ .
 COPY shared/ /shared/
-RUN oapi-codegen -generate types,chi-server -package api -o api/blowup.gen.go api/openapi.yml
+RUN oapi-codegen -generate types,chi-server -package api -o api/api.gen.go api/openapi.yml
 
 # Build the Go app
 RUN CGO_ENABLED=0 go build -o /bin/blyli

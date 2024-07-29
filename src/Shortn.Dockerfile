@@ -6,8 +6,7 @@ RUN adduser -S -u 10001 scratchuser
 RUN apk update && apk upgrade && apk add --no-cache ca-certificates tzdata
 RUN update-ca-certificates
 
-COPY services/shortn/main.go services/shortn/go.* /src/
-COPY services/shortn/utils /src/utils/
+COPY services/shortn/ .
 COPY shared/ /shared/
 
 RUN CGO_ENABLED=0 go build -o /bin/blyli

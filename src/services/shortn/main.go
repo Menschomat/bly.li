@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/Menschomat/bly.li/services/shortn/api"
 	u "github.com/Menschomat/bly.li/services/shortn/utils"
 	m "github.com/Menschomat/bly.li/shared/model"
 	"github.com/Menschomat/bly.li/shared/mongo"
@@ -24,8 +25,20 @@ var (
 	oidcProvider *oidc.Provider
 )
 
-func store(w http.ResponseWriter, r *http.Request) {
+var _ api.ServerInterface = (*Server)(nil)
 
+type Server struct{}
+
+func (p *Server) GetAll(w http.ResponseWriter, r *http.Request) {
+	user := r.Header.Get("X-Auth-User")
+	w.Header().Set("Content-Type", "text/plain")
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprintf(w, "Hello")
+	log.Println(user)
+	log.Println(r.Header)
+}
+
+func (p *Server) PostStore(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	var shortn m.ShortnReq
 	json.NewDecoder(r.Body).Decode(&shortn)
@@ -43,15 +56,6 @@ func store(w http.ResponseWriter, r *http.Request) {
 	}
 	mongo.StoreShortURL(m.ShortURL{URL: url, Short: short})
 	w.Write(payload)
-}
-
-func getAll(w http.ResponseWriter, r *http.Request) {
-	user := r.Header.Get("X-Auth-User")
-	w.Header().Set("Content-Type", "text/plain")
-	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, "Hello")
-	log.Println(user)
-	log.Println(r.Header)
 }
 
 func JWTVerifier(next http.Handler) http.Handler {
@@ -79,18 +83,15 @@ func InitOidcProvicer(ctx context.Context, url string) *oidc.Provider {
 func main() {
 	cfgUtils.FillEnvStruct(&appConfig)
 	// Set up OIDC provider and OAuth2 config
-	ctx := context.Background()
-	oidcProvider = InitOidcProvicer(ctx, appConfig.OidcConfig.OidcUrl)
+	oidcProvider = InitOidcProvicer(context.Background(), appConfig.OidcConfig.OidcUrl)
 	log.Println("*_-_-_-BlyLi-Shortn-_-_-_*")
 	// Create new Chi-Router
 	r := chi.NewRouter()
 	// Add Middlewares to Router
 	r.Use(middleware.Logger)
 	r.Use(JWTVerifier)
-	// Define paths in router
-	r.Post("/", store)
-	r.Get("/", getAll)
-
+	server := &Server{}
+	api.HandlerFromMux(server, r)
 	err := http.ListenAndServe(":8080", r)
 	if err != nil {
 		log.Fatalln("There's an error with the server", err)
