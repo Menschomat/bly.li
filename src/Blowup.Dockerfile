@@ -1,4 +1,4 @@
-FROM golang:1.22-alpine AS build
+FROM golang:1.22-alpine AS prepare
 
 WORKDIR /src/
 
@@ -8,20 +8,23 @@ RUN update-ca-certificates
 
 RUN go install github.com/deepmap/oapi-codegen/cmd/oapi-codegen@latest
 
+FROM scratch AS base
+
+COPY --from=prepare /etc/passwd /etc/passwd
+COPY --from=prepare /usr/share/zoneinfo /usr/share/zoneinfo
+COPY --from=prepare /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+ENV TZ=Europe/Berlin
+
+##Blowup-Specific:
+FROM prepare AS build
+
 COPY services/blowup/ .
 COPY shared/ /shared/
 RUN oapi-codegen -generate types,chi-server -package api -o api/api.gen.go api/openapi.yml
 
-# Build the Go app
 RUN CGO_ENABLED=0 go build -o /bin/blyli
 
-FROM scratch
-
-COPY --from=build /etc/passwd /etc/passwd
-COPY --from=build /usr/share/zoneinfo /usr/share/zoneinfo
-ENV TZ=Europe/Berlin
-
-COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+FROM base
 
 COPY --from=build /bin/blyli /bin/blyli
 
