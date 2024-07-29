@@ -68,13 +68,14 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: "{{defaultContext}}:src/."
-          file: "Blowup.Dockerfile"
+          file: "Dockerfile"
           push: true
           tags: |
             mensch0mat/bly.li.blowup:${{ needs.setup_docker.outputs.version_tag }}
             ${{ env.LATEST_TAG && 'mensch0mat/bly.li.blowup:latest' || '' }}
           build-args: |
             VERSION=${{ needs.setup_docker.outputs.version }}
+            SERVICE=blowup
 
   build_and_push_shortn:
     runs-on: ubuntu-latest
@@ -90,10 +91,12 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: "{{defaultContext}}:src/."
-          file: "Shortn.Dockerfile"
+          file: "Dockerfile"
           push: true
           tags: |
             mensch0mat/bly.li.shortn:${{ needs.setup_docker.outputs.version_tag }}
             ${{ env.LATEST_TAG && 'mensch0mat/bly.li.shortn:latest' || '' }}
           build-args: |
             VERSION=${{ needs.setup_docker.outputs.version }}
+            SERVICE=shortn
+
