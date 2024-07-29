@@ -32,12 +32,13 @@ jobs:
           echo ${{ steps.version_step.outputs.version_tag }}
           echo ${{ steps.version_step.outputs.latest_tag }}
 
-  build_and_push:
+  setup_docker:
     runs-on: ubuntu-latest
     needs: extract_version
-    strategy:
-      matrix:
-        service: [blowup, shortn]
+    outputs:
+      version: ${{ needs.extract_version.outputs.version }}
+      version_tag: ${{ needs.extract_version.outputs.version_tag }}
+      latest_tag: ${{ needs.extract_version.outputs.latest_tag }}
     steps:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -59,15 +60,22 @@ jobs:
           username: ${{ secrets.DOCKER_HUB_USER }}
           password: ${{ secrets.DOCKER_HUB }}
 
+  build_and_push:
+    runs-on: ubuntu-latest
+    needs: setup_docker
+    strategy:
+      matrix:
+        service: [blowup, shortn]
+    steps:
       - name: Build and push ${{ matrix.service }}
         uses: docker/build-push-action@v6
         with:
-          context: "{{defaultContext}}:src/."
-          file: "Dockerfile"
+          context: src/.
+          file: Dockerfile
           push: true
           tags: |
-            mensch0mat/bly.li.${{ matrix.service }}:${{ needs.extract_version.outputs.version_tag }}
-            ${{ env.LATEST_TAG && 'mensch0mat/bly.li.${{ matrix.service }}:latest' || '' }}
+            mensch0mat/bly.li.${{ matrix.service }}:${{ needs.setup_docker.outputs.version_tag }}
+            ${{ env.LATEST_TAG && 'mensch0mat/bly.li.'${{ matrix.service }}':latest' || '' }}
           build-args: |
-            VERSION=${{ needs.extract_version.outputs.version }}
+            VERSION=${{ needs.setup_docker.outputs.version }}
             SERVICE=${{ matrix.service }}
