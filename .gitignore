@@ -3,3 +3,4 @@
 .vscode/
 docker-compose.yml
 *.crt
+*.gen.go

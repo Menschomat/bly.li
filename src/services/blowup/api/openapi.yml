@@ -1,0 +1,34 @@
+openapi: 3.0.0
+info:
+  title: Blowup API
+  version: 1.0.0
+  description: API for blowing up shortened URLs.
+servers:
+  - url: https://bly.li
+tags:
+  - name: blowup
+    description: Endpoints for blowing up shortened URLs.
+paths:
+  /{short}:
+    get:
+      tags:
+        - blowup
+      summary: Blow up a shortened URL
+      parameters:
+        - in: path
+          name: short
+          required: true
+          schema:
+            type: string
+          description: The short part of the URL
+      responses:
+        "301":
+          description: Redirect to the original URL
+          headers:
+            Location:
+              description: The original URL
+              schema:
+                type: string
+                format: uri
+        "404":
+          description: Short URL not found

@@ -10,12 +10,17 @@ import (
 	utils "github.com/Menschomat/bly.li/shared/utils"
 	apiUtils "github.com/Menschomat/bly.li/shared/utils/api"
 
+	"github.com/Menschomat/bly.li/services/blowup/api"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 )
 
-func blowUpShortToUrl(w http.ResponseWriter, r *http.Request) {
-	var short string = chi.URLParam(r, "short")
+var _ api.ServerInterface = (*Server)(nil)
+
+type Server struct{}
+
+// FindPets implements all the handlers in the ServerInterface
+func (p *Server) GetShort(w http.ResponseWriter, r *http.Request, short string) {
 	if utils.IsValidShort(short) {
 		url, err := redis.GetUrl(short)
 		if err != nil || len(url) == 0 {
@@ -39,7 +44,9 @@ func main() {
 	log.Println("*_-_-_-BlyLi-Blowup-_-_-_*")
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
-	r.Get("/{short}", blowUpShortToUrl)
+	r.Use(middleware.Recoverer)
+	server := &Server{}
+	api.HandlerFromMux(server, r)
 	err := http.ListenAndServe(":8080", r)
 	if err != nil {
 		log.Fatalln("There's an error with the server", err)
