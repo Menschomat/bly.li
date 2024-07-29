@@ -1,3 +1,4 @@
+[![golang-pipeline](https://github.com/Menschomat/bly.li/actions/workflows/push.yml/badge.svg)](https://github.com/Menschomat/bly.li/actions/workflows/push.yml) [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=Menschomat_bly.li&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=Menschomat_bly.li)
 # bly.li
 
 ### Welcome to bly.li, a Short-Url-Service written in GoLang!
