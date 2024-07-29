@@ -70,7 +70,7 @@ jobs:
       - name: Build and push ${{ matrix.service }}
         uses: docker/build-push-action@v6
         with:
-          context: src/.
+          context: "{{defaultContext}}:src/."
           file: Dockerfile
           push: true
           tags: |
