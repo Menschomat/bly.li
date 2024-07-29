@@ -6,8 +6,11 @@ RUN adduser -S -u 10001 scratchuser
 RUN apk update && apk upgrade && apk add --no-cache ca-certificates tzdata
 RUN update-ca-certificates
 
+RUN go install github.com/deepmap/oapi-codegen/cmd/oapi-codegen@latest
+
 COPY services/shortn/ .
 COPY shared/ /shared/
+RUN oapi-codegen -generate types,chi-server -package api -o api/api.gen.go api/openapi.yml
 
 RUN CGO_ENABLED=0 go build -o /bin/blyli
 
