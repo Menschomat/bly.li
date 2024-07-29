@@ -54,12 +54,6 @@ jobs:
             echo "LATEST_TAG=$(echo ${{ needs.extract_version.outputs.latest_tag }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
           fi
 
-      - name: Login to DockerHub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_HUB_USER }}
-          password: ${{ secrets.DOCKER_HUB }}
-
   build_and_push:
     runs-on: ubuntu-latest
     needs: setup_docker
@@ -67,6 +61,11 @@ jobs:
       matrix:
         service: [blowup, shortn]
     steps:
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_HUB_USER }}
+          password: ${{ secrets.DOCKER_HUB }}
       - name: Build and push ${{ matrix.service }}
         uses: docker/build-push-action@v6
         with:
