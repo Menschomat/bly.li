@@ -5,6 +5,7 @@ info:
   description: API for blowing up shortened URLs.
 servers:
   - url: https://bly.li
+  - url: http://blyli.localhost
 tags:
   - name: blowup
     description: Endpoints for blowing up shortened URLs.
