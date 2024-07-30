@@ -52,7 +52,7 @@ jobs:
           fi
 
   build_and_push:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-arm64
     needs: setup_docker
     strategy:
       matrix:
