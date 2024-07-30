@@ -108,6 +108,7 @@ func GetShortURLByShort(short string) (*m.ShortURL, error) {
 		}
 		return nil, fmt.Errorf("failed to find document: %v", err)
 	}
+	log.Println(result.URL)
 
 	return &result, nil
 }

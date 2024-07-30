@@ -4,8 +4,8 @@ info:
   version: 1.0.0
   description: API for shortening URLs and retrieving all shortened URLs.
 servers:
-  - url: https://bly.li
-  - url: http://blyli.localhost
+  - url: http://blyli.localhost/shortn
+  - url: https://bly.li/shortn
 tags:
   - name: shortn
     description: Endpoints for shortening URLs and retrieving all shortened URLs.
