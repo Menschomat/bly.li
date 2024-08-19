@@ -54,7 +54,6 @@ jobs:
     strategy:
       matrix:
         service: [blowup, shortn]
-        arch: [linux/amd64, linux/arm64]
     steps:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -75,7 +74,7 @@ jobs:
           cache-to: type=gha,mode=max`
           file: Dockerfile
           push: true
-          platforms: ${{ matrix.arch }}
+          platforms: linux/amd64,linux/arm64
           tags: |
             mensch0mat/bly.li.${{ matrix.service }}:${{ needs.setup_docker.outputs.version_tag }}
             ${{ env.LATEST_TAG && 'mensch0mat/bly.li.${{ matrix.service }}:latest' || '' }}
