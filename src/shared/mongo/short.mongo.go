@@ -76,3 +76,21 @@ func GetShortURLByShort(short string) (*m.ShortURL, error) {
 
 	return &result, nil
 }
+
+func DeleteShortURLByShort(short string) error {
+	_client, _err := GetMongoClient()
+	if _err != nil {
+		log.Fatal(_err)
+		return _err
+	}
+	collection := _client.Database(DATABASE).Collection("urls")
+	filter := bson.M{"short": short}
+	_, err := collection.DeleteOne(context.Background(), filter)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return fmt.Errorf("no document found with the given short value: %v", short)
+		}
+		return fmt.Errorf("failed to find document: %v", err)
+	}
+	return nil
+}

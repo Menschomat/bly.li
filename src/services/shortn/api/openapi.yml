@@ -50,6 +50,23 @@ paths:
                   $ref: "#/components/schemas/ShortURL"
         "500":
           description: Server error
+  /{short}:
+    delete:
+      tags:
+        - shortn
+      summary: Delete a shortened URL
+      parameters:
+        - in: path
+          name: short
+          required: true
+          schema:
+            type: string
+          description: The short part of the URL
+      responses:
+        "200":
+          description: Deleted successfully
+        "404":
+          description: Short URL not found
 components:
   schemas:
     ShortnReq:

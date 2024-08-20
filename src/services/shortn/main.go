@@ -30,6 +30,21 @@ var _ api.ServerInterface = (*Server)(nil)
 
 type Server struct{}
 
+func (p *Server) DeleteShort(w http.ResponseWriter, r *http.Request, short string) {
+	if redis.ShortExists(short) {
+		err := redis.DeleteUrl(short)
+		if err != nil {
+			return
+		}
+	}
+	if mongo.ShortExists(short) {
+		err := mongo.DeleteShortURLByShort(short)
+		if err != nil {
+			return
+		}
+	}
+}
+
 func (p *Server) GetAll(w http.ResponseWriter, r *http.Request) {
 	user := r.Header.Get("X-Auth-User")
 	w.Header().Set("Content-Type", "text/plain")

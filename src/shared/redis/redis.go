@@ -48,6 +48,18 @@ func GetUrl(short string) (u string, e error) {
 	}
 	return url, nil
 }
+
+func DeleteUrl(short string) (e error) {
+	_cache := getRedisClient()
+	key := "url:" + short
+	_, err := _cache.HDel(ctx, key, "url").Result()
+	if err != nil || _cache.Expire(ctx, key, targetTtl).Err() != nil {
+		log.Println("Warning: Could not delete url from redis!")
+		return err
+	}
+	return nil
+}
+
 func ShortExists(short string) bool {
 	_cache := getRedisClient()
 	exists := _cache.Exists(ctx, "url:"+short)
