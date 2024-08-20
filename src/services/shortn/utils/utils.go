@@ -8,10 +8,10 @@ import (
 	"strings"
 
 	"github.com/Menschomat/bly.li/shared/mongo"
-	redis "github.com/Menschomat/bly.li/shared/redis"
+	"github.com/Menschomat/bly.li/shared/redis"
 )
 
-var alphabet []rune = []rune("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz")
+var alphabet = []rune("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890")
 
 func GetUniqueShort() string {
 	short := randomString(5, alphabet)
@@ -22,11 +22,11 @@ func GetUniqueShort() string {
 }
 
 func ParseUrl(str string) (string, error) {
-	url, err := url.ParseRequestURI(str)
-	if err != nil || !isUrl(url.String()) {
-		return "", errors.New("not a valid url")
+	uri, err := url.ParseRequestURI(str)
+	if err != nil || !isUrl(uri.String()) {
+		return "", errors.New("not a valid uri")
 	}
-	return url.String(), nil
+	return uri.String(), nil
 }
 
 func randomString(n int, alphabet []rune) string {

@@ -11,7 +11,7 @@ import (
 	u "github.com/Menschomat/bly.li/services/shortn/utils"
 	m "github.com/Menschomat/bly.li/shared/model"
 	"github.com/Menschomat/bly.li/shared/mongo"
-	redis "github.com/Menschomat/bly.li/shared/redis"
+	"github.com/Menschomat/bly.li/shared/redis"
 	apiUtils "github.com/Menschomat/bly.li/shared/utils/api"
 	cfgUtils "github.com/Menschomat/bly.li/shared/utils/config"
 	"github.com/coreos/go-oidc/v3/oidc"
@@ -34,7 +34,11 @@ func (p *Server) GetAll(w http.ResponseWriter, r *http.Request) {
 	user := r.Header.Get("X-Auth-User")
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, "Hello")
+	_, err := fmt.Fprintf(w, "Hello")
+	if err != nil {
+		return
+	}
+	//TODO remove this logging
 	log.Println(user)
 	log.Println(r.Header)
 }
@@ -42,28 +46,31 @@ func (p *Server) GetAll(w http.ResponseWriter, r *http.Request) {
 func (p *Server) PostStore(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	var shortn m.ShortnReq
-	json.NewDecoder(r.Body).Decode(&shortn)
+	err := json.NewDecoder(r.Body).Decode(&shortn)
 	url, err := u.ParseUrl(shortn.Url)
 	if err != nil {
-		apiUtils.BadRequestError(w, r)
+		apiUtils.BadRequestError(w)
 		return
 	}
 	short := u.GetUniqueShort()
 	redis.StoreUrl(short, url)
 	payload, err := json.Marshal(m.ShortnRes{Url: url, Short: short})
 	if err != nil {
-		apiUtils.InternalServerError(w, r)
+		apiUtils.InternalServerError(w)
 		return
 	}
-	mongo.StoreShortURL(m.ShortURL{URL: url, Short: short})
-	w.Write(payload)
+	_, err = mongo.StoreShortURL(m.ShortURL{URL: url, Short: short})
+	_, err = w.Write(payload)
+	if err != nil {
+		return
+	}
 }
 
 func JWTVerifier(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		base_ctx := context.Background()
+		baseCtx := context.Background()
 		var verifier = oidcProvider.Verifier(&oidc.Config{ClientID: appConfig.OidcConfig.OidcClientId})
-		token, err := verifier.Verify(base_ctx, apiUtils.TokenFromHeader(r))
+		token, err := verifier.Verify(baseCtx, apiUtils.TokenFromHeader(r))
 		if err != nil {
 			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 			return
@@ -73,18 +80,18 @@ func JWTVerifier(next http.Handler) http.Handler {
 	})
 }
 
-func InitOidcProvicer(ctx context.Context, url string) *oidc.Provider {
-	provider, oidc_err := oidc.NewProvider(ctx, url)
-	if oidc_err != nil {
-		panic(oidc_err)
+func InitOidcProvider(ctx context.Context, url string) *oidc.Provider {
+	provider, oidcErr := oidc.NewProvider(ctx, url)
+	if oidcErr != nil {
+		panic(oidcErr)
 	}
 	return provider
 }
 
 func main() {
-	cfgUtils.FillEnvStruct(&appConfig)
+	err := cfgUtils.FillEnvStruct(&appConfig)
 	// Set up OIDC provider and OAuth2 config
-	oidcProvider = InitOidcProvicer(context.Background(), appConfig.OidcConfig.OidcUrl)
+	oidcProvider = InitOidcProvider(context.Background(), appConfig.OidcConfig.OidcUrl)
 	log.Println("*_-_-_-BlyLi-Shortn-_-_-_*")
 	// Create new Chi-Router
 	r := chi.NewRouter()
@@ -103,7 +110,7 @@ func main() {
 	}))
 	server := &Server{}
 	api.HandlerFromMux(server, r)
-	err := http.ListenAndServe(":8080", r)
+	err = http.ListenAndServe(":8080", r)
 	if err != nil {
 		log.Fatalln("There's an error with the server", err)
 	}

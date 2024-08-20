@@ -1,5 +1,5 @@
 # Common base image with Go installation and necessary tools
-FROM golang:1.22-alpine AS base-prepare
+FROM golang:1.23-alpine AS base-prepare
 
 WORKDIR /src/
 

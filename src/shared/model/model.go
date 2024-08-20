@@ -1,12 +1,9 @@
 package model
 
-// GENERAL
 type OidcConfig struct {
 	OidcClientId string `env:"CLIENT_ID, default=12345"`
 	OidcUrl      string `env:"URL, default=http://127.0.0.1"`
 }
-
-// SHORTN
 
 type ShortURL struct {
 	Short string `bson:"short"`

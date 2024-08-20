@@ -2,12 +2,12 @@ package api
 
 import "net/http"
 
-func InternalServerError(w http.ResponseWriter, r *http.Request) {
+func InternalServerError(w http.ResponseWriter) {
 	w.WriteHeader(http.StatusInternalServerError)
-	w.Write([]byte("internal server error"))
+	_, _ = w.Write([]byte("internal server error"))
 }
 
-func BadRequestError(w http.ResponseWriter, r *http.Request) {
+func BadRequestError(w http.ResponseWriter) {
 	w.WriteHeader(http.StatusBadRequest)
-	w.Write([]byte("bad request error"))
+	_, _ = w.Write([]byte("bad request error"))
 }
