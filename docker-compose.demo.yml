@@ -1,6 +1,6 @@
 services:
   reverse-proxy:
-    image: traefik:v3.1
+    image: traefik:comte
     environment:
       - TZ=CET
     command:
@@ -29,6 +29,18 @@ services:
       - "traefik.http.middlewares.hello_world-rewrite.stripprefix.prefixes=/hello_world"
     image: nginxdemos/hello
 
+  front:
+    build:
+      context: src/services/front/.
+      dockerfile: Dockerfile
+    #image: mensch0mat/bly.li.front:main
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.services.front.loadbalancer.server.port=80"
+      - "traefik.http.routers.front.rule=Host(`blyli.localhost`) && PathPrefix(`/front/`)"
+      - "traefik.http.routers.front.middlewares=front-rewrite"
+      - "traefik.http.middlewares.front-rewrite.stripprefix.prefixes=/front"
+
   shortn:
     build:
       context: src/.
@@ -54,6 +66,9 @@ services:
       - "traefik.enable=true"
       - "traefik.http.services.blowup.loadbalancer.server.port=8080"
       - "traefik.http.routers.blowup.rule=Host(`blyli.localhost`)"
+      - "traefik.http.middlewares.add-context.redirectregex.regex=^http:\\/\\/([^\\/]+)\\/?$$"
+      - "traefik.http.middlewares.add-context.redirectregex.replacement=http://$$1/front/"
+      - "traefik.http.routers.blowup.middlewares=add-context"
 
   mongodb:
     image: mongo:7
