@@ -2,20 +2,24 @@
 
 # bly.li
 
-<image style=" padding:1rem; margin:auto; border-radius:1rem; height: 9rem; overflow:hidden;  margin: -1.5rem; margin-bottom:-1.7rem;" src="./etc/assets/logos/go_logo.png">
+### Welcome to bly.li: A calable Short URL Service in GoLang
+
+Easily create and share memorable links to any webpage with bly.li! Simply input the URL you want to shorten, and our service will generate a concise link that you can share on social media, via email, or anywhere else.
+
+### Tech-stack
+
+<div>
+<image style=" padding:1rem; margin:auto; border-radius:1rem; height: 6rem;" src="./etc/assets/logos/go_logo.png">
 <image style=" padding:1rem; margin:auto; border-radius:1rem; height: 4rem;  padding-bottom:1.5rem;" src="./etc/assets/logos/redis_mark.svg">
-<image style=" padding:1rem; margin:auto; border-radius:1rem; height: 4.7rem" src="./etc/assets/logos/mongo_db.svg">
+<image style=" padding:1rem; margin:auto; border-radius:1rem; height: 5rem" src="./etc/assets/logos/mongo_db.svg">
 <image style=" padding:1rem; margin:auto; border-radius:1rem; height: 5rem" src="./etc/assets/logos/traefik.svg">
 <image style=" padding:1rem; margin:auto; border-radius:1rem; width: 5rem" src="./etc/assets/logos/angular_gradient.png">
 <image style=" padding:1rem; margin:auto; border-radius:1rem; width: 5rem; padding-bottom:1.7rem; " src="./etc/assets/logos/tailwindcss.svg">
 <image style=" padding:1rem; margin:auto; border-radius:1rem; width: 5rem" src="./etc/assets/logos/bun_logo.svg">
 <image style=" padding:1rem; margin:auto; border-radius:1rem; width: 5rem" src="./etc/assets/logos/docker-mark.svg">
+</div>
 
-### Welcome to bly.li: A calable Short URL Service in GoLang
-
-Easily create and share memorable links to any webpage with bly.li! Simply input the URL you want to shorten, and our service will generate a concise link that you can share on social media, via email, or anywhere else.
-
-**Key Features:**
+### Key Features:
 
 - **Scalability**: Our architecture is designed for horizontal scaling, allowing services to be easily expanded to meet growing demands.
 - **Statelessness**: All services are stateless, ensuring seamless performance even in the event of node failures. This also makes it easy to maintain and update individual components without affecting the overall system.
