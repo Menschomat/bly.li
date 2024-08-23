@@ -1,0 +1,6 @@
+{
+  "oidcClientId": "default-client-id",
+  "oidcIssuer": "https://default-issuer.com",
+  "oidcRedirectUri": "/front/",
+  "basePath": "/shortn"
+}

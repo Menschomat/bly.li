@@ -11,7 +11,7 @@ import (
 	"github.com/Menschomat/bly.li/shared/redis"
 )
 
-var alphabet = []rune("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890")
+var alphabet = []rune("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz")
 
 func GetUniqueShort() string {
 	short := randomString(5, alphabet)

@@ -1,0 +1,15 @@
+.gitignore
+README.md
+api.module.ts
+api/api.ts
+api/shortn.service.ts
+api/shortn.serviceInterface.ts
+configuration.ts
+encoder.ts
+git_push.sh
+index.ts
+model/models.ts
+model/short-url.ts
+model/shortn-req.ts
+param.ts
+variables.ts

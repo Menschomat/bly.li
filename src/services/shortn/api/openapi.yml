@@ -28,10 +28,7 @@ paths:
             application/json:
               schema:
                 type: object
-                properties:
-                  short:
-                    type: string
-                    example: "short.ly/abc123"
+                $ref: "#/components/schemas/ShortURL"
         "400":
           description: Invalid input
   /all:
