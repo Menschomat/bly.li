@@ -70,7 +70,7 @@ jobs:
           cache-to: type=gha,mode=max`
           file: Dockerfile
           push: true
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
           tags: |
             mensch0mat/bly.li.front:${{ needs.setup_docker.outputs.version_tag }}
             ${{ env.LATEST_TAG && 'mensch0mat/bly.li.front:latest' || '' }}
