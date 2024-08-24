@@ -14,7 +14,7 @@ import { OAuthService } from 'angular-oauth2-oidc';
         class="px-4 py-2 bg-white dark:bg-gray-900 rounded-md text-transparent hover:bg-transparent hover:text-white"
       >
         <span
-          class="bg-animate block bg-clip-text font-montserrat font-black leading-snug bg-clip-text bg-gradient-to-r from-indigo-400 via-pink-500 to-purple-500"
+          class="bg-animate block font-montserrat font-black leading-snug bg-clip-text bg-gradient-to-r from-indigo-400 via-pink-500 to-purple-500"
           >shrink</span
         >
       </div>

@@ -22,7 +22,7 @@ export class AuthService {
         // Optional: Retrieve user profile or do any other necessary actions
       } else {
         console.log('NOT LOGGEDIN');
-        // User is not logged in, don't redirect to Authentik yet
+        
         // The user will click the login button to initiate the login process
       }
     });

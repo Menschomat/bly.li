@@ -13,9 +13,9 @@ import { URLService } from '../../services/url.service';
   imports: [ButtonPrimaryComponent, CommonModule, FormsModule],
   template: `
     <div
-      class="max-w-2xl px-8 py-4 backdrop-blur-md bg-white/30 shadow dark:bg-gray-800/50 rounded-lg"
+      class="mt-2 max-w-2xl px-8 py-4 backdrop-blur-md bg-white/30 shadow dark:bg-gray-800/50 rounded-lg"
     >
-      <div class="mt-2 flex flex-col">
+      <div class=" flex flex-col">
         <a
           href="#"
           class="text-xl font-bold text-gray-700 dark:text-white"
@@ -35,7 +35,6 @@ import { URLService } from '../../services/url.service';
             class="flex-1 mt-2 pl-1"
           ></app-button-primary>
         </div>
-        <div class="mt-2 flex-1 flex"></div>
       </div>
       <a
         [href]="baseUrl + '/' + lastShort"
