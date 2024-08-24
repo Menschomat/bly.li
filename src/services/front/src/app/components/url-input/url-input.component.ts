@@ -4,6 +4,8 @@ import { ShortnReq, ShortnService } from '../../core/api/v1';
 import { FormsModule } from '@angular/forms';
 import { BehaviorSubject } from 'rxjs';
 import { CommonModule } from '@angular/common';
+import { ConfigService } from '../../services/config.service';
+import { URLService } from '../../services/url.service';
 
 @Component({
   selector: 'app-url-input',
@@ -14,18 +16,15 @@ import { CommonModule } from '@angular/common';
 })
 export class UrlInputComponent implements OnInit {
   public shortInputValue: string = '';
+  public baseUrl: string = window.location.origin;
   private lastShortSubj: BehaviorSubject<string | undefined> =
     new BehaviorSubject<string | undefined>(undefined);
-  constructor(private api: ShortnService) {}
-  ngOnInit(): void {
-  
-  }
+  constructor(private api: ShortnService, private urlService: URLService) {}
+  ngOnInit(): void {}
   requestShort() {
-    console.log('fsds');
-
     this.api
       .storePost({ Url: this.shortInputValue } as ShortnReq)
-      .subscribe((a) => this.lastShortSubj.next(a.Short));
+      .subscribe((a) => this.urlService.triggerNextShort(a.Short));
   }
   get lastShort$() {
     return this.lastShortSubj.asObservable();

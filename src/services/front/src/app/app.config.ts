@@ -48,4 +48,3 @@ export function appConfigInitializer(appConfig: ConfigService): Function {
 export function storageFactory(): OAuthStorage {
   return localStorage;
 }
-
