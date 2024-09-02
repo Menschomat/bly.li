@@ -1,0 +1,113 @@
+networks:
+  blyli:
+  #traefik_proxy:
+  #  external: true
+
+services:
+  mongodb:
+    image: mongo:7
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - blyli
+    environment:
+      - TZ=${TZ}
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --save 20 1 --loglevel warning
+    volumes:
+      - redis_data:/data
+    networks:
+      - blyli
+    environment:
+      - TZ=${TZ}
+    restart: unless-stopped
+
+  shortn:
+    build:
+      context: src/.
+      dockerfile: Dockerfile
+      args:
+        - SERVICE=shortn
+    image: mensch0mat/bly.li.shortn:main
+    environment:
+      - OIDC_URL=${OIDC_URL}
+      - OIDC_CLIENT_ID=${OIDC_CLIENT_ID}
+      - TZ=${TZ}
+    networks:
+      - blyli
+    restart: unless-stopped
+
+  front:
+    build:
+      context: src/services/front/.
+      dockerfile: Dockerfile
+    image: mensch0mat/bly.li.front:main
+    volumes:
+      - ${CONFIG_PATH}:/usr/share/nginx/html/assets/config.json
+    environment:
+      - TZ=${TZ}
+    networks:
+      - blyli
+    restart: unless-stopped
+
+  blowup:
+    build:
+      context: src/.
+      dockerfile: Dockerfile
+      args:
+        - SERVICE=blowup
+    image: mensch0mat/bly.li.blowup:main
+    environment:
+      - TZ=${TZ}
+    networks:
+      - blyli
+    restart: unless-stopped
+  #swagger:
+  #  build:
+  #    context: src/.
+  #    dockerfile: Swagger.Dockerfile
+  #  environment:
+  #    - BASE_URL=/swagger
+  #  ports:
+  #    - 8084:8080
+  #  labels:
+  #    - "traefik.enable=true"
+  #    - "traefik.http.services.swagger.loadbalancer.server.port=8080"
+  #    - "traefik.http.routers.swagger.rule=Host(`blyli.localhost`) && PathPrefix(`/swagger`)"
+  #  profiles:
+  #    - development
+  nginx:
+    image: nginx:latest
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    networks:
+      - blyli
+    #  - traefik_proxy
+
+    #labels:
+    #  - "traefik.enable=true"
+    #  - "traefik.http.routers.nginx.entrypoints=web"
+    #  - "traefik.http.routers.nginx.rule=Host(`${HOST_URL}`)"
+    #  - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+    #  - "traefik.http.routers.nginx.middlewares=redirect-to-https"
+    #  - "traefik.http.routers.nginx-secure.entrypoints=websecure"
+    #  - "traefik.http.routers.nginx-secure.rule=Host(`${HOST_URL}`)"
+    #  - "traefik.http.routers.nginx-secure.tls.certresolver=defaultres"
+    #  - "traefik.http.services.nginx.loadbalancer.server.port=80"
+    #  - "traefik.docker.network=traefik_proxy"
+    environment:
+      - TZ=${TZ}
+    restart: unless-stopped
+
+volumes:
+  mongo_data:
+    driver: local
+  redis_data:
+    driver: local
