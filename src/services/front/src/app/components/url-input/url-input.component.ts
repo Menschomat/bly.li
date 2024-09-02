@@ -4,7 +4,6 @@ import { ShortnReq, ShortnService } from '../../core/api/v1';
 import { FormsModule } from '@angular/forms';
 import { BehaviorSubject } from 'rxjs';
 import { CommonModule } from '@angular/common';
-import { ConfigService } from '../../services/config.service';
 import { URLService } from '../../services/url.service';
 
 @Component({

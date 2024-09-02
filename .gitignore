@@ -1,7 +1,6 @@
 .bash_history
 .DS_Store
 .vscode/
-docker-compose.yml
 *.crt
 *.gen.go
 .dev.env
