@@ -4,3 +4,4 @@
 docker-compose.yml
 *.crt
 *.gen.go
+.dev.env
