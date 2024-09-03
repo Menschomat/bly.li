@@ -74,11 +74,27 @@ func (p *Server) PostStore(w http.ResponseWriter, r *http.Request) {
 		apiUtils.InternalServerError(w)
 		return
 	}
-	_, err = mongo.StoreShortURL(m.ShortURL{URL: url, Short: short})
-	_, err = w.Write(payload)
-	if err != nil {
-		return
+	usrInfo, err := GetUsrInfoFromCtx(r.Context())
+	if usrInfo != nil {
+		_, err = mongo.StoreShortURL(m.ShortURL{URL: url, Short: short, Owner: usrInfo.Email})
 	}
+	if err != nil {
+		_, err = mongo.StoreShortURL(m.ShortURL{URL: url, Short: short})
+	}
+	_, err = w.Write(payload)
+}
+func GetUsrInfoFromCtx(ctx context.Context) (*struct {
+	Nickname string `json:"nickname"`
+	Email    string `json:"email"`
+}, error) {
+	var claims struct {
+		Nickname string `json:"nickname"`
+		Email    string `json:"email"`
+	}
+	if err := ctx.Value("token").(*oidc.IDToken).Claims(&claims); err != nil {
+		return nil, err
+	}
+	return &claims, nil
 }
 
 func JWTVerifier(next http.Handler) http.Handler {

@@ -1,13 +1,14 @@
-import { Injectable } from '@angular/core';
-import { OAuthService, AuthConfig } from 'angular-oauth2-oidc';
-import { BehaviorSubject, Observable } from 'rxjs';
-import { ConfigService } from './config.service';
+import {Injectable} from '@angular/core';
+import {AuthConfig, OAuthService} from 'angular-oauth2-oidc';
+import {BehaviorSubject, Observable} from 'rxjs';
+import {ConfigService} from './config.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class AuthService {
   private userSubject: BehaviorSubject<Record<string, any> | null>;
+
   constructor(
     private oauthService: OAuthService,
     private config: ConfigService
@@ -17,12 +18,11 @@ export class AuthService {
     oauthService.loadDiscoveryDocumentAndTryLogin().then(() => {
       if (this.oauthService.hasValidAccessToken()) {
         // User is already logged in
-        console.log('LOGGEDIN');
-        console.log(this.oauthService.getIdentityClaims());
+        console.log('LOGGED_IN');
         // Optional: Retrieve user profile or do any other necessary actions
       } else {
-        console.log('NOT LOGGEDIN');
-        
+        console.log('NOT LOGGED_IN');
+        this.oauthService.revokeTokenAndLogout().then();
         // The user will click the login button to initiate the login process
       }
     });
@@ -37,8 +37,8 @@ export class AuthService {
         this.userSubject.next(this.oauthService.getIdentityClaims());
       }
     });
-    console.log('CurrentToken', this.userSubject.value);
   }
+
   public getAuthConfig(): AuthConfig {
     const appConfig = this.config.getConfig();
     return {
@@ -56,6 +56,9 @@ export class AuthService {
       // Code Flow (PKCE ist standardmäßig bei Nutzung von Code Flow aktiviert)
       responseType: 'code',
       strictDiscoveryDocumentValidation: false,
+      useRefreshToken: true,
+      //allowUnsafeReuseRefreshToken: true,
+      startCheckSession: true,
     } as AuthConfig;
   }
 
@@ -76,18 +79,21 @@ export class AuthService {
   get identityClaims(): Record<string, any> {
     return this.oauthService.getIdentityClaims();
   }
+
   // Observable for the current user profile
   get currentUser$(): Observable<Record<string, any> | null> {
     return this.userSubject.asObservable();
   }
+
   login() {
     this.oauthService.initCodeFlow();
   }
+
   logout() {
     this.oauthService.logOut();
   }
 
   refresh() {
-    this.oauthService.refreshToken();
+    this.oauthService.refreshToken().then();
   }
 }

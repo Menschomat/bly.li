@@ -15,7 +15,7 @@ import { OAuthService } from 'angular-oauth2-oidc';
       >
         <span
           class="bg-animate block font-montserrat font-black leading-snug bg-clip-text bg-gradient-to-r from-indigo-400 via-pink-500 to-purple-500"
-          >shrink</span
+        ><ng-content></ng-content></span
         >
       </div>
     </button>

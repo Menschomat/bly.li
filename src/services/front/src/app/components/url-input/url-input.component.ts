@@ -32,7 +32,7 @@ import { URLService } from '../../services/url.service';
           <app-button-primary
             (click)="requestShort()"
             class="flex-1 mt-2 pl-1"
-          ></app-button-primary>
+          >shrink</app-button-primary>
         </div>
       </div>
       <a
