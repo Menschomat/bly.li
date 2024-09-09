@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 
@@ -26,86 +25,139 @@ var (
 	oidcProvider *oidc.Provider
 )
 
+// Ensure Server implements the ServerInterface
 var _ api.ServerInterface = (*Server)(nil)
 
 type Server struct{}
 
-func (p *Server) DeleteShort(w http.ResponseWriter, r *http.Request, short string) {
+// Utility function to delete short URLs from both Redis and MongoDB
+func deleteShortURL(short string) error {
 	if redis.ShortExists(short) {
-		err := redis.DeleteUrl(short)
-		if err != nil {
-			return
+		if err := redis.DeleteUrl(short); err != nil {
+			return err
 		}
 	}
 	if mongo.ShortExists(short) {
-		err := mongo.DeleteShortURLByShort(short)
+		if err := mongo.DeleteShortURLByShort(short); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (p *Server) DeleteShort(w http.ResponseWriter, _ *http.Request, short string) {
+	if err := deleteShortURL(short); err != nil {
+		apiUtils.InternalServerError(w)
+		log.Printf("Error deleting short URL: %v", err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (p *Server) GetAll(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	userInfo, err := GetUserInfoFromCtx(r.Context())
+	if err != nil {
+		apiUtils.InternalServerError(w)
+		log.Printf("Error retrieving user info: %v", err)
+		return
+	}
+
+	if userInfo != nil {
+		shorts, err := mongo.GetShortsByUsr(userInfo.Sub)
+		if err != nil {
+			apiUtils.InternalServerError(w)
+			log.Printf("Error fetching user shorts: %v", err)
+			return
+		}
+
+		payload, _ := json.Marshal(shorts)
+		_, err = w.Write(payload)
 		if err != nil {
 			return
 		}
 	}
-}
-
-func (p *Server) GetAll(w http.ResponseWriter, r *http.Request) {
-	user := r.Header.Get("X-Auth-User")
-	w.Header().Set("Content-Type", "text/plain")
-	w.WriteHeader(http.StatusOK)
-	_, err := fmt.Fprintf(w, "Hello")
-	if err != nil {
-		return
-	}
-	//TODO remove this logging
-	log.Println(user)
-	log.Println(r.Header)
 }
 
 func (p *Server) PostStore(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	var shortn m.ShortnReq
-	err := json.NewDecoder(r.Body).Decode(&shortn)
-	url, err := u.ParseUrl(shortn.Url)
-	if err != nil {
+	var shortReq m.ShortnReq
+
+	if err := json.NewDecoder(r.Body).Decode(&shortReq); err != nil {
 		apiUtils.BadRequestError(w)
+		log.Printf("Error decoding request body: %v", err)
 		return
 	}
+
+	url, err := u.ParseUrl(shortReq.Url)
+	if err != nil {
+		apiUtils.BadRequestError(w)
+		log.Printf("Invalid URL: %v", err)
+		return
+	}
+
 	short := u.GetUniqueShort()
+
 	redis.StoreUrl(short, url)
+
 	payload, err := json.Marshal(m.ShortnRes{Url: url, Short: short})
 	if err != nil {
 		apiUtils.InternalServerError(w)
+		log.Printf("Error marshalling response payload: %v", err)
 		return
 	}
-	usrInfo, err := GetUsrInfoFromCtx(r.Context())
-	if usrInfo != nil {
-		_, err = mongo.StoreShortURL(m.ShortURL{URL: url, Short: short, Owner: usrInfo.Email})
-	}
-	if err != nil {
+
+	userInfo, err := GetUserInfoFromCtx(r.Context())
+	if userInfo != nil {
+		_, err = mongo.StoreShortURL(m.ShortURL{URL: url, Short: short, Owner: userInfo.Sub})
+	} else {
 		_, err = mongo.StoreShortURL(m.ShortURL{URL: url, Short: short})
 	}
+
+	if err != nil {
+		apiUtils.InternalServerError(w)
+		log.Printf("Error storing short URL in MongoDB: %v", err)
+		return
+	}
+
 	_, err = w.Write(payload)
+	if err != nil {
+		return
+	}
 }
-func GetUsrInfoFromCtx(ctx context.Context) (*struct {
+
+// GetUserInfoFromCtx Move utility function to a shared utils package if necessary
+func GetUserInfoFromCtx(ctx context.Context) (*struct {
 	Nickname string `json:"nickname"`
 	Email    string `json:"email"`
+	Sub      string `json:"sub"`
 }, error) {
 	var claims struct {
 		Nickname string `json:"nickname"`
 		Email    string `json:"email"`
+		Sub      string `json:"sub"`
 	}
-	if err := ctx.Value("token").(*oidc.IDToken).Claims(&claims); err != nil {
+
+	token := ctx.Value("token").(*oidc.IDToken)
+	if err := token.Claims(&claims); err != nil {
 		return nil, err
 	}
 	return &claims, nil
 }
 
+// JWTVerifier Middleware to verify JWT tokens
 func JWTVerifier(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		baseCtx := context.Background()
-		var verifier = oidcProvider.Verifier(&oidc.Config{ClientID: appConfig.OidcConfig.OidcClientId})
+		verifier := oidcProvider.Verifier(&oidc.Config{ClientID: appConfig.OidcConfig.OidcClientId})
+
 		token, err := verifier.Verify(baseCtx, apiUtils.TokenFromHeader(r))
 		if err != nil {
 			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+			log.Printf("JWT verification failed: %v", err)
 			return
 		}
+
 		ctx := context.WithValue(r.Context(), "token", token)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
@@ -114,36 +166,44 @@ func JWTVerifier(next http.Handler) http.Handler {
 func InitOidcProvider(ctx context.Context, url string) *oidc.Provider {
 	provider, oidcErr := oidc.NewProvider(ctx, url)
 	if oidcErr != nil {
-		panic(oidcErr)
+		log.Fatalf("Error initializing OIDC provider: %v", oidcErr)
 	}
 	return provider
 }
 
 func main() {
-	err := cfgUtils.FillEnvStruct(&appConfig)
-	// Set up OIDC provider and OAuth2 config
+	// Load application config
+	if err := cfgUtils.FillEnvStruct(&appConfig); err != nil {
+		log.Fatalf("Error loading config: %v", err)
+	}
+
+	// Initialize OIDC provider
 	oidcProvider = InitOidcProvider(context.Background(), appConfig.OidcConfig.OidcUrl)
 	log.Println("*_-_-_-BlyLi-Shortn-_-_-_*")
-	// Create new Chi-Router
+
+	// Create a new Chi Router
 	r := chi.NewRouter()
-	// Add Middlewares to Router
+
+	// Add Middlewares
 	r.Use(middleware.Logger)
 	r.Use(JWTVerifier)
 	r.Use(cors.Handler(cors.Options{
-		// AllowedOrigins:   []string{"https://foo.com"}, // Use this to allow specific origin hosts
-		AllowedOrigins: []string{"*"},
-		// AllowOriginFunc:  func(r *http.Request, origin string) bool { return true },
+		AllowedOrigins:   []string{"*"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"*"},
 		ExposedHeaders:   []string{"Link"},
 		AllowCredentials: false,
-		MaxAge:           300, // Maximum value not ignored by any of major browsers
+		MaxAge:           300,
 	}))
+
 	server := &Server{}
 	api.HandlerFromMux(server, r)
-	err = http.ListenAndServe(":8080", r)
-	if err != nil {
-		log.Fatalln("There's an error with the server", err)
+
+	// Start server
+	if err := http.ListenAndServe(":8080", r); err != nil {
+		log.Fatalf("Server error: %v", err)
 	}
+
+	// Close MongoDB client on exit
 	defer mongo.CloseClientDB()
 }

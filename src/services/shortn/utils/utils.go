@@ -13,34 +13,40 @@ import (
 
 var alphabet = []rune("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz")
 
+// GetUniqueShort generates a unique short string by checking against Redis and MongoDB.
+// It ensures the short doesn't exist in both databases before returning it.
 func GetUniqueShort() string {
-	short := randomString(5, alphabet)
-	if redis.ShortExists(short) || mongo.ShortExists(short) {
-		return GetUniqueShort()
+	for {
+		short := generateRandomString(5, alphabet)
+		if !redis.ShortExists(short) && !mongo.ShortExists(short) {
+			return short
+		}
 	}
-	return short
 }
 
-func ParseUrl(str string) (string, error) {
-	uri, err := url.ParseRequestURI(str)
-	if err != nil || !isUrl(uri.String()) {
-		return "", errors.New("not a valid uri")
+// ParseUrl validates a given string as a proper URL and returns it if valid.
+// Returns an error if the URL is invalid.
+func ParseUrl(input string) (string, error) {
+	parsedUrl, err := url.ParseRequestURI(input)
+	if err != nil || !isValidUrl(parsedUrl.String()) {
+		return "", errors.New("invalid URL format")
 	}
-	return uri.String(), nil
+	return parsedUrl.String(), nil
 }
 
-func randomString(n int, alphabet []rune) string {
+// generateRandomString creates a random string of length 'n' from the provided 'alphabet'.
+// This is used to generate the short URL string.
+func generateRandomString(n int, alphabet []rune) string {
 	alphabetSize := len(alphabet)
 	var sb strings.Builder
 	for i := 0; i < n; i++ {
-		ch := alphabet[rand.Intn(alphabetSize)]
-		sb.WriteRune(ch)
+		sb.WriteRune(alphabet[rand.Intn(alphabetSize)])
 	}
-	s := sb.String()
-	return s
+	return sb.String()
 }
 
-func isUrl(str string) bool {
+// isValidUrl uses a regular expression to check if a string is a valid URL.
+func isValidUrl(str string) bool {
 	var re = regexp.MustCompile(`((([A-Za-z]{3,9}:(?:\/\/)?)(?:[-;:&=\+\$,\w]+@)?[A-Za-z0-9.-]+(:[0-9]+)?|(?:www.|[-;:&=\+\$,\w]+@)[A-Za-z0-9.-]+)((?:\/[\+~%\/.\w-_]*)?\??(?:[-\+=&;%@.\w_]*)#?(?:[\w]*))?)`)
 	return len(re.FindStringIndex(str)) > 0
 }

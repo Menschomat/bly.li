@@ -77,6 +77,57 @@ func GetShortURLByShort(short string) (*m.ShortURL, error) {
 	return &result, nil
 }
 
+func GetShortsByUsr(userId string) ([]m.ShortURL, error) {
+	// Get MongoDB client
+	_client, _err := GetMongoClient()
+	if _err != nil {
+		log.Fatal(_err)
+		return nil, _err
+	}
+
+	// Select the "urls" collection from the database
+	collection := _client.Database(DATABASE).Collection("urls")
+
+	// Create a filter to match the owner (userId)
+	filter := bson.M{"owner": userId}
+
+	// Find all documents matching the filter
+	cursor, err := collection.Find(context.Background(), filter)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find documents: %v", err)
+	}
+	defer func(cursor *mongo.Cursor, ctx context.Context) {
+		err := cursor.Close(ctx)
+		if err != nil {
+
+		}
+	}(cursor, context.Background())
+
+	var results []m.ShortURL
+
+	// Iterate through the cursor and decode each document
+	for cursor.Next(context.Background()) {
+		var result m.ShortURL
+		if err := cursor.Decode(&result); err != nil {
+			return nil, fmt.Errorf("failed to decode document: %v", err)
+		}
+		results = append(results, result)
+	}
+
+	// Check for any errors encountered during cursor iteration
+	if err := cursor.Err(); err != nil {
+		return nil, fmt.Errorf("error occurred during cursor iteration: %v", err)
+	}
+
+	// If no results were found, return an error
+	if len(results) == 0 {
+		return nil, fmt.Errorf("no documents found for user: %s", userId)
+	}
+
+	// Return the results slice
+	return results, nil
+}
+
 func DeleteShortURLByShort(short string) error {
 	_client, _err := GetMongoClient()
 	if _err != nil {
