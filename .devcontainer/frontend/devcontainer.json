@@ -1,11 +1,14 @@
 {
-  "name": "Frontend-Container - Bun",
-  "image": "ghcr.io/nhaef/devcontainer-bun:latest",
-  "customizations": {
+    "name": "Frontend-Container - Bun",
+    "image": "mcr.microsoft.com/devcontainers/typescript-node:1-20",
+    "customizations": {
       "vscode": {
-          "extensions": [
-              "dbaeumer.vscode-eslint"
-          ]
+        "extensions": [
+          "dbaeumer.vscode-eslint"
+        ]
       }
+    },
+    //"forwardPorts": [4200],
+    "postCreateCommand": "npm install -g bun && cd src/services/front && bun install"
   }
-}
+  

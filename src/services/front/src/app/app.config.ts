@@ -1,8 +1,4 @@
-import {
-  APP_INITIALIZER,
-  ApplicationConfig,
-  provideZoneChangeDetection,
-} from '@angular/core';
+import { ApplicationConfig, provideZoneChangeDetection, inject, provideAppInitializer } from '@angular/core';
 import {
   AuthConfig,
   OAuthStorage,
@@ -29,12 +25,10 @@ export const appConfig: ApplicationConfig = {
     }),
     { provide: BASE_PATH, useValue: window.location.origin + '/shortn' },
     { provide: OAuthStorage, useFactory: storageFactory },
-    {
-      provide: APP_INITIALIZER,
-      useFactory: appConfigInitializer,
-      multi: true,
-      deps: [ConfigService],
-    },
+    provideAppInitializer(() => {
+        const initializerFn = (appConfigInitializer)(inject(ConfigService));
+        return initializerFn();
+      }),
   ],
 };
 

@@ -2,10 +2,9 @@ import { Component } from '@angular/core';
 import { LoginMenuComponent } from './login-menu/login-menu.component';
 
 @Component({
-  selector: 'app-nav-bar',
-  standalone: true,
-  imports: [LoginMenuComponent],
-  template: `
+    selector: 'app-nav-bar',
+    imports: [LoginMenuComponent],
+    template: `
     <nav
       x-data="{ isOpen: false }"
       class="relative backdrop-blur-md m-2 rounded-xl"
@@ -21,6 +20,6 @@ import { LoginMenuComponent } from './login-menu/login-menu.component';
         <app-login-menu></app-login-menu>
       </div>
     </nav>
-  `,
+  `
 })
 export class NavBarComponent {}

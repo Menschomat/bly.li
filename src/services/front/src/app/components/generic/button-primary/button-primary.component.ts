@@ -2,10 +2,9 @@ import { Component, EventEmitter, Output } from '@angular/core';
 import { OAuthService } from 'angular-oauth2-oidc';
 
 @Component({
-  selector: 'app-button-primary',
-  standalone: true,
-  imports: [],
-  template: `
+    selector: 'app-button-primary',
+    imports: [],
+    template: `
     <button
       (click)="triggerBtn($event)"
       class="bg-animate p-0.5 rounded-lg from-indigo-400 via-pink-500 to-purple-500 bg-gradient-to-r"
@@ -19,7 +18,7 @@ import { OAuthService } from 'angular-oauth2-oidc';
         >
       </div>
     </button>
-  `,
+  `
 })
 export class ButtonPrimaryComponent {
   @Output() click: EventEmitter<any> = new EventEmitter();
