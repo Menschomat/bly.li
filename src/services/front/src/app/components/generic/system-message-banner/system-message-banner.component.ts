@@ -1,11 +1,10 @@
 import { Component, Input } from '@angular/core';
 
 @Component({
-  selector: 'app-system-message-banner',
-  standalone: true,
-  imports: [],
-  template: ` <p>{{ dispMsg }}</p> `,
-  styles: ``,
+    selector: 'app-system-message-banner',
+    imports: [],
+    template: ` <p>{{ dispMsg }}</p> `,
+    styles: ``
 })
 export class SystemMessageBannerComponent {
   @Input()

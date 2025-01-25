@@ -4,10 +4,9 @@ import { URLService } from '../../services/url.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 @Component({
-  selector: 'app-url-output',
-  standalone: true,
-  imports: [CommonModule, FormsModule],
-  template: `
+    selector: 'app-url-output',
+    imports: [CommonModule, FormsModule],
+    template: `
     <div
       *ngIf="outUrl$ | async as outUrl"
       class=" max-w-2xl px-8 py-4  backdrop-blur-md bg-white/30 shadow dark:bg-gray-800/50 rounded-lg"
@@ -39,7 +38,7 @@ import { FormsModule } from '@angular/forms';
       </div>
     </div>
   `,
-  styles: ``,
+    styles: ``
 })
 export class UrlOutputComponent {
   isCopied: boolean = false;

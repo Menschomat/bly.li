@@ -1,19 +1,16 @@
 import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
 import { UrlInputComponent } from './components/url-input/url-input.component';
 import { NavBarComponent } from './components/nav-bar/nav-bar.component';
 import { UrlOutputComponent } from './components/url-output/url-output.component';
 
 @Component({
-  selector: 'app-root',
-  standalone: true,
-  imports: [
-    RouterOutlet,
-    UrlInputComponent,
-    NavBarComponent,
-    UrlOutputComponent,
-  ],
-  template: `
+    selector: 'app-root',
+    imports: [
+        UrlInputComponent,
+        NavBarComponent,
+        UrlOutputComponent,
+    ],
+    template: `
     <div class="flex flex-col h-full text-gray-800 dark:text-gray-200">
       <app-nav-bar></app-nav-bar>
       <div class="flex flex-1 flex-col items-center justify-center">
@@ -29,10 +26,10 @@ import { UrlOutputComponent } from './components/url-output/url-output.component
       </div>
 
       <div class="m-2 text-gray-700 dark:text-white flex justify-center">
-        <div>©Mensch0 - 2024</div>
+        <div>©Mensch0 - 2025</div>
       </div>
     </div>
-  `,
+  `
 })
 export class AppComponent {
   title = 'front';

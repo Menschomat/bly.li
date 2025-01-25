@@ -1,0 +1,17 @@
+{
+  "name": "Backend-Container - GoLang",
+  "image": "mcr.microsoft.com/devcontainers/go:1",
+  "features": {
+    "ghcr.io/devcontainers/features/go:1": {
+      "version": "1.23"
+    }
+  },
+  "postCreateCommand": "sh .devcontainer/backed/devcontainer-setup.sh",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "golang.go"
+      ]
+    }
+  }
+}

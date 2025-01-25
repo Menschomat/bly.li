@@ -1,7 +1,0 @@
-{
-  "/shortn/**": {
-    "target": "http://blyli.localhost",
-    "secure": false,
-    "changeOrigin": true
-  }
-}

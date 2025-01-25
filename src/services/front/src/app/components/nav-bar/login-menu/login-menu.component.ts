@@ -4,10 +4,9 @@ import { filter, map, Observable } from 'rxjs';
 import { CommonModule } from '@angular/common';
 
 @Component({
-  selector: 'app-login-menu',
-  standalone: true,
-  imports: [CommonModule],
-  template: `
+    selector: 'app-login-menu',
+    imports: [CommonModule],
+    template: `
     <div
       *ngIf="!(curUsrName | async)"
       class="transition-colors duration-300 transform text-gray-800 dark:text-gray-200"
@@ -31,7 +30,7 @@ import { CommonModule } from '@angular/common';
         Logout<i class="ml-2 fa-solid fa-arrow-right-from-bracket"></i
       ></a>
     </div>
-  `,
+  `
 })
 export class LoginMenuComponent {
   public curUsrName: Observable<string | undefined>;
