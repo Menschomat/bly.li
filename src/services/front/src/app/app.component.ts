@@ -1,5 +1,4 @@
 import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
 import { UrlInputComponent } from './components/url-input/url-input.component';
 import { NavBarComponent } from './components/nav-bar/nav-bar.component';
 import { UrlOutputComponent } from './components/url-output/url-output.component';
@@ -7,7 +6,6 @@ import { UrlOutputComponent } from './components/url-output/url-output.component
 @Component({
     selector: 'app-root',
     imports: [
-        RouterOutlet,
         UrlInputComponent,
         NavBarComponent,
         UrlOutputComponent,
@@ -28,7 +26,7 @@ import { UrlOutputComponent } from './components/url-output/url-output.component
       </div>
 
       <div class="m-2 text-gray-700 dark:text-white flex justify-center">
-        <div>©Mensch0 - 2024</div>
+        <div>©Mensch0 - 2025</div>
       </div>
     </div>
   `
