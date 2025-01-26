@@ -1,17 +1,19 @@
 {
   "name": "Backend-Container - GoLang",
-  "image": "mcr.microsoft.com/devcontainers/go:1",
+  "dockerComposeFile": ["docker-compose.yml"],
+  "service": "devcontainer",
+  "workspaceFolder": "/workspace",
   "features": {
     "ghcr.io/devcontainers/features/go:1": {
       "version": "1.23"
     }
   },
-  "postCreateCommand": "sh .devcontainer/backed/devcontainer-setup.sh",
   "customizations": {
     "vscode": {
-      "extensions": [
-        "golang.go"
-      ]
+      "extensions": ["golang.go"]
     }
-  }
+  },
+  "postCreateCommand": "sh .devcontainer/backed/devcontainer-setup.sh",
+  "runServices": ["mongodb", "redis"], 
+  "shutdownAction": "stopCompose"
 }
