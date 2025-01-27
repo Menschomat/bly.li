@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/Menschomat/bly.li/services/shortn/api"
 	u "github.com/Menschomat/bly.li/services/shortn/utils"
@@ -24,6 +25,8 @@ import (
 var (
 	appConfig    m.ShortnConfig
 	oidcProvider *oidc.Provider
+	start        int = 1
+	end          int = 1
 )
 
 var _ api.ServerInterface = (*Server)(nil)
@@ -67,7 +70,11 @@ func (p *Server) PostStore(w http.ResponseWriter, r *http.Request) {
 		apiUtils.BadRequestError(w)
 		return
 	}
-	short := u.GetUniqueShort()
+	short, err := u.GetSquidShort(uint64(start))
+	if err != nil {
+		log.Fatalln("There's an error with the server", err)
+	}
+	start++
 	redis.StoreUrl(short, url)
 	payload, err := json.Marshal(m.ShortnRes{Url: url, Short: short})
 	if err != nil {
@@ -82,6 +89,10 @@ func (p *Server) PostStore(w http.ResponseWriter, r *http.Request) {
 		_, err = mongo.StoreShortURL(m.ShortURL{URL: url, Short: short})
 	}
 	_, err = w.Write(payload)
+	if start > end {
+		log.Println("Exiting... range exeeded")
+		os.Exit(0)
+	}
 }
 func GetUsrInfoFromCtx(ctx context.Context) (*struct {
 	Nickname string `json:"nickname"`
@@ -141,6 +152,13 @@ func main() {
 	}))
 	server := &Server{}
 	api.HandlerFromMux(server, r)
+	conn := u.CreateZkConnection()
+	defer conn.Close()
+	start, end, err = u.AllocateRange(conn)
+	if err != nil {
+		log.Fatalln("There's an error with the range", err)
+	}
+	log.Println(start, end)
 	err = http.ListenAndServe(":8082", r)
 	if err != nil {
 		log.Fatalln("There's an error with the server", err)

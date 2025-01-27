@@ -14,3 +14,14 @@ services:
       - TZ=${TZ}
     ports:
       - "6379:6379"
+
+  zookeeper:
+    image: bitnami/zookeeper:latest
+    container_name: zookeeper
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes  # Enables anonymous access (optional, for testing/dev)
+    ports:
+      - "2181:2181"  # Client connections
+    #volumes:
+    #  - zookeeper_data:/bitnami/zookeeper  # Persistent storage
+    restart: unless-stopped

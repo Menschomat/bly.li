@@ -26,7 +26,8 @@
     "mongodb",
     "redis",
     "front",
-    "nginx"
+    "nginx",
+    "zookeeper"
   ],
   "shutdownAction": "stopCompose",
   "mounts": [
