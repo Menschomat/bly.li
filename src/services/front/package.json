@@ -4,10 +4,8 @@
   "scripts": {
     "ng": "ng",
     "start": "$npm_execpath run ng serve",
-    "start:container": "$npm_execpath run start --host 0.0.0.0 --poll 2000 --disable-host-check",
-    "start:container:blyli": "$npm_execpath run start:container --proxy-config proxy/blyli.proxy.conf.json",
-    "start:container:local": "$npm_execpath run start:container --proxy-config proxy/local.proxy.conf.json",
-    "start:container:container": "$npm_execpath run start:container --proxy-config proxy/devcontainer.proxy.conf.json",
+    "start:container": "$npm_execpath run start --host 0.0.0.0 --poll 2000 --disable-host-check --proxy-config proxy/devcontainer.proxy.conf.json",
+    "start:container:blyli": "$npm_execpath run start --host 0.0.0.0 --poll 2000 --disable-host-check --proxy-config proxy/blyli.proxy.conf.json",
     "build": "$npm_execpath run ng build",
     "watch": "$npm_execpath run ng build --watch --configuration development",
     "test": "$npm_execpath run ng test",
