@@ -4,3 +4,4 @@
 *.crt
 *.gen.go
 .dev.env
+.devcontainer/.env
