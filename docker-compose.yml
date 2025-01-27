@@ -41,7 +41,19 @@ services:
     networks:
       - blyli
     restart: unless-stopped
-
+  blowup:
+    build:
+      context: src/.
+      dockerfile: Dockerfile
+      args:
+        - SERVICE=blowup
+    image: mensch0mat/bly.li.blowup:main
+    environment:
+      - TZ=${TZ}
+    networks:
+      - blyli
+    restart: unless-stopped
+    
   front:
     build:
       context: src/services/front/.
@@ -55,18 +67,7 @@ services:
       - blyli
     restart: unless-stopped
 
-  blowup:
-    build:
-      context: src/.
-      dockerfile: Dockerfile
-      args:
-        - SERVICE=blowup
-    image: mensch0mat/bly.li.blowup:main
-    environment:
-      - TZ=${TZ}
-    networks:
-      - blyli
-    restart: unless-stopped
+
   #swagger:
   #  build:
   #    context: src/.

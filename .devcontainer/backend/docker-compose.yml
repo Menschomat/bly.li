@@ -1,0 +1,31 @@
+services:
+  backend-container:
+    image: mcr.microsoft.com/devcontainers/go:1
+    volumes:
+      - ../:/workspace:cached
+    command: sleep infinity
+    environment:
+      - GO111MODULE=on
+      - OIDC_URL=${OIDC_URL}
+      - OIDC_CLIENT_ID=${OIDC_CLIENT_ID}
+    working_dir: /workspace
+    depends_on:
+      - mongodb
+      - redis
+      - nginx
+  front:
+    build:
+      context: ../src/services/front/.
+      dockerfile: Dockerfile
+    image: mensch0mat/bly.li.front:main
+    volumes:
+      - ${CONFIG_PATH}:/usr/share/nginx/html/assets/config.json
+    environment:
+      - TZ=${TZ}
+    restart: unless-stopped
+  nginx:
+    image: nginx:latest
+    ports:
+      - "4200:8080"
+    volumes:
+      - ./backend/nginx.conf:/etc/nginx/nginx.conf
