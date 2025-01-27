@@ -1,9 +1,10 @@
 {
   "name": "Backend-Container - GoLang",
   "dockerComposeFile": [
+    "../docker-compose.yml",
     "docker-compose.yml"
   ],
-  "service": "devcontainer",
+  "service": "backend-container",
   "workspaceFolder": "/workspace",
   "features": {
     "ghcr.io/devcontainers/features/go:1": {

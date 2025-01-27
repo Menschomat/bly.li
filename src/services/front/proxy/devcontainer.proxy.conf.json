@@ -1,0 +1,12 @@
+{
+  "/shortn/**": {
+    "target": "http://nginx:8080",
+    "secure": false,
+    "changeOrigin": true
+  },
+  "/blowup/*": {
+    "target": "http://nginx:8080",
+    "secure": false,
+    "changeOrigin": true
+  }
+}

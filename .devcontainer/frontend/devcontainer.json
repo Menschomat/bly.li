@@ -1,6 +1,9 @@
 {
   "name": "Frontend-Container - Bun",
-  "image": "mcr.microsoft.com/devcontainers/typescript-node:1-20",
+  //"image": "mcr.microsoft.com/devcontainers/typescript-node:1-20",
+  "dockerComposeFile": ["../docker-compose.yml", "docker-compose.yml"],
+  "service": "frontend-container",
+  "workspaceFolder": "/workspace/src/services/front",
   "customizations": {
     "vscode": {
       "extensions": [
@@ -13,5 +16,8 @@
     }
   },
   //"forwardPorts": [4200],
-  "postCreateCommand": "npm install -g bun && cd src/services/front && bun install"
+  "postCreateCommand": "npm install -g bun && bun install",
+  "mounts": [
+    "type=bind,source=${localEnv:HOME}${localEnv:USERPROFILE}/.ssh,target=/home/vscode/.ssh,readonly"
+  ]
 }
