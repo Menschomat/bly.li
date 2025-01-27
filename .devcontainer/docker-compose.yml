@@ -1,23 +1,16 @@
 version: '3.8'
 services:
   mongodb:
-    image: mongo:5.0
-    container_name: dev_mongodb
+    image: mongo:7
     ports:
       - "27017:27017"
     environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: example
+      - TZ=${TZ}
+    restart: unless-stopped
 
   redis:
     image: redis:latest
-    container_name: dev_redis
+    environment:
+      - TZ=${TZ}
     ports:
       - "6379:6379"
-
-  nginx:
-    image: nginx:latest
-    ports:
-      - "8080:8080"
-    volumes:
-      - ./frontend/nginx.conf:/etc/nginx/nginx.conf

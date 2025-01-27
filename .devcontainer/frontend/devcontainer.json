@@ -17,6 +17,13 @@
   },
   //"forwardPorts": [4200],
   "postCreateCommand": "npm install -g bun && bun install",
+  "runServices": [
+    "mongodb",
+    "redis",
+    "shortn",
+    "blowup",
+    "nginx"
+  ],
   "mounts": [
     "type=bind,source=${localEnv:HOME}${localEnv:USERPROFILE}/.ssh,target=/home/vscode/.ssh,readonly"
   ]
