@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -12,10 +11,10 @@ import (
 	u "github.com/Menschomat/bly.li/services/shortn/utils"
 	m "github.com/Menschomat/bly.li/shared/model"
 	"github.com/Menschomat/bly.li/shared/mongo"
+	"github.com/Menschomat/bly.li/shared/oidc"
 	"github.com/Menschomat/bly.li/shared/redis"
 	apiUtils "github.com/Menschomat/bly.li/shared/utils/api"
 	cfgUtils "github.com/Menschomat/bly.li/shared/utils/config"
-	"github.com/coreos/go-oidc/v3/oidc"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -23,10 +22,9 @@ import (
 )
 
 var (
-	appConfig    m.ShortnConfig
-	oidcProvider *oidc.Provider
-	start        int = 1
-	end          int = 1
+	appConfig m.ShortnConfig
+	start     int = 1
+	end       int = 1
 )
 
 var _ api.ServerInterface = (*Server)(nil)
@@ -81,7 +79,7 @@ func (p *Server) PostStore(w http.ResponseWriter, r *http.Request) {
 		apiUtils.InternalServerError(w)
 		return
 	}
-	usrInfo, err := GetUsrInfoFromCtx(r.Context())
+	usrInfo, err := oidc.GetUsrInfoFromCtx(r.Context())
 	if usrInfo != nil {
 		_, err = mongo.StoreShortURL(m.ShortURL{URL: url, Short: short, Owner: usrInfo.Email})
 	}
@@ -94,52 +92,16 @@ func (p *Server) PostStore(w http.ResponseWriter, r *http.Request) {
 		os.Exit(0)
 	}
 }
-func GetUsrInfoFromCtx(ctx context.Context) (*struct {
-	Nickname string `json:"nickname"`
-	Email    string `json:"email"`
-}, error) {
-	var claims struct {
-		Nickname string `json:"nickname"`
-		Email    string `json:"email"`
-	}
-	if err := ctx.Value("token").(*oidc.IDToken).Claims(&claims); err != nil {
-		return nil, err
-	}
-	return &claims, nil
-}
-
-func JWTVerifier(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		baseCtx := context.Background()
-		var verifier = oidcProvider.Verifier(&oidc.Config{ClientID: appConfig.OidcConfig.OidcClientId})
-		token, err := verifier.Verify(baseCtx, apiUtils.TokenFromHeader(r))
-		if err != nil {
-			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
-			return
-		}
-		ctx := context.WithValue(r.Context(), "token", token)
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
-}
-
-func InitOidcProvider(ctx context.Context, url string) *oidc.Provider {
-	provider, oidcErr := oidc.NewProvider(ctx, url)
-	if oidcErr != nil {
-		panic(oidcErr)
-	}
-	return provider
-}
 
 func main() {
 	err := cfgUtils.FillEnvStruct(&appConfig)
 	// Set up OIDC provider and OAuth2 config
-	oidcProvider = InitOidcProvider(context.Background(), appConfig.OidcConfig.OidcUrl)
 	log.Println("*_-_-_-BlyLi-Shortn-_-_-_*")
 	// Create new Chi-Router
 	r := chi.NewRouter()
 	// Add Middlewares to Router
 	r.Use(middleware.Logger)
-	r.Use(JWTVerifier)
+	r.Use(oidc.JWTVerifier)
 	r.Use(cors.Handler(cors.Options{
 		// AllowedOrigins:   []string{"https://foo.com"}, // Use this to allow specific origin hosts
 		AllowedOrigins: []string{"https://*", "http://*"},
