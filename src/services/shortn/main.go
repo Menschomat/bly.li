@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"log/slog"
 	"net/http"
 	"os"
 
@@ -54,9 +55,7 @@ func (p *Server) GetAll(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		return
 	}
-	//TODO remove this logging
-	log.Println(user)
-	log.Println(r.Header)
+	slog.Debug(user)
 }
 
 func (p *Server) PostStore(w http.ResponseWriter, r *http.Request) {
@@ -88,15 +87,18 @@ func (p *Server) PostStore(w http.ResponseWriter, r *http.Request) {
 	}
 	_, err = w.Write(payload)
 	if start > end {
-		log.Println("Exiting... range exeeded")
+		slog.Info("Exiting... range exeeded")
 		os.Exit(0)
 	}
 }
 
 func main() {
 	err := cfgUtils.FillEnvStruct(&appConfig)
+	if err != nil {
+		slog.Error("There's an error with the Config", "error", err)
+	}
 	// Set up OIDC provider and OAuth2 config
-	log.Println("*_-_-_-BlyLi-Shortn-_-_-_*")
+	slog.Info("*_-_-_-BlyLi-Shortn-_-_-_*")
 	// Create new Chi-Router
 	r := chi.NewRouter()
 	// Add Middlewares to Router
@@ -118,12 +120,12 @@ func main() {
 	defer conn.Close()
 	start, end, err = u.AllocateRange(conn)
 	if err != nil {
-		log.Fatalln("There's an error with the range", err)
+		slog.Error("There's an error with the range", "error", err)
 	}
-	log.Println(start, end)
+	slog.Info("Range", "start", start, "end", end)
 	err = http.ListenAndServe(":8082", r)
 	if err != nil {
-		log.Fatalln("There's an error with the server", err)
+		slog.Error("There's an error with the server", "error", err)
 	}
 	defer mongo.CloseClientDB()
 }
