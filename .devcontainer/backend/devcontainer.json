@@ -1,9 +1,6 @@
 {
   "name": "Backend-Container - GoLang",
-  "dockerComposeFile": [
-    "../docker-compose.yml",
-    "docker-compose.yml"
-  ],
+  "dockerComposeFile": ["../docker-compose.yml", "docker-compose.yml"],
   "service": "backend-container",
   "workspaceFolder": "/workspace",
   "features": {
@@ -21,14 +18,10 @@
       ]
     }
   },
+  
+  "overrideCommand": false,
   "postCreateCommand": "sh .devcontainer/backend/devcontainer-setup.sh",
-  "runServices": [
-    "mongodb",
-    "redis",
-    "front",
-    "nginx",
-    "zookeeper"
-  ],
+  "runServices": ["mongodb", "redis", "front", "nginx", "zookeeper"],
   "shutdownAction": "stopCompose",
   "mounts": [
     "type=bind,source=${localEnv:HOME}${localEnv:USERPROFILE}/.ssh,target=/home/vscode/.ssh,readonly"

@@ -12,7 +12,6 @@ services:
     depends_on:
       - mongodb
       - redis
-      - nginx
   front:
     build:
       context: ../src/services/front/.
@@ -27,5 +26,7 @@ services:
     image: nginx:latest
     ports:
       - "4200:8080"
+    depends_on:
+      - backend-container      
     volumes:
       - ./backend/nginx.conf:/etc/nginx/nginx.conf

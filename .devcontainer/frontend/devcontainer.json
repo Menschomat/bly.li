@@ -16,6 +16,7 @@
     }
   },
   //"forwardPorts": [4200],
+  "shutdownAction": "stopCompose",  
   "postCreateCommand": "npm install -g bun && bun install",
   "runServices": [
     "mongodb",
