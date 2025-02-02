@@ -7,7 +7,6 @@ import (
 	"net/http"
 
 	"github.com/Menschomat/bly.li/services/dasher/api"
-	u "github.com/Menschomat/bly.li/services/dasher/utils"
 
 	"github.com/Menschomat/bly.li/shared/mongo"
 	"github.com/Menschomat/bly.li/shared/oidc"
@@ -16,11 +15,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
-)
-
-var (
-	start int = 1
-	end   int = 1
 )
 
 var _ api.ServerInterface = (*Server)(nil)
@@ -74,16 +68,7 @@ func main() {
 	}))
 	server := &Server{}
 	api.HandlerFromMux(server, r)
-	conn := u.CreateZkConnection()
-	defer conn.Close()
-	_start, _end, err := u.AllocateRange(conn)
-	if err != nil {
-		slog.Error("There's an error with the range", "error", err)
-	}
-	start = _start
-	end = _end
-	slog.Info("Range", "start", start, "end", end)
-	err = http.ListenAndServe(":8083", r)
+	err := http.ListenAndServe(":8083", r)
 	if err != nil {
 		slog.Error("There's an error with the server", "error", err)
 	}
