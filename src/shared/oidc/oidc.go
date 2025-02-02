@@ -6,27 +6,21 @@ import (
 	"sync"
 	"time"
 
-	m "github.com/Menschomat/bly.li/shared/model"
+	"github.com/Menschomat/bly.li/shared/config"
 	apiUtils "github.com/Menschomat/bly.li/shared/utils/api"
-	cfgUtils "github.com/Menschomat/bly.li/shared/utils/config"
 	"github.com/coreos/go-oidc/v3/oidc"
 )
 
 var (
-	appConfig    m.ShortnConfig
 	oidcProvider *oidc.Provider
 	providerOnce sync.Once
 )
 
 func GetOidcProvider() (*oidc.Provider, error) {
-	err := cfgUtils.FillEnvStruct(&appConfig)
-	if err != nil {
-		panic(err)
-	}
 	providerOnce.Do(func() {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
-		oidcProvider = initOidcProvider(ctx, appConfig.OidcConfig.OidcUrl)
+		oidcProvider = initOidcProvider(ctx, config.OidcConfig().OidcUrl)
 	})
 	return oidcProvider, nil
 }
@@ -38,7 +32,7 @@ func JWTVerifier(next http.Handler) http.Handler {
 		if err != nil {
 			panic(err)
 		}
-		var verifier = oidcProvider.Verifier(&oidc.Config{ClientID: appConfig.OidcConfig.OidcClientId})
+		var verifier = oidcProvider.Verifier(&oidc.Config{ClientID: config.OidcConfig().OidcClientId})
 		token, err := verifier.Verify(baseCtx, apiUtils.TokenFromHeader(r))
 		if err != nil {
 			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)

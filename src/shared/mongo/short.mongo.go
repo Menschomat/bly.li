@@ -4,12 +4,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
+
+	"github.com/Menschomat/bly.li/shared/config"
 	m "github.com/Menschomat/bly.li/shared/model"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"log"
 )
+
+var database = config.MongoConfig().Database
 
 // ShortExists Check if a short URL exists in MongoDB
 func ShortExists(short string) bool {
@@ -18,7 +22,7 @@ func ShortExists(short string) bool {
 		log.Fatal(_err)
 		return false
 	}
-	collection := _client.Database(DATABASE).Collection("urls")
+	collection := _client.Database(database).Collection("urls")
 
 	filter := bson.M{"short": short}
 	count, err := collection.CountDocuments(context.Background(), filter)
@@ -35,7 +39,7 @@ func StoreShortURL(shortURL m.ShortURL) (interface{}, error) {
 		log.Fatal(_err)
 		return nil, _err
 	}
-	collection := _client.Database(DATABASE).Collection("urls")
+	collection := _client.Database(database).Collection("urls")
 
 	// Create an index on the short field to ensure uniqueness
 	indexModel := mongo.IndexModel{
@@ -61,7 +65,7 @@ func GetShortURLByShort(short string) (*m.ShortURL, error) {
 		log.Fatal(_err)
 		return nil, _err
 	}
-	collection := _client.Database(DATABASE).Collection("urls")
+	collection := _client.Database(database).Collection("urls")
 	var result m.ShortURL
 	filter := bson.M{"short": short}
 
@@ -83,7 +87,7 @@ func DeleteShortURLByShort(short string) error {
 		log.Fatal(_err)
 		return _err
 	}
-	collection := _client.Database(DATABASE).Collection("urls")
+	collection := _client.Database(database).Collection("urls")
 	filter := bson.M{"short": short}
 	_, err := collection.DeleteOne(context.Background(), filter)
 	if err != nil {

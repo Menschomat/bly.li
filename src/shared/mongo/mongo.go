@@ -6,35 +6,32 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Menschomat/bly.li/shared/config"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
-
-var client *mongo.Client
 
 var (
 	clientInstance *mongo.Client
 	clientOnce     sync.Once
 )
 
-const DATABASE string = "short_url_db"
-
 func GetMongoClient() (*mongo.Client, error) {
 	clientOnce.Do(func() {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 		var err error
-		client, err = mongo.Connect(ctx, options.Client().ApplyURI("mongodb://mongodb:27017"))
+		clientInstance, err = mongo.Connect(ctx, options.Client().ApplyURI(config.MongoConfig().MongoServerUrl))
 		if err != nil {
 			log.Fatal(err)
 		}
 		// check the connection
-		err = client.Ping(ctx, nil)
+		err = clientInstance.Ping(ctx, nil)
 		if err != nil {
 			log.Fatal(err)
 		}
 	})
-	return client, nil
+	return clientInstance, nil
 }
 
 func CloseClientDB() {

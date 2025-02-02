@@ -15,7 +15,6 @@ import (
 	"github.com/Menschomat/bly.li/shared/oidc"
 	"github.com/Menschomat/bly.li/shared/redis"
 	apiUtils "github.com/Menschomat/bly.li/shared/utils/api"
-	cfgUtils "github.com/Menschomat/bly.li/shared/utils/config"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -23,9 +22,8 @@ import (
 )
 
 var (
-	appConfig m.ShortnConfig
-	start     int = 1
-	end       int = 1
+	start int = 1
+	end   int = 1
 )
 
 var _ api.ServerInterface = (*Server)(nil)
@@ -93,10 +91,7 @@ func (p *Server) PostStore(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	err := cfgUtils.FillEnvStruct(&appConfig)
-	if err != nil {
-		slog.Error("There's an error with the Config", "error", err)
-	}
+
 	// Set up OIDC provider and OAuth2 config
 	slog.Info("*_-_-_-BlyLi-Shortn-_-_-_*")
 	// Create new Chi-Router
@@ -118,10 +113,12 @@ func main() {
 	api.HandlerFromMux(server, r)
 	conn := u.CreateZkConnection()
 	defer conn.Close()
-	start, end, err = u.AllocateRange(conn)
+	_start, _end, err := u.AllocateRange(conn)
 	if err != nil {
 		slog.Error("There's an error with the range", "error", err)
 	}
+	start = _start
+	end = _end
 	slog.Info("Range", "start", start, "end", end)
 	err = http.ListenAndServe(":8082", r)
 	if err != nil {

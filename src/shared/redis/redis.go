@@ -3,6 +3,7 @@ package redis
 import (
 	"context"
 	"log"
+	"log/slog"
 	"strconv"
 	"time"
 
@@ -43,7 +44,7 @@ func GetUrl(short string) (u string, e error) {
 	key := "url:" + short
 	url, err := _cache.HGet(ctx, key, "url").Result()
 	if err != nil || _cache.Expire(ctx, key, targetTtl).Err() != nil {
-		log.Println("Warning: Could not fetch url from redis!")
+		slog.Warn("Could not fetch url from redis!")
 		return "", err
 	}
 	return url, nil
@@ -54,7 +55,7 @@ func DeleteUrl(short string) (e error) {
 	key := "url:" + short
 	_, err := _cache.HDel(ctx, key, "url").Result()
 	if err != nil || _cache.Expire(ctx, key, targetTtl).Err() != nil {
-		log.Println("Warning: Could not delete url from redis!")
+		slog.Warn("Could not delete url from redis!")
 		return err
 	}
 	return nil
