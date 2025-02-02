@@ -3,6 +3,7 @@ package model
 type ShortURL struct {
 	Short string `bson:"short"`
 	URL   string `bson:"url"`
+	Count int    `bson:"count"`
 	Owner string `bson:"owner,omitempty"`
 }
 
