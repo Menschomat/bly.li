@@ -1,7 +1,7 @@
 networks:
   blyli:
-  #traefik_proxy:
-  #  external: true
+    #traefik_proxy:
+    #  external: true
 
 services:
   mongodb:
@@ -41,6 +41,20 @@ services:
     networks:
       - blyli
     restart: unless-stopped
+  dasher:
+    build:
+      context: src/.
+      dockerfile: Dockerfile
+      args:
+        - SERVICE=dasher
+    image: mensch0mat/bly.li.dasher:main
+    environment:
+      - OIDC_URL=${OIDC_URL}
+      - OIDC_CLIENT_ID=${OIDC_CLIENT_ID}
+      - TZ=${TZ}
+    networks:
+      - blyli
+    restart: unless-stopped
   blowup:
     build:
       context: src/.
@@ -53,7 +67,7 @@ services:
     networks:
       - blyli
     restart: unless-stopped
-    
+
   front:
     build:
       context: src/services/front/.
@@ -66,7 +80,6 @@ services:
     networks:
       - blyli
     restart: unless-stopped
-
 
   #swagger:
   #  build:

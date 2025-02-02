@@ -22,3 +22,4 @@ generate_api_code() {
 # Generate API code for each service
 generate_api_code "src/services/blowup/api"
 generate_api_code "src/services/shortn/api"
+generate_api_code "src/services/dasher/api"

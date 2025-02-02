@@ -5,5 +5,6 @@ toolchain go1.23.0
 use (
 	./src/services/blowup
 	./src/services/shortn
+	./src/services/dasher
 	./src/shared
 )

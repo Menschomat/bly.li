@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"log/slog"
 	"net/http"
@@ -29,32 +28,6 @@ var (
 var _ api.ServerInterface = (*Server)(nil)
 
 type Server struct{}
-
-func (p *Server) DeleteShort(w http.ResponseWriter, r *http.Request, short string) {
-	if redis.ShortExists(short) {
-		err := redis.DeleteUrl(short)
-		if err != nil {
-			return
-		}
-	}
-	if mongo.ShortExists(short) {
-		err := mongo.DeleteShortURLByShort(short)
-		if err != nil {
-			return
-		}
-	}
-}
-
-func (p *Server) GetAll(w http.ResponseWriter, r *http.Request) {
-	user := r.Header.Get("X-Auth-User")
-	w.Header().Set("Content-Type", "text/plain")
-	w.WriteHeader(http.StatusOK)
-	_, err := fmt.Fprintf(w, "Hello")
-	if err != nil {
-		return
-	}
-	slog.Debug(user)
-}
 
 func (p *Server) PostStore(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
