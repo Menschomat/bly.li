@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/Menschomat/bly.li/shared/model"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -26,11 +27,11 @@ func getRedisClient() *redis.Client {
 	return cacheClient
 }
 
-func StoreUrl(short string, url string) {
+func StoreUrl(short string, url string, count int) {
 	_cache := getRedisClient()
 	key := "url:" + short
 	errs := [...]error{
-		_cache.HSet(ctx, key, "url", url, "count", 0).Err(),
+		_cache.HSet(ctx, key, "url", url, "count", count).Err(),
 		_cache.Expire(ctx, key, targetTtl).Err(),
 	}
 	for _, err := range errs {
@@ -39,6 +40,36 @@ func StoreUrl(short string, url string) {
 		}
 	}
 }
+
+func GetShort(short string) (u model.ShortURL, e error) {
+	_cache := getRedisClient()
+	key := "url:" + short
+
+	// Fetch all fields of the ShortURL struct
+	data, err := _cache.HGetAll(ctx, key).Result()
+	if err != nil || len(data) == 0 {
+		slog.Warn("Could not fetch url from redis!")
+		return u, err // return empty struct and error
+	}
+
+	// Set the expiration time (refresh TTL)
+	if err := _cache.Expire(ctx, key, targetTtl).Err(); err != nil {
+		slog.Warn("Could not refresh TTL in redis!", "error", err)
+	}
+
+	// Convert count from string to int
+	count, _ := strconv.Atoi(data["count"]) // Ignore error, assume default 0
+
+	// Map Redis data to the model.ShortURL struct
+	u = model.ShortURL{
+		Short: short,       // assuming "short" is a field
+		URL:   data["url"], // assuming "url" is a field
+		Count: count,       // assuming "count" is a field
+	}
+
+	return u, nil
+}
+
 func GetUrl(short string) (u string, e error) {
 	_cache := getRedisClient()
 	key := "url:" + short
@@ -58,6 +89,8 @@ func DeleteUrl(short string) (e error) {
 		slog.Warn("Could not delete url from redis!")
 		return err
 	}
+	MarkToDel(short)
+	RemoveUnsaved(short)
 	return nil
 }
 
@@ -77,4 +110,5 @@ func RegisterClick(short string) {
 	if err2 != nil {
 		log.Println(err2)
 	}
+	MarkUnsaved(short)
 }

@@ -43,7 +43,7 @@ func (p *Server) PostStore(w http.ResponseWriter, r *http.Request) {
 		log.Fatalln("There's an error with the server", err)
 	}
 	start++
-	redis.StoreUrl(short, url)
+	redis.StoreUrl(short, url, 0)
 	payload, err := json.Marshal(m.ShortnRes{Url: url, Short: short})
 	if err != nil {
 		apiUtils.InternalServerError(w)
@@ -54,7 +54,7 @@ func (p *Server) PostStore(w http.ResponseWriter, r *http.Request) {
 		_, err = mongo.StoreShortURL(m.ShortURL{URL: url, Short: short, Owner: usrInfo.Email})
 	}
 	if err != nil {
-		_, err = mongo.StoreShortURL(m.ShortURL{URL: url, Short: short})
+		_, err = mongo.StoreShortURL(m.ShortURL{URL: url, Short: short, Count: 0})
 	}
 	_, err = w.Write(payload)
 	if start > end {

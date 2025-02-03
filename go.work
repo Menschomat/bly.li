@@ -6,5 +6,6 @@ use (
 	./src/services/blowup
 	./src/services/shortn
 	./src/services/dasher
+	./src/services/perso
 	./src/shared
 )

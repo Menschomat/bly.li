@@ -3,6 +3,9 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/Menschomat/bly.li/shared/model"
 	"github.com/Menschomat/bly.li/shared/mongo"
@@ -28,7 +31,7 @@ func (p *Server) GetShort(w http.ResponseWriter, r *http.Request, short string) 
 			var shortInfo *model.ShortURL
 			shortInfo, err = mongo.GetShortURLByShort(short)
 			if err == nil {
-				redis.StoreUrl(shortInfo.Short, shortInfo.URL)
+				redis.StoreUrl(shortInfo.Short, shortInfo.URL, shortInfo.Count)
 				url = shortInfo.URL
 			}
 		}
@@ -43,23 +46,40 @@ func (p *Server) GetShort(w http.ResponseWriter, r *http.Request, short string) 
 
 func main() {
 	log.Println("*_-_-_-BlyLi-Blowup-_-_-_*")
+
+	// Initialize router
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 	r.Use(cors.Handler(cors.Options{
-		// AllowedOrigins:   []string{"https://foo.com"}, // Use this to allow specific origin hosts
-		AllowedOrigins: []string{"https://*", "http://*"},
-		// AllowOriginFunc:  func(r *http.Request, origin string) bool { return true },
+		AllowedOrigins:   []string{"https://*", "http://*"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
 		ExposedHeaders:   []string{"Link"},
 		AllowCredentials: false,
-		MaxAge:           300, // Maximum value not ignored by any of major browsers
+		MaxAge:           300,
 	}))
+
+	// Graceful shutdown handling
 	server := &Server{}
 	api.HandlerFromMux(server, r)
-	err := http.ListenAndServe(":8081", r)
-	if err != nil {
-		log.Fatalln("There's an error with the server", err)
+
+	// HTTP server in a goroutine
+	serverErrChan := make(chan error, 1)
+	go func() {
+		serverErrChan <- http.ListenAndServe(":8081", r)
+	}()
+
+	// Handle shutdown signals
+	stopChan := make(chan os.Signal, 1)
+	signal.Notify(stopChan, os.Interrupt, syscall.SIGTERM)
+
+	select {
+	case err := <-serverErrChan:
+		log.Fatalln("Server error:", err)
+	case <-stopChan:
+		log.Println("Shutdown signal received. Stopping server...")
 	}
+
+	log.Println("Server shut down successfully.")
 }

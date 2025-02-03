@@ -59,6 +59,35 @@ func StoreShortURL(shortURL m.ShortURL) (interface{}, error) {
 	return insertResult.InsertedID, nil
 }
 
+func UpdateShortUrl(shortURL m.ShortURL) (interface{}, error) {
+	_client, _err := GetMongoClient()
+	if _err != nil {
+		log.Fatal(_err)
+		return nil, _err
+	}
+	collection := _client.Database(database).Collection("urls")
+
+	filter := bson.D{{Key: "short", Value: shortURL.Short}}
+	update := bson.D{
+		{Key: "$set", Value: bson.M{
+			"url":   shortURL.URL,
+			"count": shortURL.Count,
+			// Add other fields you want to update
+		}},
+	}
+
+	opts := options.Update().SetUpsert(false) // Change to true if you want to insert if not found
+
+	updateResult, err := collection.UpdateOne(context.Background(), filter, update, opts)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update document: %v", err)
+	}
+
+	log.Printf("Matched %d document(s) and modified %d document(s)\n", updateResult.MatchedCount, updateResult.ModifiedCount)
+
+	return updateResult.UpsertedID, nil
+}
+
 func GetShortURLByShort(short string) (*m.ShortURL, error) {
 	_client, _err := GetMongoClient()
 	if _err != nil {
