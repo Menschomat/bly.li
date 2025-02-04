@@ -10,12 +10,14 @@ import {
 } from '@angular/common/http';
 import { BASE_PATH } from './core/api/v1';
 import { ConfigService } from './services/config.service';
+import { provideRouter } from '@angular/router';
+import { routes } from './app.routes';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideZoneChangeDetection({ eventCoalescing: true }),
 
-    //provideRouter(routes),
+    provideRouter(routes),
     provideHttpClient(withInterceptorsFromDi()),
     provideOAuthClient({
       resourceServer: {
