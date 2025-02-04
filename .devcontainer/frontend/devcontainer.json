@@ -16,13 +16,16 @@
     }
   },
   //"forwardPorts": [4200],
-  "shutdownAction": "stopCompose",  
+  "shutdownAction": "stopCompose",
   "postCreateCommand": "npm install -g bun && bun install",
   "runServices": [
+    "zookeeper",
     "mongodb",
     "redis",
     "shortn",
     "blowup",
+    "perso",
+    "dasher",
     "nginx"
   ],
   "mounts": [

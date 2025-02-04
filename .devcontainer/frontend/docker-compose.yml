@@ -34,6 +34,16 @@ services:
       - OIDC_CLIENT_ID=${OIDC_CLIENT_ID}
       - TZ=${TZ}
     restart: unless-stopped
+  perso:
+    build:
+      context: ../src/.
+      dockerfile: Dockerfile
+      args:
+        - SERVICE=perso
+    #image: mensch0mat/bly.li.shortn:main
+    environment:
+      - TZ=${TZ}
+    restart: unless-stopped
   blowup:
     build:
       context: ../src/.
@@ -50,5 +60,8 @@ services:
       - "8080:8080"
     depends_on:
       - frontend-container
+      - shortn
+      - dasher
+      - blowup
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf
