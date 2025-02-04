@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"log/slog"
 
 	"github.com/Menschomat/bly.li/shared/config"
 	m "github.com/Menschomat/bly.li/shared/model"
@@ -108,6 +109,34 @@ func GetShortURLByShort(short string) (*m.ShortURL, error) {
 	log.Println(result.URL)
 
 	return &result, nil
+}
+
+func GetShortsByOwner(owner string) *[]m.ShortURL {
+	_client, _err := GetMongoClient()
+	if _err != nil {
+		log.Fatal(_err)
+		return &[]m.ShortURL{}
+	}
+	collection := _client.Database(database).Collection("urls")
+	filter := bson.M{"owner": owner}
+
+	//err := collection.Find(context.Background(), filter).Decode(&result)
+	// Retrieves documents that match the query filter
+	cursor, err := collection.Find(context.Background(), filter)
+	if err != nil {
+		panic(err)
+	}
+	// Unpacks the cursor into a slice
+	var results []m.ShortURL
+	if err = cursor.All(context.TODO(), &results); err != nil {
+		panic(err)
+	}
+	if err != nil {
+		slog.Error("Error while fetching the owners shorts!")
+		return &[]m.ShortURL{}
+	}
+
+	return &results
 }
 
 func DeleteShortURLByShort(short string) error {

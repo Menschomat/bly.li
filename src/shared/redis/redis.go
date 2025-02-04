@@ -89,7 +89,6 @@ func DeleteUrl(short string) (e error) {
 		slog.Warn("Could not delete url from redis!")
 		return err
 	}
-	MarkToDel(short)
 	RemoveUnsaved(short)
 	return nil
 }

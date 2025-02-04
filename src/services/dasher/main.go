@@ -1,13 +1,14 @@
 package main
 
 import (
-	"fmt"
+	"encoding/json"
 
 	"log/slog"
 	"net/http"
 
 	"github.com/Menschomat/bly.li/services/dasher/api"
 
+	m "github.com/Menschomat/bly.li/shared/model"
 	"github.com/Menschomat/bly.li/shared/mongo"
 	"github.com/Menschomat/bly.li/shared/oidc"
 	"github.com/Menschomat/bly.li/shared/redis"
@@ -37,14 +38,27 @@ func (p *Server) DeleteShortShort(w http.ResponseWriter, r *http.Request, short 
 }
 
 func (p *Server) GetShortAll(w http.ResponseWriter, r *http.Request) {
-	user := r.Header.Get("X-Auth-User")
-	w.Header().Set("Content-Type", "text/plain")
-	w.WriteHeader(http.StatusOK)
-	_, err := fmt.Fprintf(w, "Hello")
+	w.Header().Set("Content-Type", "application/json")
+	shorts := &[]m.ShortURL{}
+	usrInfo, err := oidc.GetUsrInfoFromCtx(r.Context())
 	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	slog.Debug(user)
+	if usrInfo != nil {
+		shorts = mongo.GetShortsByOwner(usrInfo.Email)
+	}
+	payload, err := json.Marshal(shorts)
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+	_, err = w.Write(payload)
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
 }
 
 func main() {
