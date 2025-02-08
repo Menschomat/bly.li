@@ -15,13 +15,15 @@ FROM base-prepare AS build
 
 # Copy specific service files based on the argument
 COPY services/${SERVICE}/ ./
+COPY api/ /apidocs/
 COPY shared/ /shared/
+RUN oapi-codegen -generate types,skip-prune -package api -o ../shared/api/api.gen.go ../apidocs/shared.openapi.yml
 # Conditionally run the oapi-codegen command if SERVICE is not "perso"
 RUN if [ "$SERVICE" != "perso" ]; then \
-      oapi-codegen -generate types,chi-server -package api -o api/api.gen.go api/openapi.yml; \
-    else \
-      echo "Skipping code generation for service 'perso'"; \
-    fi
+  oapi-codegen -generate types,chi-server -import-mapping ./shared.openapi.yml:github.com/Menschomat/bly.li/shared/api -package api -o api/api.gen.go ../apidocs/${SERVICE}.openapi.yml; \
+  else \
+  echo "Skipping code generation for service 'perso'"; \
+  fi
 
 RUN CGO_ENABLED=0 go build -o /bin/blyli
 

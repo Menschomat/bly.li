@@ -4,17 +4,23 @@ import { DashboardComponent } from './views/dashboard/dashboard.component';
 
 export const routes: Routes = [
   {
-    // Standardroute: Umleitung auf '/home'
-    path: '',
-    redirectTo: 'front',
-     pathMatch: 'full'
-  },
-  {
     path: 'front',
     component: LandingPageComponent,
   },
   {
-    path: 'front/dash',
+    path: 'dash',
     component: DashboardComponent,
+  },
+  {
+    // Standardroute: Umleitung auf '/home'
+    path: '',
+    redirectTo: 'front',
+    pathMatch: 'full',
+  },
+  {
+    // Standardroute: Umleitung auf '/home'
+    path: '**',
+    redirectTo: 'front',
+    pathMatch: 'full',
   },
 ];

@@ -1,0 +1,32 @@
+openapi: 3.0.0
+info:
+  title: Shared API Components
+  version: 1.0.0
+  description: Shared components for all services.
+
+components:
+  schemas:
+    ShortnReq:
+      type: object
+      properties:
+        Url:
+          type: string
+          description: The original URL
+          example: "https://example.com"
+
+    ShortURL:
+      type: object
+      properties:
+        Short:
+          type: string
+          description: The short-path of the URL
+          example: "abc123"
+        URL:
+          type: string
+          description: The original URL
+          example: "https://example.com"
+        Owner:
+          type: string
+          nullable: true
+          description: The owner of the item
+          example: "cjames"

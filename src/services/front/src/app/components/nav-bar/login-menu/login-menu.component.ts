@@ -11,7 +11,7 @@ import { CommonModule } from '@angular/common';
       *ngIf="!(curUsrName | async)"
       class="transition-colors duration-300 transform text-gray-800 dark:text-gray-200"
     >
-      <a (click)="login()" href="#" class="text-lg cursor-pointer align-middle">
+      <a (click)="login()" class="text-lg cursor-pointer align-middle">
         Login<i class="fa-solid fa-arrow-right-to-bracket"></i
       ></a>
     </div>
@@ -24,7 +24,7 @@ import { CommonModule } from '@angular/common';
       ></a>
       <a
         (click)="logout()"
-        href="#"
+     
         class="text-lg cursor-pointer align-middle"
       >
         Logout<i class="ml-2 fa-solid fa-arrow-right-from-bracket"></i
