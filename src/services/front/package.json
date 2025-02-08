@@ -9,7 +9,7 @@
     "build": "$npm_execpath run ng build",
     "watch": "$npm_execpath run ng build --watch --configuration development",
     "test": "$npm_execpath run ng test",
-    "generate:api": "openapi-generator-cli generate -i ../shortn/api/openapi.yml -g typescript-angular -o src/app/core/api/v1 --additional-properties fileNaming=kebab-case,withInterfaces=true --generate-alias-as-model"
+    "generate:api": "openapi-generator-cli generate -i ../../api/shortn.openapi.yml -g typescript-angular -o src/app/api/shortn/ --additional-properties fileNaming=kebab-case,withInterfaces=true --generate-alias-as-model"
   },
   "private": true,
   "dependencies": {

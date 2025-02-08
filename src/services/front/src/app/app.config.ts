@@ -8,7 +8,7 @@ import {
   provideHttpClient,
   withInterceptorsFromDi,
 } from '@angular/common/http';
-import { BASE_PATH } from './core/api/v1';
+import { BASE_PATH } from './api/shortn/';
 import { ConfigService } from './services/config.service';
 import { provideRouter, withDisabledInitialNavigation, withEnabledBlockingInitialNavigation, withHashLocation } from '@angular/router';
 import { routes } from './app.routes';

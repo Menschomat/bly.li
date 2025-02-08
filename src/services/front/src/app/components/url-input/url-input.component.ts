@@ -1,10 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { ButtonPrimaryComponent } from '../generic/button-primary/button-primary.component';
-import { ShortnReq, ShortnService } from '../../core/api/v1';
 import { FormsModule } from '@angular/forms';
 import { BehaviorSubject } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { URLService } from '../../services/url.service';
+import { ShortnReq, ShortnService } from '../../api/shortn';
 
 @Component({
     selector: 'app-url-input',
