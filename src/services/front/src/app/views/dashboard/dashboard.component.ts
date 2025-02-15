@@ -10,7 +10,7 @@ import { CommonModule } from '@angular/common';
     <p>dashboard works!</p>
     @for (item of $allShorts | async; track item.Short) {
     <div>
-      {{ item }}
+      {{ item.Short }}
     </div>
     }
   `,
