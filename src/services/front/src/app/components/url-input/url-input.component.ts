@@ -4,12 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { BehaviorSubject } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { URLService } from '../../services/url.service';
-import { ShortnReq, ShortnService } from '../../api/shortn';
+import { ShortnReq, ShortnService } from '../../api';
 
 @Component({
-    selector: 'app-url-input',
-    imports: [ButtonPrimaryComponent, CommonModule, FormsModule],
-    template: `
+  selector: 'app-url-input',
+  imports: [ButtonPrimaryComponent, CommonModule, FormsModule],
+  template: `
     <div
       class="mt-2 max-w-2xl px-8 py-4 backdrop-blur-md bg-white/30 shadow dark:bg-gray-800/50 rounded-lg"
     >
@@ -33,9 +33,8 @@ import { ShortnReq, ShortnService } from '../../api/shortn';
           >
         </div>
       </div>
-
     </div>
-  `
+  `,
 })
 export class UrlInputComponent implements OnInit {
   public shortInputValue: string = '';

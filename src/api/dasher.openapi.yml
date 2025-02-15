@@ -9,14 +9,13 @@ servers:
   - url: https://bly.li/dasher
 
 tags:
-  - name: shortn
+  - name: dasher
     description: Endpoints for retrieving shortened URLs and statistics.
-
 paths:
   /short/all:
     get:
       tags:
-        - shortn
+        - dasher
       summary: Retrieve all shortened URLs
       responses:
         "200":
@@ -33,7 +32,7 @@ paths:
   /short/{short}:
     delete:
       tags:
-        - shortn
+        - dasher
       summary: Delete a shortened URL
       parameters:
         - in: path

@@ -1,0 +1,158 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Shortn API",
+    "version": "1.0.0",
+    "description": "API for shortening URLs and retrieving all shortened URLs."
+  },
+  "servers": [
+    {
+      "url": "http://blyli.localhost/shortn"
+    },
+    {
+      "url": "https://bly.li/shortn"
+    }
+  ],
+  "tags": [
+    {
+      "name": "shortn",
+      "description": "Endpoints for shortening URLs and retrieving all shortened URLs."
+    },
+    {
+      "name": "dasher",
+      "description": "Endpoints for retrieving shortened URLs and statistics."
+    },
+    {
+      "name": "blowup",
+      "description": "Endpoints for blowing up shortened URLs."
+    },
+    {
+      "name": "frontend",
+      "description": "Endpoints for Frontend-Usage."
+    }
+  ],
+  "paths": {
+    "/store": {
+      "post": {
+        "tags": [
+          "shortn"
+        ],
+        "summary": "Shorten a URL",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "./shared.openapi.yml#/components/schemas/ShortnReq"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully shortened URL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./shared.openapi.yml#/components/schemas/ShortURL"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input"
+          }
+        }
+      }
+    },
+    "/short/all": {
+      "get": {
+        "tags": [
+          "dasher"
+        ],
+        "summary": "Retrieve all shortened URLs",
+        "responses": {
+          "200": {
+            "description": "A list of shortened URLs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "./shared.openapi.yml#/components/schemas/ShortURL"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/short/{short}": {
+      "delete": {
+        "tags": [
+          "dasher"
+        ],
+        "summary": "Delete a shortened URL",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "short",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The short part of the URL"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Deleted successfully"
+          },
+          "404": {
+            "description": "Short URL not found"
+          }
+        }
+      }
+    },
+    "/{short}": {
+      "get": {
+        "tags": [
+          "blowup"
+        ],
+        "summary": "Blow up a shortened URL",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "short",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The short part of the URL"
+          }
+        ],
+        "responses": {
+          "301": {
+            "description": "Redirect to the original URL",
+            "headers": {
+              "Location": {
+                "description": "The original URL",
+                "schema": {
+                  "type": "string",
+                  "format": "uri"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Short URL not found"
+          }
+        }
+      }
+    }
+  }
+}

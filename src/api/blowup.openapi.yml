@@ -11,6 +11,8 @@ servers:
 tags:
   - name: blowup
     description: Endpoints for blowing up shortened URLs.
+  - name: frontend
+    description: Endpoints for Frontend-Usage.
 
 paths:
   /{short}:

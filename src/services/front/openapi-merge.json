@@ -1,0 +1,23 @@
+{
+  "inputs": [
+    {
+      "inputFile": "../../api/shortn.openapi.yml",
+      "operationSelection": {
+        "includeTags": ["shortn"]
+      }
+    },
+    {
+      "inputFile": "../../api/dasher.openapi.yml",
+      "operationSelection": {
+        "includeTags": ["dasher"]
+      }
+    },
+    {
+      "inputFile": "../../api/blowup.openapi.yml",
+      "operationSelection": {
+        "includeTags": ["blowup"]
+      }
+    }
+  ],
+  "output": "../../api/frontend.openapi.json"
+}
