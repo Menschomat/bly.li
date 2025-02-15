@@ -11,7 +11,14 @@
         "dbaeumer.vscode-eslint",
         "esbenp.prettier-vscode",
         "johnpapa.Angular2",
-        "ms-azuretools.vscode-docker"
+        "ms-azuretools.vscode-docker",
+        "christian-kohler.path-intellisense",
+        "christian-kohler.npm-intellisense",
+        "bradlc.vscode-tailwindcss",
+        "redhat.vscode-yaml",
+        "formulahendry.auto-rename-tag",
+        "formulahendry.auto-close-tag",
+        "eamodio.gitlens"
       ]
     }
   },
