@@ -5,7 +5,6 @@ import {
   provideAppInitializer,
 } from '@angular/core';
 import {
-  AuthConfig,
   OAuthStorage,
   provideOAuthClient,
 } from 'angular-oauth2-oidc';
@@ -17,9 +16,6 @@ import { BASE_PATH } from './api/';
 import { ConfigService } from './services/config.service';
 import {
   provideRouter,
-  withDisabledInitialNavigation,
-  withEnabledBlockingInitialNavigation,
-  withHashLocation,
 } from '@angular/router';
 import { routes } from './app.routes';
 
