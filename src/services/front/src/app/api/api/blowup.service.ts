@@ -32,7 +32,7 @@ import {
 })
 export class BlowupService implements BlowupServiceInterface {
 
-    protected basePath = 'http://blyli.localhost/shortn';
+    protected basePath = 'http://blyli.localhost';
     public defaultHeaders = new HttpHeaders();
     public configuration = new Configuration();
     public encoder: HttpParameterCodec;

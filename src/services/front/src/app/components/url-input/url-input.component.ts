@@ -45,7 +45,7 @@ export class UrlInputComponent implements OnInit {
   ngOnInit(): void {}
   requestShort() {
     this.api
-      .storePost({ Url: this.shortInputValue } as ShortnReq)
+      .shortnStorePost({ Url: this.shortInputValue } as ShortnReq)
       .subscribe((a) => this.urlService.triggerNextShort(a.Short));
   }
   get lastShort$() {

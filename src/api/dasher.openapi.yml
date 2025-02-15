@@ -5,8 +5,8 @@ info:
   description: API for Statistics-Dashboards etc.
 
 servers:
-  - url: http://blyli.localhost/dasher
-  - url: https://bly.li/dasher
+  - url: http://blyli.localhost
+  - url: https://bly.li
 
 tags:
   - name: dasher

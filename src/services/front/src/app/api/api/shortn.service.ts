@@ -36,7 +36,7 @@ import {
 })
 export class ShortnService implements ShortnServiceInterface {
 
-    protected basePath = 'http://blyli.localhost/shortn';
+    protected basePath = 'http://blyli.localhost';
     public defaultHeaders = new HttpHeaders();
     public configuration = new Configuration();
     public encoder: HttpParameterCodec;
@@ -102,12 +102,12 @@ export class ShortnService implements ShortnServiceInterface {
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      */
-    public storePost(shortnReq: ShortnReq, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ShortURL>;
-    public storePost(shortnReq: ShortnReq, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ShortURL>>;
-    public storePost(shortnReq: ShortnReq, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ShortURL>>;
-    public storePost(shortnReq: ShortnReq, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public shortnStorePost(shortnReq: ShortnReq, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ShortURL>;
+    public shortnStorePost(shortnReq: ShortnReq, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ShortURL>>;
+    public shortnStorePost(shortnReq: ShortnReq, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ShortURL>>;
+    public shortnStorePost(shortnReq: ShortnReq, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (shortnReq === null || shortnReq === undefined) {
-            throw new Error('Required parameter shortnReq was null or undefined when calling storePost.');
+            throw new Error('Required parameter shortnReq was null or undefined when calling shortnStorePost.');
         }
 
         let localVarHeaders = this.defaultHeaders;
@@ -155,7 +155,7 @@ export class ShortnService implements ShortnServiceInterface {
             }
         }
 
-        let localVarPath = `/store`;
+        let localVarPath = `/shortn/store`;
         return this.httpClient.request<ShortURL>('post', `${this.configuration.basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,

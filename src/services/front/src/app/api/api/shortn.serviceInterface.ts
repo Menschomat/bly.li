@@ -29,6 +29,6 @@ export interface ShortnServiceInterface {
      * 
      * @param shortnReq 
      */
-    storePost(shortnReq: ShortnReq, extraHttpRequestParams?: any): Observable<ShortURL>;
+    shortnStorePost(shortnReq: ShortnReq, extraHttpRequestParams?: any): Observable<ShortURL>;
 
 }

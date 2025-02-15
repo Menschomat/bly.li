@@ -7,10 +7,10 @@
   },
   "servers": [
     {
-      "url": "http://blyli.localhost/shortn"
+      "url": "http://blyli.localhost"
     },
     {
-      "url": "https://bly.li/shortn"
+      "url": "https://bly.li"
     }
   ],
   "tags": [
@@ -25,14 +25,10 @@
     {
       "name": "blowup",
       "description": "Endpoints for blowing up shortened URLs."
-    },
-    {
-      "name": "frontend",
-      "description": "Endpoints for Frontend-Usage."
     }
   ],
   "paths": {
-    "/store": {
+    "/shortn/store": {
       "post": {
         "tags": [
           "shortn"
@@ -65,7 +61,7 @@
         }
       }
     },
-    "/short/all": {
+    "/dasher/short/all": {
       "get": {
         "tags": [
           "dasher"
@@ -91,7 +87,7 @@
         }
       }
     },
-    "/short/{short}": {
+    "/dasher/short/{short}": {
       "delete": {
         "tags": [
           "dasher"

@@ -5,8 +5,8 @@ info:
   description: API for shortening URLs and retrieving all shortened URLs.
 
 servers:
-  - url: http://blyli.localhost/shortn
-  - url: https://bly.li/shortn
+  - url: http://blyli.localhost
+  - url: https://bly.li
 
 tags:
   - name: shortn

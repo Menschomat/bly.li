@@ -2,12 +2,18 @@
   "inputs": [
     {
       "inputFile": "../../api/shortn.openapi.yml",
+      "pathModification": {
+        "prepend": "/shortn"
+      },
       "operationSelection": {
         "includeTags": ["shortn"]
       }
     },
     {
       "inputFile": "../../api/dasher.openapi.yml",
+      "pathModification": {
+        "prepend": "/dasher"
+      },
       "operationSelection": {
         "includeTags": ["dasher"]
       }

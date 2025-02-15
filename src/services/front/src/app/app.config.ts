@@ -1,4 +1,9 @@
-import { ApplicationConfig, provideZoneChangeDetection, inject, provideAppInitializer } from '@angular/core';
+import {
+  ApplicationConfig,
+  provideZoneChangeDetection,
+  inject,
+  provideAppInitializer,
+} from '@angular/core';
 import {
   AuthConfig,
   OAuthStorage,
@@ -10,7 +15,12 @@ import {
 } from '@angular/common/http';
 import { BASE_PATH } from './api/';
 import { ConfigService } from './services/config.service';
-import { provideRouter, withDisabledInitialNavigation, withEnabledBlockingInitialNavigation, withHashLocation } from '@angular/router';
+import {
+  provideRouter,
+  withDisabledInitialNavigation,
+  withEnabledBlockingInitialNavigation,
+  withHashLocation,
+} from '@angular/router';
 import { routes } from './app.routes';
 
 export const appConfig: ApplicationConfig = {
@@ -21,16 +31,16 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(withInterceptorsFromDi()),
     provideOAuthClient({
       resourceServer: {
-        allowedUrls: [window.location.origin + '/shortn'],
+        allowedUrls: [window.location.origin],
         sendAccessToken: true,
       },
     }),
-    { provide: BASE_PATH, useValue: window.location.origin + '/shortn' },
+    { provide: BASE_PATH, useValue: window.location.origin },
     { provide: OAuthStorage, useFactory: storageFactory },
     provideAppInitializer(() => {
-        const initializerFn = (appConfigInitializer)(inject(ConfigService));
-        return initializerFn();
-      }),
+      const initializerFn = appConfigInitializer(inject(ConfigService));
+      return initializerFn();
+    }),
   ],
 };
 

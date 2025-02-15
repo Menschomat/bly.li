@@ -27,13 +27,13 @@ export interface DasherServiceInterface {
      * Retrieve all shortened URLs
      * 
      */
-    shortAllGet(extraHttpRequestParams?: any): Observable<Array<ShortURL>>;
+    dasherShortAllGet(extraHttpRequestParams?: any): Observable<Array<ShortURL>>;
 
     /**
      * Delete a shortened URL
      * 
      * @param _short The short part of the URL
      */
-    shortShortDelete(_short: string, extraHttpRequestParams?: any): Observable<{}>;
+    dasherShortShortDelete(_short: string, extraHttpRequestParams?: any): Observable<{}>;
 
 }
