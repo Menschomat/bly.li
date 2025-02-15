@@ -3,8 +3,8 @@ import {
   CUSTOM_ELEMENTS_SCHEMA,
   NO_ERRORS_SCHEMA,
 } from '@angular/core';
-import { DasherService, ShortURL } from '../../../api';
-import { BehaviorSubject, Observable, Subject } from 'rxjs';
+import { ShortURL } from '../../../api';
+import { Observable } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { ShortTableRowComponent } from './short-table-row/short-table-row.component';
 import { DashboardService } from '../../../services/dashboard.service';
