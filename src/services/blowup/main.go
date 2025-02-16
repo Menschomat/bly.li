@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/Menschomat/bly.li/shared/model"
 	"github.com/Menschomat/bly.li/shared/mongo"
@@ -26,6 +27,7 @@ type Server struct{}
 // GetShort FindPets implements all the handlers in the ServerInterface
 func (p *Server) GetShort(w http.ResponseWriter, r *http.Request, short string) {
 	if utils.IsValidShort(short) {
+
 		url, err := redis.GetUrl(short)
 		if err != nil || len(url) == 0 {
 			var shortInfo *model.ShortURL
@@ -36,12 +38,25 @@ func (p *Server) GetShort(w http.ResponseWriter, r *http.Request, short string) 
 			}
 		}
 		if err == nil && len(url) > 0 {
-			go redis.RegisterClick(short)
+			ip := readUserIP(r)
+			userAgent := r.UserAgent()
+			go redis.RegisterClick(model.ShortClick{Short: short, Ip: ip, UsrAgent: userAgent, Timestamp: time.Now()})
 			w.Header().Set("Location", url)
 			w.WriteHeader(http.StatusTemporaryRedirect)
 		}
 	}
 	apiUtils.BadRequestError(w)
+}
+
+func readUserIP(r *http.Request) string {
+	IPAddress := r.Header.Get("X-Real-Ip")
+	if IPAddress == "" {
+		IPAddress = r.Header.Get("X-Forwarded-For")
+	}
+	if IPAddress == "" {
+		IPAddress = r.RemoteAddr
+	}
+	return IPAddress
 }
 
 func main() {

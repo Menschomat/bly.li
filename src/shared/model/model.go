@@ -9,6 +9,13 @@ type ShortURL struct {
 	Owner string `bson:"owner,omitempty"`
 }
 
+type ShortClick struct {
+	Short     string
+	Timestamp time.Time
+	Ip        string
+	UsrAgent  string
+}
+
 type ShortClickCount struct {
 	Short     string    `bson:"short"`
 	Timestamp time.Time `bson:"timestamp"`

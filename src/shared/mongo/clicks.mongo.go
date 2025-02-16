@@ -8,19 +8,21 @@ import (
 	m "github.com/Menschomat/bly.li/shared/model"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 // CreateTimeSeriesCollection creates the time-series collection and necessary indexes.
 func CreateTimeSeriesCollection(client *mongo.Client, dbName, collectionName string) error {
 	db := client.Database(dbName)
 
-	// Create the time-series collection if it doesn't exist
 	cmd := bson.D{
 		{Key: "create", Value: collectionName},
 		{Key: "timeseries", Value: bson.D{
 			{Key: "timeField", Value: "timestamp"},
 			{Key: "metaField", Value: "short"},
-			{Key: "granularity", Value: "minutes"},
+			//({Key: "granularity", Value: "minutes"},
+			{Key: "bucketMaxSpanSeconds", Value: 300},  // 5 minutes
+			{Key: "bucketRoundingSeconds", Value: 300}, // 5-minute alignment
 		}},
 	}
 
@@ -28,25 +30,6 @@ func CreateTimeSeriesCollection(client *mongo.Client, dbName, collectionName str
 	if err != nil && !isNamespaceExistsError(err) {
 		return fmt.Errorf("failed to create time-series collection: %v", err)
 	}
-
-	// Create a unique compound index on (short, timestamp)
-	//coll := db.Collection(collectionName)
-	//indexModel := mongo.IndexModel{
-	//	Keys: bson.D{
-	//		{Key: "short", Value: 1},
-	//		{Key: "timestamp", Value: 1},
-	//	},
-	//	Options: options.Index().SetUnique(true),
-	//}
-	//
-	//_, err = coll.Indexes().CreateOne(context.Background(), indexModel)
-	//if err != nil {
-	//	// Check if the error is about the index already existing; if not, return error
-	//	if !isIndexAlreadyExistsError(err) {
-	//		return fmt.Errorf("failed to create unique index: %v", err)
-	//	}
-	//}
-
 	return nil
 }
 
@@ -58,61 +41,51 @@ func isNamespaceExistsError(err error) bool {
 	return false
 }
 
-// isIndexAlreadyExistsError checks if the error is due to the index already existing.
-func isIndexAlreadyExistsError(err error) bool {
-	if cmdErr, ok := err.(mongo.CommandError); ok && (cmdErr.Code == 85 || cmdErr.Code == 86) {
-		return true
+// IncrementShortClickCount handles atomic increments with proper time-series constraints
+func IncrementShortClickCount(client *mongo.Client, dbName, colName, shortID string) error {
+	coll := client.Database(dbName).Collection(colName)
+	now := time.Now().UTC()
+
+	// Magic happens in the document ID structure
+	docID := bson.D{
+		{Key: "short", Value: shortID},
+		{Key: "timestamp", Value: now.Truncate(5 * time.Minute)},
 	}
-	return false
+
+	update := bson.D{
+		{Key: "$inc", Value: bson.D{{Key: "count", Value: 1}}},
+		{Key: "$setOnInsert", Value: docID}, // For new documents
+	}
+
+	// Leverage upsert through native driver capabilities
+	_, err := coll.UpdateMany(
+		context.Background(),
+		docID, // Exact match on compound ID
+		update,
+		options.Update().SetUpsert(false),
+	)
+
+	return err
 }
 
-// IncrementShortClickCount handles click counting using insert and update on duplicate.
-func IncrementShortClickCount(client *mongo.Client, dbName, colName, shortID string, clickTime time.Time) error {
-	coll := client.Database(dbName).Collection(colName)
+func InsetTimeseriesDoc(shortID string, count int, clickTime time.Time) error {
+	client, err := GetMongoClient()
+	if err != nil {
+		return err
+	}
+	coll := client.Database(database).Collection("click_counts")
 	roundedTime := roundTo5Min(clickTime)
-
 	// Attempt to insert a new document
 	data := m.ShortClickCount{
 		Short:     shortID,
 		Timestamp: roundedTime,
-		Count:     1,
+		Count:     count,
 	}
-	_, err := coll.InsertOne(context.Background(), data)
-	if err == nil {
-		return nil // Successfully inserted
-	}
-
-	// Check for duplicate key error
-	if !isDuplicateKeyError(err) {
-		return fmt.Errorf("failed to insert click count: %v", err)
-	}
-
-	// Update existing document to increment count
-	filter := bson.D{
-		{Key: "short", Value: shortID},
-		{Key: "timestamp", Value: roundedTime},
-	}
-	update := bson.D{
-		{Key: "$inc", Value: bson.D{{Key: "count", Value: 1}}},
-	}
-	_, err = coll.UpdateOne(context.Background(), filter, update)
+	_, err = coll.InsertOne(context.Background(), data)
 	if err != nil {
-		return fmt.Errorf("failed to update click count after duplicate: %v", err)
+		return err
 	}
-
-	return nil
-}
-
-// isDuplicateKeyError checks if the error is a MongoDB duplicate key error.
-func isDuplicateKeyError(err error) bool {
-	if writeErr, ok := err.(mongo.WriteException); ok {
-		for _, e := range writeErr.WriteErrors {
-			if e.Code == 11000 { // MongoDB duplicate key error code
-				return true
-			}
-		}
-	}
-	return false
+	return nil // Successfully inserted
 }
 
 // Existing helper functions remain unchanged
@@ -125,12 +98,28 @@ func roundTo5Min(t time.Time) time.Time {
 func GetClicksForShort(client *mongo.Client, dbName, colName, shortID string) ([]m.ShortClickCount, error) {
 	coll := client.Database(dbName).Collection(colName)
 
-	cursor, err := coll.Find(
-		context.Background(),
-		bson.M{"short": shortID},
-	)
+	pipeline := mongo.Pipeline{
+		bson.D{{Key: "$match", Value: bson.D{{Key: "short", Value: shortID}}}},
+		bson.D{{Key: "$group", Value: bson.D{
+			{Key: "_id", Value: bson.D{
+				{Key: "$dateTrunc", Value: bson.D{
+					{Key: "date", Value: "$timestamp"},
+					{Key: "unit", Value: "minute"},
+					{Key: "binSize", Value: 5},
+				}},
+			}},
+			{Key: "count", Value: bson.D{{Key: "$sum", Value: "$count"}}},
+		}}},
+		bson.D{{Key: "$project", Value: bson.D{
+			{Key: "timestamp", Value: "$_id"},
+			{Key: "count", Value: 1},
+			{Key: "_id", Value: 0},
+		}}},
+	}
+
+	cursor, err := coll.Aggregate(context.Background(), pipeline)
 	if err != nil {
-		return nil, fmt.Errorf("failed to query click counts: %v", err)
+		return nil, fmt.Errorf("failed to aggregate click counts: %v", err)
 	}
 	defer cursor.Close(context.Background())
 
@@ -148,5 +137,5 @@ func RecordClick(shortID string) error {
 	if err != nil {
 		return err
 	}
-	return IncrementShortClickCount(client, database, "click_counts", shortID, time.Now())
+	return IncrementShortClickCount(client, database, "click_counts", shortID)
 }

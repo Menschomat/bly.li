@@ -2,6 +2,7 @@ package redis
 
 import (
 	"context"
+	"encoding/json"
 	"log"
 	"log/slog"
 	"strconv"
@@ -15,7 +16,7 @@ var cacheClient *redis.Client
 var targetTtl = 1 * time.Minute
 var ctx = context.Background()
 
-func getRedisClient() *redis.Client {
+func GetRedisClient() *redis.Client {
 	if cacheClient != nil {
 		return cacheClient
 	}
@@ -28,7 +29,7 @@ func getRedisClient() *redis.Client {
 }
 
 func StoreUrl(short string, url string, count int) {
-	_cache := getRedisClient()
+	_cache := GetRedisClient()
 	key := "url:" + short
 	errs := [...]error{
 		_cache.HSet(ctx, key, "url", url, "count", count).Err(),
@@ -42,7 +43,7 @@ func StoreUrl(short string, url string, count int) {
 }
 
 func GetShort(short string) (u model.ShortURL, e error) {
-	_cache := getRedisClient()
+	_cache := GetRedisClient()
 	key := "url:" + short
 
 	// Fetch all fields of the ShortURL struct
@@ -71,7 +72,7 @@ func GetShort(short string) (u model.ShortURL, e error) {
 }
 
 func GetUrl(short string) (u string, e error) {
-	_cache := getRedisClient()
+	_cache := GetRedisClient()
 	key := "url:" + short
 	url, err := _cache.HGet(ctx, key, "url").Result()
 	if err != nil || _cache.Expire(ctx, key, targetTtl).Err() != nil {
@@ -82,7 +83,7 @@ func GetUrl(short string) (u string, e error) {
 }
 
 func DeleteUrl(short string) (e error) {
-	_cache := getRedisClient()
+	_cache := GetRedisClient()
 	key := "url:" + short
 	_, err := _cache.HDel(ctx, key, "url").Result()
 	if err != nil || _cache.Expire(ctx, key, targetTtl).Err() != nil {
@@ -94,13 +95,14 @@ func DeleteUrl(short string) (e error) {
 }
 
 func ShortExists(short string) bool {
-	_cache := getRedisClient()
+	_cache := GetRedisClient()
 	exists := _cache.Exists(ctx, "url:"+short)
 	return exists.Val() > 0
 }
 
-func RegisterClick(short string) {
-	_cache := getRedisClient()
+func RegisterClick(click model.ShortClick) {
+	_cache := GetRedisClient()
+	short := click.Short
 	count, err1 := strconv.Atoi(_cache.HGet(ctx, "url:"+short, "count").Val())
 	if err1 != nil {
 		log.Println(_cache.HGet(ctx, "url:"+short, "url").Val(), err1)
@@ -109,5 +111,23 @@ func RegisterClick(short string) {
 	if err2 != nil {
 		log.Println(err2)
 	}
+	out, err3 := json.Marshal(click)
+	if err3 != nil {
+		log.Println(err2)
+	}
+	if err := _cache.Publish(ctx, "blowup_action_click", out).Err(); err != nil {
+		log.Println(err)
+	}
+	eventID, err4 := _cache.XAdd(ctx, &redis.XAddArgs{
+		Stream: "blowup_action_click",
+		Values: map[string]interface{}{
+			"data": string(out),
+		},
+	}).Result()
+	if err4 != nil {
+		log.Fatalf("Could not add event: %v", err4)
+	}
+	log.Printf("Click event added with ID: %s\n", eventID)
+
 	MarkUnsaved(short)
 }

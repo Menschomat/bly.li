@@ -1,66 +1,58 @@
 package main
 
 import (
+	"context"
 	"log"
-	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
-	"github.com/Menschomat/bly.li/shared/mongo"
-	"github.com/Menschomat/bly.li/shared/redis"
 	"github.com/Menschomat/bly.li/shared/scheduler"
 )
 
 func main() {
 	log.Println("*_-_-_-BlyLi-Perso-_-_-_*")
 
-	// Start the scheduler (runs "Hello World" every 30 seconds)
-	persistUnsaved := func() {
-		keys, err := redis.GetUnsavedKeys()
-		if err != nil {
-			log.Fatalln("There's an error with the server", err)
-		}
-		for _, key := range keys {
-			// element is the element from someSlice for where we are
-			short, err := redis.GetShort(key)
-			if err != nil {
-				log.Fatalln("There's an error with the server", err)
-			}
-			slog.Info("Storing changed short: " + short.Short)
-			mongo.StoreShortURL(short)
-			s, err := mongo.GetShortURLByShort(short.Short)
-			if err != nil {
-				log.Fatalln("There's an error with the server", err)
-			}
-			log.Println(short)
-			log.Println(s)
-			increment := short.Count - s.Count
-			s.Count = short.Count
-			log.Println(s)
-			mongo.UpdateShortUrl(*s)
-			log.Println(increment)
-			for i := 0; i < increment; i++ {
-				err := mongo.RecordClick(s.URL)
-				if err != nil {
-					log.Fatalln("There's an error with the server", err)
-				}
-			}
-			redis.RemoveUnsaved(short.Short)
-		}
+	unsavedScheduler := scheduler.NewScheduler(10*time.Second, persistUnsaved)
+	// New scheduler job to cleanup acknowledged stream messages every minute.
+	cleanupScheduler := scheduler.NewScheduler(1*time.Minute, cleanupStream)
+	// Create the aggregator for click events.
+	aggregator := NewClickAggregator()
 
-	}
-	scheduler := scheduler.NewScheduler(10*time.Second, persistUnsaved)
+	// New scheduler task to flush aggregated clicks every 5 minutes.
+	aggregatorFlushScheduler := scheduler.NewScheduler(5*time.Minute, func() {
+		aggregated := aggregator.Flush()
+		if len(aggregated) > 0 {
+			persistAggregatedClicks(aggregated)
+		} else {
+			log.Println("No aggregated clicks to persist this 5-minute window.")
+		}
+	})
+	// Create a cancellable context for graceful shutdown of the consumer.
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
-	// Handle shutdown signals
+	// Start the Redis stream consumer in its own goroutine.
+	go runConsumer(ctx, aggregator)
+
+	// Handle shutdown signals.
 	stopChan := make(chan os.Signal, 1)
 	signal.Notify(stopChan, os.Interrupt, syscall.SIGTERM)
 
-	select {
-	case <-stopChan:
-		log.Println("Shutdown signal received. Stopping scheduler...")
-		scheduler.Stop() // Stop scheduler safely
-	}
+	// Wait for a shutdown signal.
+	<-stopChan
+	log.Println("Shutdown signal received. Stopping scheduler and consumer...")
+
+	// Stop the scheduler.
+	unsavedScheduler.Stop()
+	cleanupScheduler.Stop()
+	aggregatorFlushScheduler.Stop()
+
+	// Cancel the consumer context to shut it down gracefully.
+	cancel()
+
+	// Optionally, wait a bit for cleanup.
+	time.Sleep(5 * time.Second)
 	log.Println("Server shut down successfully.")
 }
