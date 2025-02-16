@@ -36,9 +36,17 @@ func main() {
 			}
 			log.Println(short)
 			log.Println(s)
+			increment := short.Count - s.Count
 			s.Count = short.Count
 			log.Println(s)
 			mongo.UpdateShortUrl(*s)
+			log.Println(increment)
+			for i := 0; i < increment; i++ {
+				err := mongo.RecordClick(s.URL)
+				if err != nil {
+					log.Fatalln("There's an error with the server", err)
+				}
+			}
 			redis.RemoveUnsaved(short.Short)
 		}
 

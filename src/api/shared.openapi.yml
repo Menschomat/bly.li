@@ -25,6 +25,10 @@ components:
           type: string
           description: The original URL
           example: "https://example.com"
+        Count:
+          type: integer
+          description: Click count of the item
+          example: "1234"
         Owner:
           type: string
           nullable: true

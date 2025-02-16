@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 services:
   mongodb:
     image: mongo:7
@@ -9,19 +9,20 @@ services:
     restart: unless-stopped
 
   redis:
-    image: redis:latest
+    image: redis/redis-stack:latest
     environment:
       - TZ=${TZ}
     ports:
       - "6379:6379"
+      - "8001:8001"
 
   zookeeper:
     image: bitnami/zookeeper:latest
     container_name: zookeeper
     environment:
-      - ALLOW_ANONYMOUS_LOGIN=yes  # Enables anonymous access (optional, for testing/dev)
+      - ALLOW_ANONYMOUS_LOGIN=yes # Enables anonymous access (optional, for testing/dev)
     ports:
-      - "2181:2181"  # Client connections
+      - "2181:2181" # Client connections
     #volumes:
     #  - zookeeper_data:/bitnami/zookeeper  # Persistent storage
     restart: unless-stopped

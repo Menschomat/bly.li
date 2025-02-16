@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { AuthService } from '../../../services/auth.service';
-import { filter, map, Observable } from 'rxjs';
+import { filter, map, tap, Observable } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 
@@ -41,6 +41,7 @@ export class LoginMenuComponent {
   constructor(private auth: AuthService) {
     this.curUsrName = auth.currentUser$.pipe(
       filter((a) => a !== null),
+      tap((a) => console.debug(a)),
       map((a) => a['nickname'])
     );
   }
