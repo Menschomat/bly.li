@@ -24,7 +24,7 @@
   },
   //"forwardPorts": [4200],
   "shutdownAction": "stopCompose",
-  "postCreateCommand": "npm install -g bun && bun install",
+  "postCreateCommand": "sudo chown -R $(id -u):$(id -g) /workspace/src/services/front/node_modules && npm install -g bun && bun install",
   "runServices": [
     "zookeeper",
     "mongodb",
