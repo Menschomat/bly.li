@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"sync"
 
 	"github.com/Menschomat/bly.li/services/shortn/api"
 	u "github.com/Menschomat/bly.li/services/shortn/utils"
@@ -19,19 +20,54 @@ import (
 	"github.com/go-chi/cors"
 )
 
-var (
-	start int = 1
-	end   int = 1
-)
+/* -------------------------------------------------------------------- */
+/*  Server                                                              */
+/* -------------------------------------------------------------------- */
+
+type Server struct {
+	mu    sync.Mutex // guards start & end
+	start int        // next id to hand out
+	end   int        // inclusive upper bound of current range
+}
+
+/* ------------------------- range management ------------------------- */
+
+func (s *Server) allocateRangeLocked() {
+	// called with s.mu held
+	_start, _end, err := u.AllocateRange()
+	if err != nil {
+		slog.Error("range allocation failed", "error", err)
+		slog.Info("Exiting… range exceeded")
+		os.Exit(1)
+	}
+	slog.Info("Range allocated", "start", _start, "end", _end)
+	s.start = _start
+	s.end = _end
+}
+
+func (s *Server) nextShort() (string, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if s.start > s.end { // out of numbers? → fetch a new block
+		s.allocateRangeLocked()
+	}
+	id := s.start
+	s.start++
+
+	return u.GetSquidShort(uint64(id))
+}
+
+/* ---------------------------- handlers ------------------------------ */
 
 var _ api.ServerInterface = (*Server)(nil)
 
-type Server struct{}
-
-func (p *Server) PostStore(w http.ResponseWriter, r *http.Request) {
+func (s *Server) PostStore(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	var shortn m.ShortnReq
 
+	/* ----------- parse body ------------------------------------------------ */
+
+	var shortn m.ShortnReq
 	if err := json.NewDecoder(r.Body).Decode(&shortn); err != nil {
 		slog.Error("invalid request payload", "error", err)
 		apiUtils.BadRequestError(w)
@@ -45,13 +81,16 @@ func (p *Server) PostStore(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	short, err := u.GetSquidShort(uint64(start))
+	/* ----------- generate short code (thread-safe!) ------------------------ */
+
+	short, err := s.nextShort()
 	if err != nil {
-		slog.Error("failed to generate short url", "start", start, "error", err)
+		slog.Error("failed to generate short url", "error", err)
 		apiUtils.InternalServerError(w)
 		return
 	}
-	start++
+
+	/* ----------- persist --------------------------------------------------- */
 
 	if err := redis.StoreUrl(short, url, 0); err != nil {
 		slog.Error("failed to store url in redis", "short", short, "url", url, "error", err)
@@ -59,52 +98,30 @@ func (p *Server) PostStore(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	payload, err := json.Marshal(m.ShortnRes{Url: url, Short: short})
-	if err != nil {
-		slog.Error("failed to marshal response", "error", err)
-		apiUtils.InternalServerError(w)
-		return
-	}
-
-	usrInfo, err := oidc.GetUsrInfoFromCtx(r.Context())
-	if err != nil {
-		slog.Warn("Failed to get UserInfo", "error", err)
-	}
-
+	usrInfo, _ := oidc.GetUsrInfoFromCtx(r.Context()) // ignore “no user” error
 	shortURL := m.ShortURL{URL: url, Short: short}
 	if usrInfo != nil {
 		shortURL.Owner = usrInfo.Email
 	}
-
-	if _, storeErr := mongo.StoreShortURL(shortURL); storeErr != nil {
-		slog.Error("database error storing short url", "short", short, "url", url, "error", storeErr)
+	if _, err := mongo.StoreShortURL(shortURL); err != nil {
+		slog.Error("database error storing short url", "short", short, "url", url, "error", err)
 	}
 
+	/* ----------- respond --------------------------------------------------- */
+
+	payload, _ := json.Marshal(m.ShortnRes{Url: url, Short: short})
 	if _, err := w.Write(payload); err != nil {
 		slog.Error("failed to write HTTP response", "error", err)
 	}
-
-	if start > end {
-		allocateRange()
-	}
 }
 
-func allocateRange() {
-	_start, _end, err := u.AllocateRange()
-	if err != nil {
-		slog.Error("range allocation failed", "error", err)
-		slog.Info("Exiting... range exceeded")
-		os.Exit(1)
-	}
-	slog.Info("Range allocated", "start", _start, "end", _end)
-	start = _start
-	end = _end
-}
+/* -------------------------------------------------------------------- */
+/*  main                                                                */
+/* -------------------------------------------------------------------- */
 
 func main() {
 	slog.Info("*_-_-_-BlyLi-Shortn-_-_-_*")
 
-	// Set up database and other resources before listen
 	defer mongo.CloseClientDB()
 
 	r := chi.NewRouter()
@@ -120,9 +137,9 @@ func main() {
 	}))
 
 	server := &Server{}
-	api.HandlerFromMux(server, r)
+	server.allocateRangeLocked() // grab the first block before serving
 
-	allocateRange()
+	api.HandlerFromMux(server, r)
 
 	if err := http.ListenAndServe(":8082", r); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		slog.Error("API server exited with error", "error", err)
