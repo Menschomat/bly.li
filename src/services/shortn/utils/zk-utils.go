@@ -12,7 +12,7 @@ const (
 	zookeeperHosts    = "zookeeper:2181" // Zookeeper connection string
 	rootPath          = "/shortn-ranges" // Root znode for ranges
 	initialCounter    = 1                // Starting counter value
-	rangeSize         = 10               // Range size for each node
+	rangeSize         = 500              // Range size for each node
 	connectionTimeout = 5 * time.Second  // Zookeeper connection timeout
 )
 
