@@ -25,6 +25,9 @@ services:
       - OIDC_CLIENT_ID=${OIDC_CLIENT_ID}
       - TZ=${TZ}
     restart: unless-stopped
+    deploy:
+      mode: replicated
+      replicas: 2
   dasher:
     build:
       context: ../src/.
@@ -57,6 +60,9 @@ services:
     environment:
       - TZ=${TZ}
     restart: unless-stopped
+    deploy:
+      mode: replicated
+      replicas: 2
   nginx:
     image: nginx:latest
     ports:
