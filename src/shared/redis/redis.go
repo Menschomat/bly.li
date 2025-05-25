@@ -42,7 +42,7 @@ func StoreUrl(short string, url string, count int) {
 	}
 }
 
-func GetShort(short string) (u model.ShortURL, e error) {
+func GetShort(short string) (u *model.ShortURL, e error) {
 	_cache := GetRedisClient()
 	key := "url:" + short
 
@@ -62,7 +62,7 @@ func GetShort(short string) (u model.ShortURL, e error) {
 	count, _ := strconv.Atoi(data["count"]) // Ignore error, assume default 0
 
 	// Map Redis data to the model.ShortURL struct
-	u = model.ShortURL{
+	u = &model.ShortURL{
 		Short: short,       // assuming "short" is a field
 		URL:   data["url"], // assuming "url" is a field
 		Count: count,       // assuming "count" is a field

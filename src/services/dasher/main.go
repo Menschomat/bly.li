@@ -2,13 +2,12 @@ package main
 
 import (
 	"encoding/json"
-
-	"log/slog"
+	"errors"
 	"net/http"
 
-	"github.com/Menschomat/bly.li/services/dasher/api"
+	"log/slog"
 
-	m "github.com/Menschomat/bly.li/shared/model"
+	"github.com/Menschomat/bly.li/services/dasher/api"
 	"github.com/Menschomat/bly.li/shared/mongo"
 	"github.com/Menschomat/bly.li/shared/oidc"
 	"github.com/Menschomat/bly.li/shared/redis"
@@ -22,69 +21,75 @@ var _ api.ServerInterface = (*Server)(nil)
 
 type Server struct{}
 
-func (p *Server) DeleteShortShort(w http.ResponseWriter, r *http.Request, short string) {
-	if redis.ShortExists(short) {
-		err := redis.DeleteUrl(short)
-		if err != nil {
-			return
-		}
+func checkOwner(short string) (string, error) {
+	u, err := redis.GetShort(short)
+	if err == nil && u != nil && u.Owner != "" {
+		return u.Owner, nil
 	}
-	if mongo.ShortExists(short) {
-		err := mongo.DeleteShortURLByShort(short)
-		if err != nil {
-			return
-		}
+	u, err = mongo.GetShortURLByShort(short)
+	if err == nil && u != nil && u.Owner != "" {
+		return u.Owner, nil
 	}
+	return "", errors.New("owner not found")
 }
 
-func (p *Server) GetShortAll(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	shorts := &[]m.ShortURL{}
+func (p *Server) DeleteShortShort(w http.ResponseWriter, r *http.Request, short string) {
 	usrInfo, err := oidc.GetUsrInfoFromCtx(r.Context())
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	if usrInfo != nil {
-		shorts = mongo.GetShortsByOwner(usrInfo.Email)
+
+	owner, err := checkOwner(short)
+	if err != nil || owner != usrInfo.Email {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
 	}
+
+	if err := redis.DeleteUrl(short); err != nil && redis.ShortExists(short) {
+		http.Error(w, "Failed to delete from Redis", http.StatusInternalServerError)
+		return
+	}
+	if err := mongo.DeleteShortURLByShort(short); err != nil && mongo.ShortExists(short) {
+		http.Error(w, "Failed to delete from Mongo", http.StatusInternalServerError)
+		return
+	}
+}
+func (p *Server) GetShortAll(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	usrInfo, err := oidc.GetUsrInfoFromCtx(r.Context())
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+	shorts := mongo.GetShortsByOwner(usrInfo.Email)
 	payload, err := json.Marshal(shorts)
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	_, err = w.Write(payload)
-	if err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
 	w.WriteHeader(http.StatusOK)
+	w.Write(payload)
 }
 
 func main() {
-
-	// Set up OIDC provider and OAuth2 config
 	slog.Info("*_-_-_-BlyLi-Dasher-_-_-_*")
-	// Create new Chi-Router
 	r := chi.NewRouter()
-	// Add Middlewares to Router
 	r.Use(middleware.Logger)
 	r.Use(oidc.JWTVerifier)
 	r.Use(cors.Handler(cors.Options{
-		// AllowedOrigins:   []string{"https://foo.com"}, // Use this to allow specific origin hosts
-		AllowedOrigins: []string{"https://*", "http://*"},
-		// AllowOriginFunc:  func(r *http.Request, origin string) bool { return true },
+		AllowedOrigins:   []string{"https://*", "http://*"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"*"},
 		ExposedHeaders:   []string{"Link"},
 		AllowCredentials: false,
-		MaxAge:           300, // Maximum value not ignored by any of major browsers
+		MaxAge:           300,
 	}))
 	server := &Server{}
 	api.HandlerFromMux(server, r)
-	err := http.ListenAndServe(":8083", r)
-	if err != nil {
+	if err := http.ListenAndServe(":8083", r); err != nil {
 		slog.Error("There's an error with the server", "error", err)
+		return
 	}
 	defer mongo.CloseClientDB()
 }

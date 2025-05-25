@@ -20,7 +20,7 @@ func persistUnsaved() {
 			log.Fatalln("There's an error with the server:", err)
 		}
 		slog.Info("Storing changed short: " + short.Short)
-		mongo.StoreShortURL(short)
+		mongo.StoreShortURL(*short)
 		s, err := mongo.GetShortURLByShort(short.Short)
 		if err != nil {
 			log.Fatalln("There's an error with the server:", err)
