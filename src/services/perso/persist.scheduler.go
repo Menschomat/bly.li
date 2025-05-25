@@ -32,7 +32,7 @@ func persistUnsaved() {
 		log.Println(s)
 		mongo.UpdateShortUrl(*s)
 		log.Println(increment)
-		mongo.InsetTimeseriesDoc(s.URL, increment, time.Now())
+		mongo.InsetTimeseriesDoc(s.Short, increment, time.Now())
 		r.RemoveUnsaved(short.Short)
 	}
 }
