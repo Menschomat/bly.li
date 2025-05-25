@@ -16,6 +16,10 @@ import (
 
 var alphabet = []rune("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz")
 
+func GetRandomIntInRange(min int, max int) int {
+	return rand.Intn(max-min+1) + min
+}
+
 func GetUniqueShort() string {
 	short := randomString(5, alphabet)
 	if redis.ShortExists(short) || mongo.ShortExists(short) {

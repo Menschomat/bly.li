@@ -28,7 +28,7 @@ func GetRedisClient() *redis.Client {
 	return cacheClient
 }
 
-func StoreUrl(short, url string, count int) {
+func StoreUrl(short, url string, count int) error {
 	slog.Info("STORING")
 	key := "url:" + short
 
@@ -37,9 +37,7 @@ func StoreUrl(short, url string, count int) {
 	pipe.Expire(ctx, key, targetTtl)
 
 	_, err := pipe.Exec(ctx)
-	if err != nil {
-		slog.Error("Error while executing pipeline", "error", err)
-	}
+	return err
 }
 
 func GetShort(short string) (*model.ShortURL, error) {

@@ -12,11 +12,12 @@ const (
 	zookeeperHosts    = "zookeeper:2181" // Zookeeper connection string
 	rootPath          = "/shortn-ranges" // Root znode for ranges
 	initialCounter    = 1                // Starting counter value
-	rangeSize         = 500              // Range size for each node
-	connectionTimeout = 5 * time.Second  // Zookeeper connection timeout
+	rangeMin          = 200
+	rangeMax          = 500             // Range size for each node
+	connectionTimeout = 5 * time.Second // Zookeeper connection timeout
 )
 
-func CreateZkConnection() *zk.Conn {
+func createZkConnection() *zk.Conn {
 	// Connect to Zookeeper
 	conn, _, err := zk.Connect([]string{zookeeperHosts}, connectionTimeout)
 	if err != nil {
@@ -43,7 +44,8 @@ func ensurePathExists(conn *zk.Conn, path string) {
 }
 
 // allocateRange allocates a unique range of numbers for this node
-func AllocateRange(conn *zk.Conn) (int, int, error) {
+func AllocateRange() (int, int, error) {
+	conn := createZkConnection()
 	counterPath := fmt.Sprintf("%s/counter", rootPath)
 
 	// Check if the counter node exists
@@ -72,7 +74,7 @@ func AllocateRange(conn *zk.Conn) (int, int, error) {
 
 		// Calculate the new range
 		start := currentCounter
-		end := currentCounter + rangeSize - 1
+		end := currentCounter + GetRandomIntInRange(200, 500) - 1
 
 		// Update the counter atomically
 		_, err = conn.Set(counterPath, intToBytes(end+1), stat.Version)
@@ -82,7 +84,7 @@ func AllocateRange(conn *zk.Conn) (int, int, error) {
 		} else if err != nil {
 			return 0, 0, fmt.Errorf("failed to update counter: %v", err)
 		}
-
+		conn.Close()
 		// Return the allocated range
 		return start, end, nil
 	}

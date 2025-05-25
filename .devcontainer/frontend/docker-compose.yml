@@ -24,11 +24,15 @@ services:
       - OIDC_URL=${OIDC_URL}
       - OIDC_CLIENT_ID=${OIDC_CLIENT_ID}
       - TZ=${TZ}
-    restart: unless-stopped
-    deploy:
+    #restart: unless-stopped
+    deploy: # (same as before)
       mode: replicated
-      endpoint_mode: dnsrr
-      replicas: 2
+      replicas: 3
+      update_config:
+        order: start-first # new task becomes healthy before old is stopped
+      restart_policy:
+        condition: any # restart if task is unhealthy, failed, etc.
+
   dasher:
     build:
       context: ../src/.
@@ -61,10 +65,6 @@ services:
     environment:
       - TZ=${TZ}
     restart: unless-stopped
-    deploy:
-      mode: replicated
-      endpoint_mode: dnsrr
-      replicas: 2
   nginx:
     image: nginx:latest
     ports:

@@ -10,6 +10,8 @@ RUN go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest
 # Argument for service name
 ARG SERVICE
 
+# ────────────────────────────────────────────────────────────────────
+
 # Build stage for specific services
 FROM base-prepare AS build
 
@@ -27,15 +29,18 @@ RUN if [ "$SERVICE" != "perso" ]; then \
 
 RUN CGO_ENABLED=0 go build -o /bin/blyli
 
-# Final stage using scratch
+# ────────────────────────────────────────────────────────────────────
+
+# final stage  (scratch)
 FROM scratch
 
+# certs, tzdata, passwd   (unchanged)
 COPY --from=base-prepare /etc/passwd /etc/passwd
 COPY --from=base-prepare /usr/share/zoneinfo /usr/share/zoneinfo
 COPY --from=base-prepare /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 ENV TZ=Europe/Berlin
 
-# Copy the built binary from the build stage
+# service binary
 COPY --from=build /bin/blyli /bin/blyli
 
 USER scratchuser
