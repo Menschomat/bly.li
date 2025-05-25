@@ -5,7 +5,7 @@ WORKDIR /src/
 
 RUN adduser -S -u 10001 scratchuser
 RUN apk update && apk upgrade && apk add --no-cache ca-certificates tzdata && update-ca-certificates
-RUN go install github.com/deepmap/oapi-codegen/cmd/oapi-codegen@latest
+RUN go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest
 
 # Argument for service name
 ARG SERVICE

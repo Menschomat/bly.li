@@ -2,7 +2,7 @@
 
 # Install oapi-codegen
 echo "Installing oapi-codegen..."
-go install github.com/deepmap/oapi-codegen/cmd/oapi-codegen@latest
+go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest
 
 # Function to generate API code for a service
 generate_api_code() {
