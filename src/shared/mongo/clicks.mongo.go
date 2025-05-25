@@ -74,7 +74,7 @@ func InsetTimeseriesDoc(shortID string, count int, clickTime time.Time) error {
 		return err
 	}
 	coll := client.Database(database).Collection("click_counts")
-	roundedTime := roundTo5Min(clickTime)
+	roundedTime := clickTime //roundTo5Min(clickTime)
 	// Attempt to insert a new document
 	data := m.ShortClickCount{
 		Short:     shortID,
@@ -87,6 +87,55 @@ func InsetTimeseriesDoc(shortID string, count int, clickTime time.Time) error {
 	}
 	return nil // Successfully inserted
 }
+
+//func InsetTimeseriesDoc(shortID string, count int, clickTime time.Time) error {
+//	client, err := GetMongoClient()
+//	if err != nil {
+//		log.Printf("[ERROR] [%s] Failed to get MongoDB client: %v", time.Now().Format(time.RFC3339), err)
+//		return err
+//	}
+//	coll := client.Database(database).Collection("click_counts")
+//
+//	roundedTime := roundTo5Min(clickTime)
+//
+//	filter := bson.M{
+//		"short":     shortID,
+//		"timestamp": roundedTime,
+//	}
+//	update := bson.M{
+//		"$inc": bson.M{"count": count},
+//	}
+//
+//	// Versuche Update ohne Upsert (wegen TimeSeries-Einschränkung)
+//	result, err := coll.UpdateMany(context.Background(), filter, update)
+//	if err != nil {
+//		log.Printf("[ERROR] [%s] UpdateMany failed for shortID=%s at %s: %v",
+//			time.Now().Format(time.RFC3339), shortID, roundedTime.Format(time.RFC3339), err)
+//		return err
+//	}
+//
+//	if result.MatchedCount == 0 {
+//		// Kein bestehender Block -> Insert
+//		doc := bson.M{
+//			"short":     shortID,
+//			"timestamp": roundedTime,
+//			"count":     count,
+//		}
+//		_, err = coll.InsertOne(context.Background(), doc)
+//		if err != nil {
+//			log.Printf("[ERROR] [%s] InsertOne failed for shortID=%s at %s: %v",
+//				time.Now().Format(time.RFC3339), shortID, roundedTime.Format(time.RFC3339), err)
+//			return err
+//		}
+//		log.Printf("[INFO] [%s] Inserted new document for shortID=%s at %s with count=%d",
+//			time.Now().Format(time.RFC3339), shortID, roundedTime.Format(time.RFC3339), count)
+//	} else {
+//		log.Printf("[INFO] [%s] Updated count for shortID=%s at %s (+%d)",
+//			time.Now().Format(time.RFC3339), shortID, roundedTime.Format(time.RFC3339), count)
+//	}
+//
+//	return nil
+//}
 
 // Existing helper functions remain unchanged
 func roundTo5Min(t time.Time) time.Time {
