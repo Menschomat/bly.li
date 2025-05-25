@@ -4,12 +4,17 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
+	"log/slog"
+
+	"github.com/Menschomat/bly.li/shared/config"
 	m "github.com/Menschomat/bly.li/shared/model"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"log"
 )
+
+var database = config.MongoConfig().Database
 
 // ShortExists Check if a short URL exists in MongoDB
 func ShortExists(short string) bool {
@@ -18,7 +23,7 @@ func ShortExists(short string) bool {
 		log.Fatal(_err)
 		return false
 	}
-	collection := _client.Database(DATABASE).Collection("urls")
+	collection := _client.Database(database).Collection("urls")
 
 	filter := bson.M{"short": short}
 	count, err := collection.CountDocuments(context.Background(), filter)
@@ -35,7 +40,7 @@ func StoreShortURL(shortURL m.ShortURL) (interface{}, error) {
 		log.Fatal(_err)
 		return nil, _err
 	}
-	collection := _client.Database(DATABASE).Collection("urls")
+	collection := _client.Database(database).Collection("urls")
 
 	// Create an index on the short field to ensure uniqueness
 	indexModel := mongo.IndexModel{
@@ -55,13 +60,42 @@ func StoreShortURL(shortURL m.ShortURL) (interface{}, error) {
 	return insertResult.InsertedID, nil
 }
 
+func UpdateShortUrl(shortURL m.ShortURL) (interface{}, error) {
+	_client, _err := GetMongoClient()
+	if _err != nil {
+		log.Fatal(_err)
+		return nil, _err
+	}
+	collection := _client.Database(database).Collection("urls")
+
+	filter := bson.D{{Key: "short", Value: shortURL.Short}}
+	update := bson.D{
+		{Key: "$set", Value: bson.M{
+			"url":   shortURL.URL,
+			"count": shortURL.Count,
+			// Add other fields you want to update
+		}},
+	}
+
+	opts := options.Update().SetUpsert(false) // Change to true if you want to insert if not found
+
+	updateResult, err := collection.UpdateOne(context.Background(), filter, update, opts)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update document: %v", err)
+	}
+
+	log.Printf("Matched %d document(s) and modified %d document(s)\n", updateResult.MatchedCount, updateResult.ModifiedCount)
+
+	return updateResult.UpsertedID, nil
+}
+
 func GetShortURLByShort(short string) (*m.ShortURL, error) {
 	_client, _err := GetMongoClient()
 	if _err != nil {
 		log.Fatal(_err)
 		return nil, _err
 	}
-	collection := _client.Database(DATABASE).Collection("urls")
+	collection := _client.Database(database).Collection("urls")
 	var result m.ShortURL
 	filter := bson.M{"short": short}
 
@@ -77,13 +111,41 @@ func GetShortURLByShort(short string) (*m.ShortURL, error) {
 	return &result, nil
 }
 
+func GetShortsByOwner(owner string) *[]m.ShortURL {
+	_client, _err := GetMongoClient()
+	if _err != nil {
+		log.Fatal(_err)
+		return &[]m.ShortURL{}
+	}
+	collection := _client.Database(database).Collection("urls")
+	filter := bson.M{"owner": owner}
+
+	//err := collection.Find(context.Background(), filter).Decode(&result)
+	// Retrieves documents that match the query filter
+	cursor, err := collection.Find(context.Background(), filter)
+	if err != nil {
+		panic(err)
+	}
+	// Unpacks the cursor into a slice
+	var results []m.ShortURL
+	if err = cursor.All(context.TODO(), &results); err != nil {
+		panic(err)
+	}
+	if err != nil {
+		slog.Error("Error while fetching the owners shorts!")
+		return &[]m.ShortURL{}
+	}
+
+	return &results
+}
+
 func DeleteShortURLByShort(short string) error {
 	_client, _err := GetMongoClient()
 	if _err != nil {
 		log.Fatal(_err)
 		return _err
 	}
-	collection := _client.Database(DATABASE).Collection("urls")
+	collection := _client.Database(database).Collection("urls")
 	filter := bson.M{"short": short}
 	_, err := collection.DeleteOne(context.Background(), filter)
 	if err != nil {

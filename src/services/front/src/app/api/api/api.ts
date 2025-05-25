@@ -1,0 +1,10 @@
+export * from './blowup.service';
+import { BlowupService } from './blowup.service';
+export * from './blowup.serviceInterface';
+export * from './dasher.service';
+import { DasherService } from './dasher.service';
+export * from './dasher.serviceInterface';
+export * from './shortn.service';
+import { ShortnService } from './shortn.service';
+export * from './shortn.serviceInterface';
+export const APIS = [BlowupService, DasherService, ShortnService];

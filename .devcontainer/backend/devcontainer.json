@@ -1,14 +1,11 @@
 {
   "name": "Backend-Container - GoLang",
-  "dockerComposeFile": [
-    "../docker-compose.yml",
-    "docker-compose.yml"
-  ],
+  "dockerComposeFile": ["../docker-compose.yml", "docker-compose.yml"],
   "service": "backend-container",
   "workspaceFolder": "/workspace",
   "features": {
     "ghcr.io/devcontainers/features/go:1": {
-      "version": "1.23"
+      "version": "1.24"
     }
   },
   "customizations": {
@@ -17,17 +14,16 @@
         "golang.go",
         "dbaeumer.vscode-eslint",
         "esbenp.prettier-vscode",
-        "ms-azuretools.vscode-docker"
+        "ms-azuretools.vscode-docker",
+        "christian-kohler.path-intellisense",
+ 
       ]
     }
   },
+  
+  "overrideCommand": false,
   "postCreateCommand": "sh .devcontainer/backend/devcontainer-setup.sh",
-  "runServices": [
-    "mongodb",
-    "redis",
-    "front",
-    "nginx"
-  ],
+  "runServices": ["mongodb", "redis", "front", "nginx", "zookeeper"],
   "shutdownAction": "stopCompose",
   "mounts": [
     "type=bind,source=${localEnv:HOME}${localEnv:USERPROFILE}/.ssh,target=/home/vscode/.ssh,readonly"

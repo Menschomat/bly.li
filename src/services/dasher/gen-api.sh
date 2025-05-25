@@ -1,0 +1,1 @@
+oapi-codegen -generate types,chi-server -package api -o api/api.gen.go api/openapi.yml

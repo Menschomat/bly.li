@@ -11,17 +11,28 @@
         "dbaeumer.vscode-eslint",
         "esbenp.prettier-vscode",
         "johnpapa.Angular2",
-        "ms-azuretools.vscode-docker"
+        "ms-azuretools.vscode-docker",
+        "christian-kohler.path-intellisense",
+        "christian-kohler.npm-intellisense",
+        "bradlc.vscode-tailwindcss",
+        "redhat.vscode-yaml",
+        "formulahendry.auto-rename-tag",
+        "formulahendry.auto-close-tag",
+        "eamodio.gitlens"
       ]
     }
   },
   //"forwardPorts": [4200],
-  "postCreateCommand": "npm install -g bun && bun install",
+  "shutdownAction": "stopCompose",
+  "postCreateCommand": "sudo chown -R $(id -u):$(id -g) /workspace/src/services/front/node_modules && npm install -g bun && bun install",
   "runServices": [
+    "zookeeper",
     "mongodb",
     "redis",
     "shortn",
     "blowup",
+    "perso",
+    "dasher",
     "nginx"
   ],
   "mounts": [

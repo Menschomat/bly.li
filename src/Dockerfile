@@ -1,11 +1,11 @@
 # Common base image with Go installation and necessary tools
-FROM golang:1.23-alpine AS base-prepare
+FROM golang:1.24-alpine AS base-prepare
 
 WORKDIR /src/
 
 RUN adduser -S -u 10001 scratchuser
 RUN apk update && apk upgrade && apk add --no-cache ca-certificates tzdata && update-ca-certificates
-RUN go install github.com/deepmap/oapi-codegen/cmd/oapi-codegen@latest
+RUN go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest
 
 # Argument for service name
 ARG SERVICE
@@ -15,8 +15,15 @@ FROM base-prepare AS build
 
 # Copy specific service files based on the argument
 COPY services/${SERVICE}/ ./
+COPY api/ /apidocs/
 COPY shared/ /shared/
-RUN oapi-codegen -generate types,chi-server -package api -o api/api.gen.go api/openapi.yml
+RUN oapi-codegen -generate types,skip-prune -package api -o ../shared/api/api.gen.go ../apidocs/shared.openapi.yml
+# Conditionally run the oapi-codegen command if SERVICE is not "perso"
+RUN if [ "$SERVICE" != "perso" ]; then \
+  oapi-codegen -generate types,chi-server -import-mapping ./shared.openapi.yml:github.com/Menschomat/bly.li/shared/api -package api -o api/api.gen.go ../apidocs/${SERVICE}.openapi.yml; \
+  else \
+  echo "Skipping code generation for service 'perso'"; \
+  fi
 
 RUN CGO_ENABLED=0 go build -o /bin/blyli
 

@@ -1,9 +1,12 @@
-go 1.23
+go 1.24.3
 
-toolchain go1.23.0
+toolchain go1.24.3
 
 use (
 	./src/services/blowup
 	./src/services/shortn
+	./src/services/dasher
+	./src/services/perso
 	./src/shared
 )
+

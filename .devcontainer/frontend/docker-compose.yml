@@ -1,8 +1,11 @@
+volumes:
+  node_modules:
 services:
   frontend-container:
     image: mcr.microsoft.com/devcontainers/typescript-node:1-20
     volumes:
       - ../:/workspace:cached
+      - node_modules:/workspace/src/services/front/node_modules
     command: sleep infinity
     environment:
       - GO111MODULE=on
@@ -10,7 +13,6 @@ services:
     depends_on:
       - mongodb
       - redis
-      - nginx
   shortn:
     build:
       context: ../src/.
@@ -21,6 +23,28 @@ services:
     environment:
       - OIDC_URL=${OIDC_URL}
       - OIDC_CLIENT_ID=${OIDC_CLIENT_ID}
+      - TZ=${TZ}
+    restart: unless-stopped
+  dasher:
+    build:
+      context: ../src/.
+      dockerfile: Dockerfile
+      args:
+        - SERVICE=dasher
+    #image: mensch0mat/bly.li.shortn:main
+    environment:
+      - OIDC_URL=${OIDC_URL}
+      - OIDC_CLIENT_ID=${OIDC_CLIENT_ID}
+      - TZ=${TZ}
+    restart: unless-stopped
+  perso:
+    build:
+      context: ../src/.
+      dockerfile: Dockerfile
+      args:
+        - SERVICE=perso
+    #image: mensch0mat/bly.li.shortn:main
+    environment:
       - TZ=${TZ}
     restart: unless-stopped
   blowup:
@@ -37,5 +61,10 @@ services:
     image: nginx:latest
     ports:
       - "8080:8080"
+    depends_on:
+      - frontend-container
+      - shortn
+      - dasher
+      - blowup
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf

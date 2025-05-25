@@ -1,14 +1,25 @@
 package model
 
-type OidcConfig struct {
-	OidcClientId string `env:"CLIENT_ID, default=12345"`
-	OidcUrl      string `env:"URL, default=http://127.0.0.1"`
-}
+import "time"
 
 type ShortURL struct {
 	Short string `bson:"short"`
 	URL   string `bson:"url"`
+	Count int    `bson:"count"`
 	Owner string `bson:"owner,omitempty"`
+}
+
+type ShortClick struct {
+	Short     string
+	Timestamp time.Time
+	Ip        string
+	UsrAgent  string
+}
+
+type ShortClickCount struct {
+	Short     string    `bson:"short"`
+	Timestamp time.Time `bson:"timestamp"`
+	Count     int       `bson:"count"`
 }
 
 type ShortnReq struct {
@@ -20,8 +31,20 @@ type ShortnRes struct {
 	Url   string
 	Short string
 }
+
+//Configuration-Model
+
+type OidcConfig struct {
+	OidcClientId string `env:"OIDC_CLIENT_ID, default=12345"`
+	OidcUrl      string `env:"OIDC_URL, default=http://127.0.0.1"`
+}
+
+type MongoDdConfig struct {
+	Database       string `env:"MONGO_DATABASE, default=short_url_db"`
+	MongoServerUrl string `env:"MONGN_SERVER_URL, default=mongodb://mongodb:27017"`
+}
+
 type ShortnConfig struct {
-	// OidcConfig will process values from $OIDC_* and
-	// $OIDC_CLIENT_ID respectively.
-	OidcConfig *OidcConfig `env:", prefix=OIDC_"`
+	ZookeeperUrl         string `env:"ZOOKEEPER_URL, default=http://localhost"`
+	ZookeeperCounterPath string `env:"ZOOKEEPER_COUNTER_PATH, default=/counter"`
 }
