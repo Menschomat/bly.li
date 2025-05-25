@@ -27,6 +27,7 @@ services:
     restart: unless-stopped
     deploy:
       mode: replicated
+      endpoint_mode: dnsrr
       replicas: 2
   dasher:
     build:
@@ -62,6 +63,7 @@ services:
     restart: unless-stopped
     deploy:
       mode: replicated
+      endpoint_mode: dnsrr
       replicas: 2
   nginx:
     image: nginx:latest
