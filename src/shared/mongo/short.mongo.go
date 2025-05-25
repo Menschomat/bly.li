@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"log/slog"
 
 	"github.com/Menschomat/bly.li/shared/config"
 	m "github.com/Menschomat/bly.li/shared/model"
@@ -131,11 +130,6 @@ func GetShortsByOwner(owner string) *[]m.ShortURL {
 	if err = cursor.All(context.TODO(), &results); err != nil {
 		panic(err)
 	}
-	if err != nil {
-		slog.Error("Error while fetching the owners shorts!")
-		return &[]m.ShortURL{}
-	}
-
 	return &results
 }
 

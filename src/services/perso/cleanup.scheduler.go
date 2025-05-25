@@ -27,29 +27,29 @@ func cleanupStream() {
 		return
 	}
 
-	var safeID string
+	var trimUpToID string
 	if pending.Count > 0 {
-		// There are pending messages; use the smallest pending ID as the cutoff.
-		safeID = pending.Lower
+		trimUpToID = pending.Lower
 	} else {
-		// No pending messages. Use the first message in the stream.
-		entries, err := client.XRange(ctx, streamKey, "-", "+").Result()
+		// Get the ID of the newest message in the stream
+		entries, err := client.XRevRangeN(ctx, streamKey, "+", "-", 1).Result()
 		if err != nil {
-			log.Printf("Error getting XRANGE for stream: %v", err)
+			log.Printf("Error getting latest stream ID: %v", err)
 			return
 		}
 		if len(entries) == 0 {
-			// Stream is empty.
+			// Stream is already empty
+			log.Printf("Stream already empty, nothing to clean.")
 			return
 		}
-		safeID = entries[0].ID
+		trimUpToID = entries[0].ID
 	}
 
 	// Delete messages with IDs less than safeID in batches.
 	var totalDeleted int64
 	for {
 		// Fetch a batch of up to 100 messages older than safeID.
-		entries, err := client.XRangeN(ctx, streamKey, "-", safeID, 100).Result()
+		entries, err := client.XRangeN(ctx, streamKey, "-", trimUpToID, 100).Result()
 		if err != nil {
 			log.Printf("Error reading XRANGE: %v", err)
 			break
@@ -76,5 +76,5 @@ func cleanupStream() {
 			break
 		}
 	}
-	log.Printf("Cleanup completed: deleted %d messages older than safeID %s", totalDeleted, safeID)
+	log.Printf("Cleanup completed: deleted %d messages older than safeID %s", totalDeleted, trimUpToID)
 }

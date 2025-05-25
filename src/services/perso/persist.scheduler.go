@@ -16,8 +16,9 @@ func persistUnsaved() {
 	}
 	for _, key := range keys {
 		short, err := r.GetShort(key)
-		if err != nil {
-			log.Fatalln("There's an error with the server:", err)
+		if err != nil || short == nil {
+			slog.Error("Short not found in Redis!", "short", key, "error", err)
+			continue
 		}
 		slog.Info("Storing changed short: " + short.Short)
 		mongo.StoreShortURL(*short)

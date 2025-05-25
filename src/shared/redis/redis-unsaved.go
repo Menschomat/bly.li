@@ -7,7 +7,7 @@ import (
 
 // MarkUnsaved adds an entry to the Redis set "unsaved"
 func MarkUnsaved(short string) {
-	slog.Info("Try to mark " + short + " as unsaved!")
+	slog.Debug("Try to mark " + short + " as unsaved!")
 	_cache := GetRedisClient()
 	err := _cache.SAdd(ctx, "unsaved", short).Err()
 	if err != nil {

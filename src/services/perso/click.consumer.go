@@ -112,7 +112,7 @@ func runConsumer(ctx context.Context, aggregator *ClickAggregator) {
 
 					// Add the click event to the aggregator.
 					aggregator.Add(clickEvent)
-					log.Printf("Aggregated click event for short %s", clickEvent.Short)
+					//log.Printf("Aggregated click event for short %s", clickEvent.Short)
 
 					// Acknowledge the message.
 					if _, err := client.XAck(ctx, streamKey, groupName, message.ID).Result(); err != nil {
