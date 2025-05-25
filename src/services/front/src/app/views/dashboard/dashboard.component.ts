@@ -1,10 +1,11 @@
 import { Component } from '@angular/core';
 import { DasherService, ShortURL } from '../../api';
-import { Observable } from 'rxjs';
+import { filter, map, Observable, tap } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { NumberToWordsPipe } from '../../pipes/number-to-words.pipe';
 import { ShortTableComponent } from './short-table/short-table.component';
 import { DashboardService } from '../../services/dashboard.service';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -14,8 +15,9 @@ import { DashboardService } from '../../services/dashboard.service';
     <header>
       <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
         <h1 class="text-3xl font-bold  ">Dashboard</h1>
-        <h3 class="py-2">
-          Welcome back Mr. Example. Currently you have
+        <h3 class="text-xl py-2" *ngIf="$curFullName | async as fullname">
+          Welcome back <b>{{ fullname }}</b
+          >. Currently you have
           <b>{{ ($allShorts | async)?.length ?? 0 | numberToWords }}</b> shorts.
         </h3>
       </div>
@@ -30,7 +32,17 @@ import { DashboardService } from '../../services/dashboard.service';
 })
 export class DashboardComponent {
   public $allShorts: Observable<ShortURL[]>;
-  constructor(private dasherService: DashboardService) {
+  public $curFullName: Observable<string | undefined>;
+  constructor(
+    private dasherService: DashboardService,
+    private auth: AuthService
+  ) {
     this.$allShorts = this.dasherService.$allShorts;
+
+    this.$curFullName = auth.currentUser$.pipe(
+      filter((a) => a !== null),
+      tap((a) => console.debug(a)),
+      map((a) => a['name'])
+    );
   }
 }

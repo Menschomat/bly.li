@@ -20,6 +20,10 @@ export interface ShortURL {
      */
     URL?: string;
     /**
+     * Click count of the item
+     */
+    Count?: number;
+    /**
      * The owner of the item
      */
     Owner?: string | null;

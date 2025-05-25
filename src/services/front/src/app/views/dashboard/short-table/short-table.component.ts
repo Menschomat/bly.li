@@ -8,9 +8,10 @@ import { Observable } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { ShortTableRowComponent } from './short-table-row/short-table-row.component';
 import { DashboardService } from '../../../services/dashboard.service';
+import { ShortNumberPipe } from '../../../pipes/short-number.pipe';
 @Component({
   selector: 'app-short-table',
-  imports: [CommonModule, ShortTableRowComponent],
+  imports: [CommonModule, ShortNumberPipe, ShortTableRowComponent],
   schemas: [CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA],
   host: { class: 'flex-1 flex flex-col gap-4' },
   template: `
@@ -18,7 +19,9 @@ import { DashboardService } from '../../../services/dashboard.service';
     <app-short-table-row (delete)="delete(item)"
       ><row-title>{{ item.Short }}</row-title>
       <row-url>{{ item.URL }}</row-url>
-      <row-count>{{ '10k' }} Clicks</row-count></app-short-table-row
+      <row-count
+        >{{ item.Count ?? 0 | shortNumber }} Clicks</row-count
+      ></app-short-table-row
     >
     }
   `,
