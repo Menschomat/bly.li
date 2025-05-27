@@ -50,12 +50,14 @@ func (agg *ClickAggregator) Flush() map[string][]model.ShortClick {
 // persistAggregatedClicks processes the aggregated clicks.
 // For each short, it calls your persist function (e.g., saving to MongoDB).
 func persistAggregatedClicks(aggregated map[string][]model.ShortClick) {
+	summedClicks := []model.ShortClick{}
 	for short, clicks := range aggregated {
 		increment := len(clicks)
 		log.Printf("Persisting %d clicks for short: %s", increment, short)
 		mongo.InsetTimeseriesDoc(short, increment, time.Now())
-		mongo.InsetTimeseriesData("clicks", clicks)
+		summedClicks = append(summedClicks, clicks...)
 	}
+	mongo.InsetTimeseriesData("clicks", summedClicks)
 }
 
 // runConsumer starts a Redis stream consumer that aggregates click events.
@@ -96,7 +98,6 @@ func runConsumer(ctx context.Context, aggregator *ClickAggregator) {
 				log.Printf("Error reading from stream: %v", err)
 				continue
 			}
-
 			// Process messages.
 			for _, stream := range streams {
 				for _, message := range stream.Messages {
@@ -105,7 +106,6 @@ func runConsumer(ctx context.Context, aggregator *ClickAggregator) {
 						log.Printf("Message %s missing 'data' field or it is not a string", message.ID)
 						continue
 					}
-
 					var clickEvent model.ShortClick
 					if err := json.Unmarshal([]byte(dataStr), &clickEvent); err != nil {
 						log.Printf("Error unmarshaling message %s: %v", message.ID, err)
