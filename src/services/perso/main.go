@@ -21,7 +21,7 @@ func main() {
 	aggregator := NewClickAggregator()
 
 	// New scheduler task to flush aggregated clicks every 5 minutes.
-	aggregatorFlushScheduler := scheduler.NewScheduler(5*time.Minute, func() {
+	aggregatorFlushScheduler := scheduler.NewScheduler(2*time.Minute, func() {
 		aggregated := aggregator.Flush()
 		if len(aggregated) > 0 {
 			persistAggregatedClicks(aggregated)

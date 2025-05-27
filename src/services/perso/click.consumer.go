@@ -51,7 +51,9 @@ func (agg *ClickAggregator) Flush() map[string][]model.ShortClick {
 // For each short, it calls your persist function (e.g., saving to MongoDB).
 func persistAggregatedClicks(aggregated map[string][]model.ShortClick) {
 	for short, clicks := range aggregated {
-		log.Printf("Persisting %d clicks for short: %s", len(clicks), short)
+		increment := len(clicks)
+		log.Printf("Persisting %d clicks for short: %s", increment, short)
+		mongo.InsetTimeseriesDoc(short, increment, time.Now())
 		mongo.InsetTimeseriesData("clicks", clicks)
 	}
 }
