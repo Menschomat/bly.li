@@ -69,26 +69,33 @@ func IncrementShortClickCount(client *mongo.Client, dbName, colName, shortID str
 }
 
 func InsetTimeseriesDoc(shortID string, count int, clickTime time.Time) error {
+	data := m.ShortClickCount{
+		Short:     shortID,
+		Timestamp: clickTime,
+		Count:     count,
+	}
+	// Use a slice literal to wrap 'data' as []interface{}
+	return InsetTimeseriesData("click_counts", []m.ShortClickCount{data})
+}
+
+func InsetTimeseriesData[T any](colname string, data []T) error {
 	client, err := GetMongoClient()
 	if err != nil {
 		return err
 	}
-	coll := client.Database(database).Collection("click_counts")
-	roundedTime := clickTime //roundTo5Min(clickTime)
-	// Attempt to insert a new document
-	data := m.ShortClickCount{
-		Short:     shortID,
-		Timestamp: roundedTime,
-		Count:     count,
+	coll := client.Database(database).Collection(colname)
+
+	// Convert []T to []interface{} only inside this function
+	interfaceSlice := make([]interface{}, len(data))
+	for i, v := range data {
+		interfaceSlice[i] = v
 	}
-	_, err = coll.InsertOne(context.Background(), data)
+
+	_, err = coll.InsertMany(context.Background(), interfaceSlice)
 	if err != nil {
 		return err
 	}
 	return nil // Successfully inserted
-}
-func roundTo5Min(t time.Time) time.Time {
-	return t.Truncate(5 * time.Minute)
 }
 
 // GetClicksForShort queries all time-series documents for a given short URL.

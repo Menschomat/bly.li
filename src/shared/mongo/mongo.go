@@ -65,8 +65,13 @@ func InitMongoCollections(mongo_client *mongo.Client) {
 		log.Fatalf("Failed to create index on 'urls.short': %v", err)
 	}
 
-	// 2) Create or validate the time-series "click_counts" collection.
-	err := CreateTimeSeriesCollection(mongo_client, database, "click_counts")
+	// 2) Create or validate the time-series "clicks" collection.
+	err := CreateTimeSeriesCollection(mongo_client, database, "clicks")
+	if err != nil {
+		log.Fatalf("Could not create time-series collection: %v", err)
+	}
+	// 3) Create or validate the time-series "click_counts" collection.
+	err = CreateTimeSeriesCollection(mongo_client, database, "click_counts")
 	if err != nil {
 		log.Fatalf("Could not create time-series collection: %v", err)
 	}

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/Menschomat/bly.li/shared/model"
+	"github.com/Menschomat/bly.li/shared/mongo"
 	r "github.com/Menschomat/bly.li/shared/redis"
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
@@ -51,8 +52,7 @@ func (agg *ClickAggregator) Flush() map[string][]model.ShortClick {
 func persistAggregatedClicks(aggregated map[string][]model.ShortClick) {
 	for short, clicks := range aggregated {
 		log.Printf("Persisting %d clicks for short: %s", len(clicks), short)
-		// Call your persistence logic here.
-		// Example: mongo.PersistClicksForShort(short, clicks)
+		mongo.InsetTimeseriesData("clicks", clicks)
 	}
 }
 
