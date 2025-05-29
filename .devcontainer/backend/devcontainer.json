@@ -15,15 +15,23 @@
         "dbaeumer.vscode-eslint",
         "esbenp.prettier-vscode",
         "ms-azuretools.vscode-docker",
-        "christian-kohler.path-intellisense",
- 
+        "christian-kohler.path-intellisense"
       ]
     }
   },
-  
+
   "overrideCommand": false,
   "postCreateCommand": "sh .devcontainer/backend/devcontainer-setup.sh",
-  "runServices": ["mongodb", "redis", "front", "nginx", "zookeeper"],
+  "runServices": [
+    "mongodb",
+    "redis",
+    "front",
+    "nginx",
+    "zookeeper",
+    "prometheus",
+    "loki",
+    "grafana"
+  ],
   "shutdownAction": "stopCompose",
   "mounts": [
     "type=bind,source=${localEnv:HOME}${localEnv:USERPROFILE}/.ssh,target=/home/vscode/.ssh,readonly"

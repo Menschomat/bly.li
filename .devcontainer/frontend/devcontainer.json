@@ -33,7 +33,8 @@
     "blowup",
     "perso",
     "dasher",
-    "nginx"
+    "nginx",
+    "loki"
   ],
   "mounts": [
     "type=bind,source=${localEnv:HOME}${localEnv:USERPROFILE}/.ssh,target=/home/vscode/.ssh,readonly"
