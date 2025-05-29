@@ -10,13 +10,13 @@ import (
 	"github.com/Menschomat/bly.li/services/shortn/api"
 	"github.com/Menschomat/bly.li/services/shortn/logging"
 	u "github.com/Menschomat/bly.li/services/shortn/utils"
+	mw "github.com/Menschomat/bly.li/shared/api/middleware"
 	m "github.com/Menschomat/bly.li/shared/model"
 	"github.com/Menschomat/bly.li/shared/mongo"
 	"github.com/Menschomat/bly.li/shared/oidc"
 	"github.com/Menschomat/bly.li/shared/redis"
 	apiUtils "github.com/Menschomat/bly.li/shared/utils/api"
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 )
 
@@ -129,7 +129,7 @@ func main() {
 	defer mongo.CloseClientDB()
 
 	r := chi.NewRouter()
-	r.Use(middleware.Logger)
+	r.Use(mw.SlogLogger(logger))
 	r.Use(oidc.JWTVerifier)
 	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   []string{"https://*", "http://*"},
