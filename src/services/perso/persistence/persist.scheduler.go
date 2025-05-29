@@ -21,11 +21,12 @@ func PersistUnsaved() {
 	for _, key := range keys {
 		short := data.GetShort(key)
 		if short == nil {
-			logger.Error("Short not found in Redis!", "short", key, "error", err)
+			logger.Warn("Unsaved short not found in Redis", "short", key)
+			r.RemoveUnsaved(key)
 			continue
 		}
 		logger.Info("Storing changed short: " + short.Short)
 		mongo.UpdateShortUrl(*short)
-		r.RemoveUnsaved(short.Short)
+		r.RemoveUnsaved(key)
 	}
 }
