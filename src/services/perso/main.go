@@ -24,21 +24,21 @@ var (
 func main() {
 	logger.Info("Starting")
 	//Schedulers------------------------------
-	unsavedScheduler := scheduler.NewScheduler(10*time.Second, persistence.PersistUnsaved)
+	unsavedScheduler := scheduler.NewScheduler("persistance", 10*time.Second, persistence.PersistUnsaved, logger)
 	// New scheduler job to cleanup acknowledged stream messages every minute.
-	cleanupScheduler := scheduler.NewScheduler(10*time.Second, cleanup.CleanupStream)
+	cleanupScheduler := scheduler.NewScheduler("clean-up", 10*time.Second, cleanup.CleanupStream, logger)
 	// Create the aggregator for click events.
 	aggregator := tracking.NewClickAggregator()
 
 	// New scheduler task to flush aggregated clicks every 5 minutes.
-	aggregatorFlushScheduler := scheduler.NewScheduler(30*time.Second, func() {
+	aggregatorFlushScheduler := scheduler.NewScheduler("aggregation", 30*time.Second, func() {
 		aggregated := aggregator.Flush()
 		if len(aggregated) > 0 {
 			tracking.PersistAggregatedClicks(aggregated)
 		} else {
 			logger.Debug("No aggregated clicks to persist.")
 		}
-	})
+	}, logger)
 	// Create a cancellable context for graceful shutdown of the consumer.
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

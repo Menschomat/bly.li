@@ -3,6 +3,7 @@ package utils
 import (
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/go-zookeeper/zk"
@@ -17,9 +18,15 @@ const (
 	connectionTimeout = 5 * time.Second // Zookeeper connection timeout
 )
 
+type zkLogger struct{}
+
+func (zkLogger) Printf(format string, v ...interface{}) {
+	logger.Info("zookeeper", "msg", strings.TrimSpace(fmt.Sprintf(format, v...)))
+}
+
 func createZkConnection() *zk.Conn {
 	// Connect to Zookeeper
-	conn, _, err := zk.Connect([]string{zookeeperHosts}, connectionTimeout)
+	conn, _, err := zk.Connect([]string{zookeeperHosts}, connectionTimeout, zk.WithLogger(zkLogger{}))
 	if err != nil {
 		logger.Error("Failed to connect to Zookeeper", "err", err)
 		os.Exit(1)

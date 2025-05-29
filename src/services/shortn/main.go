@@ -124,7 +124,7 @@ func (s *Server) PostStore(w http.ResponseWriter, r *http.Request) {
 /* -------------------------------------------------------------------- */
 
 func main() {
-	logger.Info("*_-_-_-BlyLi-Shortn-_-_-_*")
+	logger.Info("Starting")
 
 	defer mongo.CloseClientDB()
 

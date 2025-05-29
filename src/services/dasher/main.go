@@ -75,7 +75,7 @@ func (p *Server) GetShortAll(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	logger.Info("*_-_-_-BlyLi-Dasher-_-_-_*")
+	logger.Info("Starting")
 	r := chi.NewRouter()
 	r.Use(mw.SlogLogger(logger))
 	r.Use(oidc.JWTVerifier)
