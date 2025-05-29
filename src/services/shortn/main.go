@@ -3,12 +3,12 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	"log/slog"
 	"net/http"
 	"os"
 	"sync"
 
 	"github.com/Menschomat/bly.li/services/shortn/api"
+	"github.com/Menschomat/bly.li/services/shortn/logging"
 	u "github.com/Menschomat/bly.li/services/shortn/utils"
 	m "github.com/Menschomat/bly.li/shared/model"
 	"github.com/Menschomat/bly.li/shared/mongo"
@@ -18,6 +18,10 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+)
+
+var (
+	logger = logging.GetLogger()
 )
 
 /* -------------------------------------------------------------------- */
@@ -36,11 +40,11 @@ func (s *Server) allocateRangeLocked() {
 	// called with s.mu held
 	_start, _end, err := u.AllocateRange()
 	if err != nil {
-		slog.Error("range allocation failed", "error", err)
-		slog.Info("Exiting… range exceeded")
+		logger.Error("range allocation failed", "error", err)
+		logger.Info("Exiting… range exceeded")
 		os.Exit(1)
 	}
-	slog.Info("Range allocated", "start", _start, "end", _end)
+	logger.Info("Range allocated", "start", _start, "end", _end)
 	s.start = _start
 	s.end = _end
 }
@@ -69,14 +73,14 @@ func (s *Server) PostStore(w http.ResponseWriter, r *http.Request) {
 
 	var shortn m.ShortnReq
 	if err := json.NewDecoder(r.Body).Decode(&shortn); err != nil {
-		slog.Error("invalid request payload", "error", err)
+		logger.Error("invalid request payload", "error", err)
 		apiUtils.BadRequestError(w)
 		return
 	}
 
 	url, err := u.ParseUrl(shortn.Url)
 	if err != nil {
-		slog.Warn("invalid url in request", "url", shortn.Url, "error", err)
+		logger.Warn("invalid url in request", "url", shortn.Url, "error", err)
 		apiUtils.BadRequestError(w)
 		return
 	}
@@ -85,33 +89,33 @@ func (s *Server) PostStore(w http.ResponseWriter, r *http.Request) {
 
 	short, err := s.nextShort()
 	if err != nil {
-		slog.Error("failed to generate short url", "error", err)
+		logger.Error("failed to generate short url", "error", err)
 		apiUtils.InternalServerError(w)
 		return
 	}
 
 	/* ----------- persist --------------------------------------------------- */
 
-	if err := redis.StoreUrl(short, url, 0); err != nil {
-		slog.Error("failed to store url in redis", "short", short, "url", url, "error", err)
-		apiUtils.InternalServerError(w)
-		return
-	}
-
 	usrInfo, _ := oidc.GetUsrInfoFromCtx(r.Context()) // ignore “no user” error
-	shortURL := m.ShortURL{URL: url, Short: short}
+	shortURL := m.ShortURL{URL: url, Short: short, Owner: "", Count: 0}
 	if usrInfo != nil {
 		shortURL.Owner = usrInfo.Email
 	}
+
+	if err := redis.StoreUrl(shortURL.Short, shortURL.URL, shortURL.Count, shortURL.Owner); err != nil {
+		logger.Error("failed to store url in redis", "short", short, "url", url, "error", err)
+		apiUtils.InternalServerError(w)
+		return
+	}
 	if _, err := mongo.StoreShortURL(shortURL); err != nil {
-		slog.Error("database error storing short url", "short", short, "url", url, "error", err)
+		logger.Error("database error storing short url", "short", short, "url", url, "error", err)
 	}
 
 	/* ----------- respond --------------------------------------------------- */
 
 	payload, _ := json.Marshal(m.ShortnRes{Url: url, Short: short})
 	if _, err := w.Write(payload); err != nil {
-		slog.Error("failed to write HTTP response", "error", err)
+		logger.Error("failed to write HTTP response", "error", err)
 	}
 }
 
@@ -120,7 +124,7 @@ func (s *Server) PostStore(w http.ResponseWriter, r *http.Request) {
 /* -------------------------------------------------------------------- */
 
 func main() {
-	slog.Info("*_-_-_-BlyLi-Shortn-_-_-_*")
+	logger.Info("*_-_-_-BlyLi-Shortn-_-_-_*")
 
 	defer mongo.CloseClientDB()
 
@@ -142,7 +146,7 @@ func main() {
 	api.HandlerFromMux(server, r)
 
 	if err := http.ListenAndServe(":8082", r); err != nil && !errors.Is(err, http.ErrServerClosed) {
-		slog.Error("API server exited with error", "error", err)
+		logger.Error("API server exited with error", "error", err)
 		os.Exit(1)
 	}
 }

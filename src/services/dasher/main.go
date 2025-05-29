@@ -5,19 +5,21 @@ import (
 	"errors"
 	"net/http"
 
-	"log/slog"
-
 	"github.com/Menschomat/bly.li/services/dasher/api"
+	"github.com/Menschomat/bly.li/services/dasher/logging"
+	mw "github.com/Menschomat/bly.li/shared/api/middleware"
 	"github.com/Menschomat/bly.li/shared/mongo"
 	"github.com/Menschomat/bly.li/shared/oidc"
 	"github.com/Menschomat/bly.li/shared/redis"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 )
 
-var _ api.ServerInterface = (*Server)(nil)
+var (
+	logger                     = logging.GetLogger()
+	_      api.ServerInterface = (*Server)(nil)
+)
 
 type Server struct{}
 
@@ -73,9 +75,9 @@ func (p *Server) GetShortAll(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	slog.Info("*_-_-_-BlyLi-Dasher-_-_-_*")
+	logger.Info("*_-_-_-BlyLi-Dasher-_-_-_*")
 	r := chi.NewRouter()
-	r.Use(middleware.Logger)
+	r.Use(mw.SlogLogger(logger))
 	r.Use(oidc.JWTVerifier)
 	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   []string{"https://*", "http://*"},
@@ -88,7 +90,7 @@ func main() {
 	server := &Server{}
 	api.HandlerFromMux(server, r)
 	if err := http.ListenAndServe(":8083", r); err != nil {
-		slog.Error("There's an error with the server", "error", err)
+		logger.Error("There's an error with the server", "error", err)
 		return
 	}
 	defer mongo.CloseClientDB()

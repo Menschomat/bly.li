@@ -1,26 +1,36 @@
 package main
 
 import (
-	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
+	mw "github.com/Menschomat/bly.li/shared/api/middleware"
+	"github.com/Menschomat/bly.li/shared/data"
 	"github.com/Menschomat/bly.li/shared/model"
-	"github.com/Menschomat/bly.li/shared/mongo"
 	"github.com/Menschomat/bly.li/shared/redis"
 	"github.com/Menschomat/bly.li/shared/utils"
 	apiUtils "github.com/Menschomat/bly.li/shared/utils/api"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/Menschomat/bly.li/services/blowup/api"
+	"github.com/Menschomat/bly.li/services/blowup/logging"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 )
 
-var _ api.ServerInterface = (*Server)(nil)
+var (
+	registedClicks = prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "click_registered_total",
+		Help: "Total number of clicks handled by blowup",
+	})
+	logger                     = logging.GetLogger()
+	_      api.ServerInterface = (*Server)(nil)
+)
 
 type Server struct{}
 
@@ -28,44 +38,29 @@ type Server struct{}
 func (p *Server) GetShort(w http.ResponseWriter, r *http.Request, short string) {
 	if utils.IsValidShort(short) {
 
-		url, err := redis.GetUrl(short)
-		if err != nil || len(url) == 0 {
-			var shortInfo *model.ShortURL
-			shortInfo, err = mongo.GetShortURLByShort(short)
-			if err == nil {
-				redis.StoreUrl(shortInfo.Short, shortInfo.URL, shortInfo.Count)
-				url = shortInfo.URL
-			}
+		url := data.GetShort(short)
+		if url == nil {
+			apiUtils.BadRequestError(w)
+			return
 		}
-		if err == nil && len(url) > 0 {
-			ip := readUserIP(r)
-			userAgent := r.UserAgent()
-			go redis.RegisterClick(model.ShortClick{Short: short, Ip: ip, UsrAgent: userAgent, Timestamp: time.Now()})
-			w.Header().Set("Location", url)
-			w.WriteHeader(http.StatusTemporaryRedirect)
-		}
-	}
-	apiUtils.BadRequestError(w)
-}
+		ip := apiUtils.ReadUserIP(r)
+		userAgent := r.UserAgent()
+		go redis.RegisterClick(model.ShortClick{Short: url.Short, Ip: ip, UsrAgent: userAgent, Timestamp: time.Now()})
+		registedClicks.Inc() //Increment clickCounter
+		w.Header().Set("Location", url.URL)
+		w.WriteHeader(http.StatusTemporaryRedirect)
 
-func readUserIP(r *http.Request) string {
-	IPAddress := r.Header.Get("X-Real-Ip")
-	if IPAddress == "" {
-		IPAddress = r.Header.Get("X-Forwarded-For")
 	}
-	if IPAddress == "" {
-		IPAddress = r.RemoteAddr
-	}
-	return IPAddress
+
 }
 
 func main() {
-	log.Println("*_-_-_-BlyLi-Blowup-_-_-_*")
+	logger.Info("Starting")
 
 	// Initialize router
 	r := chi.NewRouter()
-	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
+	r.Use(mw.SlogLogger(logger))
 	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   []string{"https://*", "http://*"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
@@ -78,10 +73,21 @@ func main() {
 	// Graceful shutdown handling
 	server := &Server{}
 	api.HandlerFromMux(server, r)
-
-	// HTTP server in a goroutine
 	serverErrChan := make(chan error, 1)
+
+	// --- Metrics router on a 2nd port ---
 	go func() {
+		prometheus.MustRegister(registedClicks)
+		metricsRouter := chi.NewRouter()
+		metricsRouter.Handle("/metrics", promhttp.Handler())
+		logger.Info("Prometheus metrics available on :2114/metrics")
+		serverErrChan <- http.ListenAndServe(":2114", metricsRouter)
+	}()
+
+	// --- Main server on 8083 ---
+	// HTTP server in a goroutine
+	go func() {
+		logger.Info("Backend runs on :8081")
 		serverErrChan <- http.ListenAndServe(":8081", r)
 	}()
 
@@ -91,10 +97,10 @@ func main() {
 
 	select {
 	case err := <-serverErrChan:
-		log.Fatalln("Server error:", err)
+		logger.Error("Server error", "error", err)
 	case <-stopChan:
-		log.Println("Shutdown signal received. Stopping server...")
+		logger.Info("Shutdown signal received. Stopping server...")
 	}
 
-	log.Println("Server shut down successfully.")
+	logger.Info("Server shut down successfully.")
 }

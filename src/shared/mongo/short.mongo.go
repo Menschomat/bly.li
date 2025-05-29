@@ -22,7 +22,7 @@ func ShortExists(short string) bool {
 		log.Fatal(_err)
 		return false
 	}
-	collection := _client.Database(database).Collection("urls")
+	collection := _client.Database(database).Collection(CollectionShorts)
 
 	filter := bson.M{"short": short}
 	count, err := collection.CountDocuments(context.Background(), filter)
@@ -39,7 +39,7 @@ func StoreShortURL(shortURL m.ShortURL) (interface{}, error) {
 		log.Fatal(_err)
 		return nil, _err
 	}
-	collection := _client.Database(database).Collection("urls")
+	collection := _client.Database(database).Collection(CollectionShorts)
 
 	// Create an index on the short field to ensure uniqueness
 	indexModel := mongo.IndexModel{
@@ -65,7 +65,7 @@ func UpdateShortUrl(shortURL m.ShortURL) (interface{}, error) {
 		log.Fatal(_err)
 		return nil, _err
 	}
-	collection := _client.Database(database).Collection("urls")
+	collection := _client.Database(database).Collection(CollectionShorts)
 
 	filter := bson.D{{Key: "short", Value: shortURL.Short}}
 	update := bson.D{
@@ -94,7 +94,7 @@ func GetShortURLByShort(short string) (*m.ShortURL, error) {
 		log.Fatal(_err)
 		return nil, _err
 	}
-	collection := _client.Database(database).Collection("urls")
+	collection := _client.Database(database).Collection(CollectionShorts)
 	var result m.ShortURL
 	filter := bson.M{"short": short}
 
@@ -116,7 +116,7 @@ func GetShortsByOwner(owner string) *[]m.ShortURL {
 		log.Fatal(_err)
 		return &[]m.ShortURL{}
 	}
-	collection := _client.Database(database).Collection("urls")
+	collection := _client.Database(database).Collection(CollectionShorts)
 	filter := bson.M{"owner": owner}
 
 	//err := collection.Find(context.Background(), filter).Decode(&result)
@@ -139,7 +139,7 @@ func DeleteShortURLByShort(short string) error {
 		log.Fatal(_err)
 		return _err
 	}
-	collection := _client.Database(database).Collection("urls")
+	collection := _client.Database(database).Collection(CollectionShorts)
 	filter := bson.M{"short": short}
 	_, err := collection.DeleteOne(context.Background(), filter)
 	if err != nil {

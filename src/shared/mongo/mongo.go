@@ -12,6 +12,14 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+const (
+	// Collection names
+	CollectionShorts       = "shorts"
+	CollectionClicks       = "clicks"
+	CollectionClicksCounts = "clicks_counts"
+	CollectionClicksCounty = "clicks_country"
+)
+
 var (
 	clientInstance *mongo.Client
 	clientOnce     sync.Once
@@ -55,8 +63,8 @@ func CloseClientDB() {
 
 // InitMongoCollections sets up indexes/collections. Call once during startup.
 func InitMongoCollections(mongo_client *mongo.Client) {
-	// 1) Ensure "urls" collection has a unique index on "short".
-	urlsColl := mongo_client.Database(database).Collection("urls")
+	// 1) Ensure CollectionShorts has a unique index on "short".
+	urlsColl := mongo_client.Database(database).Collection(CollectionShorts)
 	indexModel := mongo.IndexModel{
 		Keys:    bson.M{"short": 1},
 		Options: options.Index().SetUnique(true),
@@ -65,13 +73,22 @@ func InitMongoCollections(mongo_client *mongo.Client) {
 		log.Fatalf("Failed to create index on 'urls.short': %v", err)
 	}
 
-	// 2) Create or validate the time-series "clicks" collection.
-	err := CreateTimeSeriesCollection(mongo_client, database, "clicks")
+	// 2) Create an index on "userID" for quick access to short URLs owned by users.
+	userIndexModel := mongo.IndexModel{
+		Keys: bson.M{"userID": 1},
+	}
+	if _, err := urlsColl.Indexes().CreateOne(context.Background(), userIndexModel); err != nil {
+		log.Fatalf("Failed to create index on 'urls.userID': %v", err)
+	}
+
+	// 3) Create or validate the time-series "clicks" collection.
+	err := CreateTimeSeriesCollection(mongo_client, database, CollectionClicks)
 	if err != nil {
 		log.Fatalf("Could not create time-series collection: %v", err)
 	}
-	// 3) Create or validate the time-series "click_counts" collection.
-	err = CreateTimeSeriesCollection(mongo_client, database, "click_counts")
+
+	// 4) Create or validate the time-series "click_counts" collection.
+	err = CreateTimeSeriesCollection(mongo_client, database, CollectionClicksCounts)
 	if err != nil {
 		log.Fatalf("Could not create time-series collection: %v", err)
 	}

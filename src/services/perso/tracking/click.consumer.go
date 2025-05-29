@@ -1,17 +1,24 @@
-package main
+package tracking
 
 import (
 	"context"
 	"encoding/json"
-	"log"
+	"os"
 	"sync"
 	"time"
 
+	"github.com/Menschomat/bly.li/services/perso/logging"
+	"github.com/Menschomat/bly.li/shared/data"
 	"github.com/Menschomat/bly.li/shared/model"
 	"github.com/Menschomat/bly.li/shared/mongo"
 	r "github.com/Menschomat/bly.li/shared/redis"
+	l "github.com/Menschomat/bly.li/shared/utils/logging"
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
+)
+
+var (
+	logger = logging.GetLogger()
 )
 
 // ClickAggregator groups click events by the Short field.
@@ -49,19 +56,29 @@ func (agg *ClickAggregator) Flush() map[string][]model.ShortClick {
 
 // persistAggregatedClicks processes the aggregated clicks.
 // For each short, it calls your persist function (e.g., saving to MongoDB).
-func persistAggregatedClicks(aggregated map[string][]model.ShortClick) {
+func PersistAggregatedClicks(aggregated map[string][]model.ShortClick) {
 	summedClicks := []model.ShortClick{}
 	for short, clicks := range aggregated {
 		increment := len(clicks)
-		log.Printf("Persisting %d clicks for short: %s", increment, short)
+		logger.Info("Persisting clicks for short",
+			"clicks", increment,
+			"short", short,
+		)
 		mongo.InsetTimeseriesDoc(short, increment, time.Now())
+		s := data.GetShort(short)
+		if s != nil {
+			s.Count += increment
+			err := r.StoreUrl(s.Short, s.URL, s.Count, s.Owner)
+			l.LogRedisError(err)
+			r.MarkUnsaved(s.Short)
+		}
 		summedClicks = append(summedClicks, clicks...)
 	}
 	mongo.InsetTimeseriesData("clicks", summedClicks)
 }
 
 // runConsumer starts a Redis stream consumer that aggregates click events.
-func runConsumer(ctx context.Context, aggregator *ClickAggregator) {
+func RunConsumer(ctx context.Context, aggregator *ClickAggregator) {
 	client := r.GetRedisClient()
 
 	streamKey := "blowup_action_click"
@@ -71,15 +88,14 @@ func runConsumer(ctx context.Context, aggregator *ClickAggregator) {
 	// Create the consumer group if it doesn't exist.
 	err := client.XGroupCreateMkStream(ctx, streamKey, groupName, "0").Err()
 	if err != nil && err.Error() != "BUSYGROUP Consumer Group name already exists" {
-		log.Fatalf("Could not create consumer group: %v", err)
+		logger.Error("Could not create consumer group", "err", err)
+		os.Exit(1)
 	}
-
-	log.Println("Consumer started. Waiting for messages...")
-
+	logger.Info("Consumer started. Waiting for messages...")
 	for {
 		select {
 		case <-ctx.Done():
-			log.Println("Consumer shutting down...")
+			logger.Info("Consumer shutting down...")
 			return
 		default:
 			// XREADGROUP blocks for 5 seconds if no messages are available.
@@ -95,7 +111,7 @@ func runConsumer(ctx context.Context, aggregator *ClickAggregator) {
 				if err == redis.Nil {
 					continue // No messages available.
 				}
-				log.Printf("Error reading from stream: %v", err)
+				logger.Error("Error reading from stream", "err", err)
 				continue
 			}
 			// Process messages.
@@ -103,22 +119,19 @@ func runConsumer(ctx context.Context, aggregator *ClickAggregator) {
 				for _, message := range stream.Messages {
 					dataStr, ok := message.Values["data"].(string)
 					if !ok {
-						log.Printf("Message %s missing 'data' field or it is not a string", message.ID)
+						logger.Warn("Message missing 'data' field or it is not a string", "message_id", message.ID)
 						continue
 					}
 					var clickEvent model.ShortClick
 					if err := json.Unmarshal([]byte(dataStr), &clickEvent); err != nil {
-						log.Printf("Error unmarshaling message %s: %v", message.ID, err)
+						logger.Error("Error unmarshaling message", "message_id", message.ID, "err", err)
 						continue
 					}
-
 					// Add the click event to the aggregator.
 					aggregator.Add(clickEvent)
-					//log.Printf("Aggregated click event for short %s", clickEvent.Short)
-
 					// Acknowledge the message.
 					if _, err := client.XAck(ctx, streamKey, groupName, message.ID).Result(); err != nil {
-						log.Printf("Error acknowledging message %s: %v", message.ID, err)
+						logger.Error("Error acknowledging message", "message_id", message.ID, "err", err)
 					}
 				}
 			}

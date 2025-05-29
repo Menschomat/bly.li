@@ -1,16 +1,29 @@
-package main
+package cleanup
 
 import (
 	"context"
-	"log"
 	"time"
 
+	"github.com/Menschomat/bly.li/services/perso/logging"
 	r "github.com/Menschomat/bly.li/shared/redis"
+	"github.com/prometheus/client_golang/prometheus"
 )
+
+var (
+	cleanedStreamEvents = prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "stream_events_cleaned_total",
+		Help: "Total number of clicks handled by blowup",
+	})
+	logger = logging.GetLogger()
+)
+
+func InitMetrics() {
+	prometheus.MustRegister(cleanedStreamEvents)
+}
 
 // cleanupStream is a scheduled job that deletes messages that have been fully acknowledged.
 // It determines a "safe" cutoff using XPENDING and then deletes messages with IDs less than that cutoff.
-func cleanupStream() {
+func CleanupStream() {
 	// Create a short-lived context for cleanup.
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -23,7 +36,7 @@ func cleanupStream() {
 	// Get pending message info for the consumer group.
 	pending, err := client.XPending(ctx, streamKey, groupName).Result()
 	if err != nil {
-		log.Printf("Error getting XPENDING info: %v", err)
+		logger.Error("Error getting XPENDING info", "err", err)
 		return
 	}
 
@@ -34,12 +47,12 @@ func cleanupStream() {
 		// Get the ID of the newest message in the stream
 		entries, err := client.XRevRangeN(ctx, streamKey, "+", "-", 1).Result()
 		if err != nil {
-			log.Printf("Error getting latest stream ID: %v", err)
+			logger.Error("Error getting latest stream ID", "err", err)
 			return
 		}
 		if len(entries) == 0 {
 			// Stream is already empty
-			log.Printf("Stream already empty, nothing to clean.")
+			logger.Info("Stream already empty, nothing to clean.")
 			return
 		}
 		trimUpToID = entries[0].ID
@@ -51,7 +64,7 @@ func cleanupStream() {
 		// Fetch a batch of up to 100 messages older than safeID.
 		entries, err := client.XRangeN(ctx, streamKey, "-", trimUpToID, 100).Result()
 		if err != nil {
-			log.Printf("Error reading XRANGE: %v", err)
+			logger.Error("Error reading XRANGE", "err", err)
 			break
 		}
 		if len(entries) == 0 {
@@ -66,7 +79,7 @@ func cleanupStream() {
 		// Delete the batch of messages.
 		n, err := client.XDel(ctx, streamKey, ids...).Result()
 		if err != nil {
-			log.Printf("Error deleting messages: %v", err)
+			logger.Error("Error deleting messages", "err", err)
 			break
 		}
 		totalDeleted += n
@@ -76,5 +89,9 @@ func cleanupStream() {
 			break
 		}
 	}
-	log.Printf("Cleanup completed: deleted %d messages older than safeID %s", totalDeleted, trimUpToID)
+	cleanedStreamEvents.Add(float64(totalDeleted))
+	logger.Info("Cleanup completed",
+		"deleted", totalDeleted,
+		"safeID", trimUpToID,
+	)
 }

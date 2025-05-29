@@ -28,12 +28,12 @@ func GetRedisClient() *redis.Client {
 	return cacheClient
 }
 
-func StoreUrl(short, url string, count int) error {
+func StoreUrl(short, url string, count int, owner string) error {
 	slog.Info("STORING")
 	key := "url:" + short
 
 	pipe := GetRedisClient().Pipeline()
-	pipe.HSet(ctx, key, "url", url, "count", count)
+	pipe.HSet(ctx, key, "url", url, "count", count, "owner", owner)
 	pipe.Expire(ctx, key, targetTtl)
 
 	_, err := pipe.Exec(ctx)
@@ -56,6 +56,7 @@ func GetShort(short string) (*model.ShortURL, error) {
 		Short: short,
 		URL:   data["url"],
 		Count: count,
+		Owner: data["owner"],
 	}, nil
 }
 
@@ -84,15 +85,15 @@ func ShortExists(short string) bool {
 }
 
 func RegisterClick(click model.ShortClick) {
-	short := click.Short
+	//short := click.Short
 	_cache := GetRedisClient()
 
 	// Concurrently fetch count and URL
-	countResult := _cache.HGet(ctx, "url:"+short, "count")
-	count, err1 := strconv.Atoi(countResult.Val())
-	if err1 == nil && _cache.HSet(ctx, "url:"+short, "count", count+1).Err() != nil {
-		slog.Error("Error updating count")
-	}
+	//countResult := _cache.HGet(ctx, "url:"+short, "count")
+	//count, err1 := strconv.Atoi(countResult.Val())
+	//if err1 == nil && _cache.HSet(ctx, "url:"+short, "count", count+1).Err() != nil {
+	//	slog.Error("Error updating count")
+	//}
 	out, err3 := json.Marshal(click)
 	if err3 != nil {
 		slog.Error("Error marshalling click", "error", err3)
@@ -111,6 +112,5 @@ func RegisterClick(click model.ShortClick) {
 	} else {
 		slog.Debug("Click event added with ID: " + eventID)
 	}
-
-	MarkUnsaved(short)
+	//MarkUnsaved(short)
 }

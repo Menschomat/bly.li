@@ -75,7 +75,7 @@ func InsetTimeseriesDoc(shortID string, count int, clickTime time.Time) error {
 		Count:     count,
 	}
 	// Use a slice literal to wrap 'data' as []interface{}
-	return InsetTimeseriesData("click_counts", []m.ShortClickCount{data})
+	return InsetTimeseriesData(string(CollectionClicksCounts), []m.ShortClickCount{data})
 }
 
 func InsetTimeseriesData[T any](colname string, data []T) error {
