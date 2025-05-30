@@ -79,6 +79,7 @@ func main() {
 	mongo.InitMongoPackage(logger)
 	r := chi.NewRouter()
 	r.Use(mw.SlogLogger(logger))
+	r.Use(mw.InstrumentHandler)
 	r.Use(oidc.JWTVerifier)
 	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   []string{"https://*", "http://*"},

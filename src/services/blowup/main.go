@@ -29,18 +29,25 @@ var (
 		Name: "blyli_click_registered_total",
 		Help: "Total number of clicks handled by blowup",
 	})
+
+	shortNotFoundTotal = prometheus.NewCounter(
+		prometheus.CounterOpts{
+			Name: "blyli_short_not_found_total",
+			Help: "Total number of not found short requests",
+		},
+	)
+
 	logger                     = logging.GetLogger()
 	_      api.ServerInterface = (*Server)(nil)
 )
 
 type Server struct{}
 
-// GetShort FindPets implements all the handlers in the ServerInterface
 func (p *Server) GetShort(w http.ResponseWriter, r *http.Request, short string) {
 	if utils.IsValidShort(short) {
-
 		url := data.GetShort(short)
 		if url == nil {
+			shortNotFoundTotal.Inc()
 			apiUtils.BadRequestError(w)
 			return
 		}
@@ -50,9 +57,7 @@ func (p *Server) GetShort(w http.ResponseWriter, r *http.Request, short string) 
 		registedClicks.Inc() //Increment clickCounter
 		w.Header().Set("Location", url.URL)
 		w.WriteHeader(http.StatusTemporaryRedirect)
-
 	}
-
 }
 
 func main() {
@@ -61,6 +66,7 @@ func main() {
 	// Initialize router
 	r := chi.NewRouter()
 	r.Use(middleware.Recoverer)
+	//r.Use(mw.InstrumentHandler)
 	r.Use(mw.SlogLogger(logger))
 	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   []string{"https://*", "http://*"},
@@ -79,6 +85,8 @@ func main() {
 	// --- Metrics router on a 2nd port ---
 	go func() {
 		prometheus.MustRegister(registedClicks)
+
+		prometheus.MustRegister(shortNotFoundTotal)
 		metricsRouter := chi.NewRouter()
 		metricsRouter.Handle("/metrics", promhttp.Handler())
 		logger.Info("Prometheus metrics available on :2114/metrics")
