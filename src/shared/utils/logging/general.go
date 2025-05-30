@@ -18,12 +18,24 @@ var (
 func getHandler() slog.Handler {
 	once.Do(func() {
 		config, _ := loki.NewDefaultConfig("http://loki:3100/loki/api/v1/push")
-		config.TenantID = "xyz"
+		config.TenantID = "single"
 		client, _ := loki.New(config)
 		// Stdout handler
 		stdoutHandler := slog.NewJSONHandler(os.Stdout, nil)
 		// Loki handler
-		lokiHandler := slogloki.Option{Level: slog.LevelDebug, Client: client}.NewLokiHandler()
+		lokiHandler := slogloki.Option{
+			Level:  slog.LevelInfo,
+			Client: client,
+			ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
+				// Remove all user fields (let only Labels map set the Loki labels)
+				// This results in user fields being kept in the entry's body, not as Loki labels.
+				if a.Key != "service_name" && a.Key != "instance" && a.Key != "level" {
+					// Return an Attr that will not be interpreted as a label
+					a.Key = "" // or skip it in a more advanced way
+				}
+				return a
+			},
+		}.NewLokiHandler()
 
 		handler = slogmulti.Fanout(stdoutHandler, lokiHandler)
 	})
@@ -32,5 +44,9 @@ func getHandler() slog.Handler {
 
 // NewLogger creates a logger with a service-name.
 func NewLogger(serviceName string) *slog.Logger {
-	return slog.New(getHandler()).With("service_name", serviceName)
+	instanceID := os.Getenv("INSTANCE_ID")
+	if instanceID == "" {
+		instanceID, _ = os.Hostname()
+	}
+	return slog.New(getHandler()).With("service_name", serviceName).With("instance", instanceID)
 }

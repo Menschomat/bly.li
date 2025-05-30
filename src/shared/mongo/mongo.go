@@ -3,6 +3,7 @@ package mongo
 import (
 	"context"
 	"log"
+	"log/slog"
 	"sync"
 	"time"
 
@@ -14,16 +15,26 @@ import (
 
 const (
 	// Collection names
-	CollectionShorts       = "shorts"
-	CollectionClicks       = "clicks"
-	CollectionClicksCounts = "clicks_counts"
-	CollectionClicksCounty = "clicks_country"
+	CollectionShorts           = "shorts"
+	CollectionClicks           = "clicks"
+	CollectionClicksCounts     = "clicks_counts"
+	CollectionClicksCounty     = "clicks_country"
+	CollectionClicksAggregated = "clicks_aggregated"
 )
 
 var (
+	logger         *slog.Logger
+	once           sync.Once
 	clientInstance *mongo.Client
 	clientOnce     sync.Once
 )
+
+func InitMongoPackage(_logger *slog.Logger) {
+	once.Do(func() {
+		initMetrics()
+		logger = _logger
+	})
+}
 
 func GetMongoClient() (*mongo.Client, error) {
 	clientOnce.Do(func() {
@@ -62,34 +73,65 @@ func CloseClientDB() {
 }
 
 // InitMongoCollections sets up indexes/collections. Call once during startup.
-func InitMongoCollections(mongo_client *mongo.Client) {
-	// 1) Ensure CollectionShorts has a unique index on "short".
-	urlsColl := mongo_client.Database(database).Collection(CollectionShorts)
-	indexModel := mongo.IndexModel{
+func InitMongoCollections(mongoClient *mongo.Client) {
+	ctx := context.Background()
+
+	// 1) Index für Kurz-URLs
+	urlsColl := mongoClient.Database(database).Collection(CollectionShorts)
+
+	shortIndex := mongo.IndexModel{
 		Keys:    bson.M{"short": 1},
 		Options: options.Index().SetUnique(true),
 	}
-	if _, err := urlsColl.Indexes().CreateOne(context.Background(), indexModel); err != nil && !mongo.IsDuplicateKeyError(err) {
-		log.Fatalf("Failed to create index on 'urls.short': %v", err)
+	if _, err := urlsColl.Indexes().CreateOne(ctx, shortIndex); err != nil && !mongo.IsDuplicateKeyError(err) {
+		log.Fatalf("Failed to create index on 'short': %v", err)
 	}
 
-	// 2) Create an index on "userID" for quick access to short URLs owned by users.
-	userIndexModel := mongo.IndexModel{
+	userIndex := mongo.IndexModel{
 		Keys: bson.M{"userID": 1},
 	}
-	if _, err := urlsColl.Indexes().CreateOne(context.Background(), userIndexModel); err != nil {
-		log.Fatalf("Failed to create index on 'urls.userID': %v", err)
+	if _, err := urlsColl.Indexes().CreateOne(ctx, userIndex); err != nil {
+		log.Fatalf("Failed to create index on 'userID': %v", err)
 	}
 
-	// 3) Create or validate the time-series "clicks" collection.
-	err := CreateTimeSeriesCollection(mongo_client, database, CollectionClicks)
-	if err != nil {
+	// 2) Time-series clicks collection
+	if err := CreateTimeSeriesCollection(mongoClient, database, CollectionClicks); err != nil {
 		log.Fatalf("Could not create time-series collection: %v", err)
 	}
 
-	// 4) Create or validate the time-series "click_counts" collection.
-	err = CreateTimeSeriesCollection(mongo_client, database, CollectionClicksCounts)
-	if err != nil {
+	// 3) Time-series click_counts collection (z. B. für sekundäre Zählungen)
+	if err := CreateTimeSeriesCollection(mongoClient, database, CollectionClicksCounts); err != nil {
 		log.Fatalf("Could not create time-series collection: %v", err)
+	}
+
+	// 4) Aggregierte Klickdaten
+	aggColl := mongoClient.Database(database).Collection(CollectionClicksAggregated)
+
+	// Neue Struktur: Index auf echte Felder statt auf _id
+	indexes := []mongo.IndexModel{
+		{
+			Keys: bson.D{
+				{Key: "shortUrl", Value: 1},
+				{Key: "resolution", Value: 1},
+				{Key: "timestamp", Value: 1},
+			},
+			Options: options.Index().SetName("short_resolution_timestamp_idx").SetUnique(true),
+		},
+		// Optional: Für spätere Filter / Drilldowns
+		// {
+		// 	Keys: bson.D{
+		// 		{Key: "shortUrl", Value: 1},
+		// 		{Key: "timestamp", Value: 1},
+		// 		{Key: "browser", Value: 1},
+		// 		{Key: "country", Value: 1},
+		// 	},
+		// 	Options: options.Index().
+		// 		SetName("detailed_access_idx").
+		// 		SetSparse(true),
+		// },
+	}
+
+	if _, err := aggColl.Indexes().CreateMany(ctx, indexes); err != nil {
+		log.Fatalf("Failed to create indexes for clicks_aggregated: %v", err)
 	}
 }

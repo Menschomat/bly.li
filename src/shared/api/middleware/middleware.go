@@ -15,12 +15,12 @@ func SlogLogger(logger *slog.Logger) func(next http.Handler) http.Handler {
 			ww := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
 			next.ServeHTTP(ww, r)
 			logger.Debug("HTTP request",
-				slog.String("method", r.Method),
-				slog.String("path", r.URL.Path),
-				slog.Int("status", ww.Status()),
-				slog.Duration("duration", time.Since(start)),
-				slog.String("remote", r.RemoteAddr),
-				slog.String("user_agent", r.UserAgent()),
+				"method", r.Method,
+				"path", r.URL.Path,
+				"status", ww.Status(),
+				"duration", time.Since(start),
+				"remote", r.RemoteAddr,
+				"user_agent", r.UserAgent(),
 			)
 		}
 		return http.HandlerFunc(fn)

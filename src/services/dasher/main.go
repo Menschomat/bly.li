@@ -76,6 +76,7 @@ func (p *Server) GetShortAll(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	logger.Info("Starting")
+	mongo.InitMongoPackage(logger)
 	r := chi.NewRouter()
 	r.Use(mw.SlogLogger(logger))
 	r.Use(oidc.JWTVerifier)

@@ -8,7 +8,6 @@ import (
 	"github.com/Menschomat/bly.li/shared/utils/logging"
 )
 
-// GetShort FindPets implements all the handlers in the ServerInterface
 func GetShort(short string) *model.ShortURL {
 	if utils.IsValidShort(short) {
 		url, err := redis.GetShort(short)

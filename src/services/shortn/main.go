@@ -125,7 +125,7 @@ func (s *Server) PostStore(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	logger.Info("Starting")
-
+	mongo.InitMongoPackage(logger)
 	defer mongo.CloseClientDB()
 
 	r := chi.NewRouter()

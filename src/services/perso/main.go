@@ -12,6 +12,7 @@ import (
 	"github.com/Menschomat/bly.li/services/perso/logging"
 	"github.com/Menschomat/bly.li/services/perso/persistence"
 	"github.com/Menschomat/bly.li/services/perso/tracking"
+	"github.com/Menschomat/bly.li/shared/mongo"
 	"github.com/Menschomat/bly.li/shared/scheduler"
 	"github.com/go-chi/chi/v5"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -23,6 +24,7 @@ var (
 
 func main() {
 	logger.Info("Starting")
+	mongo.InitMongoPackage(logger)
 	//Schedulers------------------------------
 	unsavedScheduler := scheduler.NewScheduler("persistance", 10*time.Second, persistence.PersistUnsaved, logger)
 	// New scheduler job to cleanup acknowledged stream messages every minute.
@@ -31,13 +33,16 @@ func main() {
 	aggregator := tracking.NewClickAggregator()
 
 	// New scheduler task to flush aggregated clicks every 5 minutes.
-	aggregatorFlushScheduler := scheduler.NewScheduler("aggregation", 30*time.Second, func() {
+	clickFlushScheduler := scheduler.NewScheduler("click-handling", 30*time.Second, func() {
 		aggregated := aggregator.Flush()
 		if len(aggregated) > 0 {
 			tracking.PersistAggregatedClicks(aggregated)
 		} else {
 			logger.Debug("No aggregated clicks to persist.")
 		}
+	}, logger)
+	aggregatorScheduler := scheduler.NewScheduler("aggregation", 1*time.Minute, func() {
+		tracking.AggregateClicks()
 	}, logger)
 	// Create a cancellable context for graceful shutdown of the consumer.
 	ctx, cancel := context.WithCancel(context.Background())
@@ -71,7 +76,8 @@ func main() {
 	// Stop the scheduler.
 	unsavedScheduler.Stop()
 	cleanupScheduler.Stop()
-	aggregatorFlushScheduler.Stop()
+	clickFlushScheduler.Stop()
+	aggregatorScheduler.Stop()
 
 	// Cancel the consumer context to shut it down gracefully.
 	cancel()

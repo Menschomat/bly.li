@@ -11,7 +11,7 @@ import (
 
 var (
 	cleanedStreamEvents = prometheus.NewCounter(prometheus.CounterOpts{
-		Name: "stream_events_cleaned_total",
+		Name: "blyli_stream_events_cleaned_total",
 		Help: "Total number of clicks handled by blowup",
 	})
 	logger = logging.GetLogger()

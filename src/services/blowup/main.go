@@ -10,6 +10,7 @@ import (
 	mw "github.com/Menschomat/bly.li/shared/api/middleware"
 	"github.com/Menschomat/bly.li/shared/data"
 	"github.com/Menschomat/bly.li/shared/model"
+	"github.com/Menschomat/bly.li/shared/mongo"
 	"github.com/Menschomat/bly.li/shared/redis"
 	"github.com/Menschomat/bly.li/shared/utils"
 	apiUtils "github.com/Menschomat/bly.li/shared/utils/api"
@@ -25,7 +26,7 @@ import (
 
 var (
 	registedClicks = prometheus.NewCounter(prometheus.CounterOpts{
-		Name: "click_registered_total",
+		Name: "blyli_click_registered_total",
 		Help: "Total number of clicks handled by blowup",
 	})
 	logger                     = logging.GetLogger()
@@ -56,7 +57,7 @@ func (p *Server) GetShort(w http.ResponseWriter, r *http.Request, short string) 
 
 func main() {
 	logger.Info("Starting")
-
+	mongo.InitMongoPackage(logger)
 	// Initialize router
 	r := chi.NewRouter()
 	r.Use(middleware.Recoverer)
