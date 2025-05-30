@@ -14,6 +14,7 @@ import (
 	"github.com/Menschomat/bly.li/services/perso/tracking"
 	"github.com/Menschomat/bly.li/shared/mongo"
 	"github.com/Menschomat/bly.li/shared/scheduler"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
@@ -22,31 +23,62 @@ var (
 	logger = logging.GetLogger()
 )
 
-func main() {
-	logger.Info("Starting")
-	mongo.InitMongoPackage(logger)
-	//Schedulers------------------------------
-	unsavedScheduler := scheduler.NewScheduler("persistance", 10*time.Second, persistence.PersistUnsaved, logger)
-	// New scheduler job to cleanup acknowledged stream messages every minute.
-	cleanupScheduler := scheduler.NewScheduler("clean-up", 10*time.Second, cleanup.CleanupStream, logger)
-	// Create the aggregator for click events.
-	aggregator := tracking.NewClickAggregator()
+// schedulerJob wraps configuration for background scheduler tasks.
+type schedulerJob struct {
+	name     string
+	interval time.Duration
+	task     func()
+}
 
-	// New scheduler task to flush aggregated clicks every 5 minutes.
-	clickFlushScheduler := scheduler.NewScheduler("click-handling", 30*time.Second, func() {
-		aggregated := aggregator.Flush()
-		if len(aggregated) > 0 {
-			tracking.PersistAggregatedClicks(aggregated)
-		} else {
-			logger.Debug("No aggregated clicks to persist.")
-		}
-	}, logger)
-	aggregatorScheduler := scheduler.NewScheduler("aggregation", 1*time.Minute, func() {
-		tracking.AggregateClicks()
-	}, logger)
-	// Create a cancellable context for graceful shutdown of the consumer.
+func main() {
+	logger.Info("Starting perso service")
+	mongo.InitMongoPackage(logger)
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+
+	// Set up all scheduler jobs in a slice for consistency and easier maintenance.
+	aggregator := tracking.NewClickAggregator()
+	jobs := []struct {
+		name     string
+		interval time.Duration
+		job      scheduler.Job
+	}{
+		{
+			name:     "persistance",
+			interval: 10 * time.Second,
+			job:      scheduler.FuncJob(persistence.PersistUnsaved),
+		},
+		{
+			name:     "clean-up",
+			interval: 10 * time.Second,
+			job:      scheduler.FuncJob(cleanup.CleanupStream),
+		},
+		{
+			name:     "click-handling",
+			interval: 30 * time.Second,
+			job: scheduler.FuncJob(func() {
+				aggregated := aggregator.Flush()
+				if len(aggregated) > 0 {
+					tracking.PersistAggregatedClicks(aggregated)
+				} else {
+					logger.Debug("No aggregated clicks to persist.")
+				}
+			}),
+		},
+		{
+			name:     "aggregation",
+			interval: 1 * time.Minute,
+			job:      scheduler.FuncJob(tracking.AggregateClicks),
+		},
+	}
+
+	// Start all schedulers and track them for shutdown.
+	var schedulers []*scheduler.Scheduler
+	for _, job := range jobs {
+		s := scheduler.NewScheduler(job.name, job.interval, job.job, logger)
+		schedulers = append(schedulers, s)
+	}
 
 	// Start the Redis stream consumer in its own goroutine.
 	go tracking.RunConsumer(ctx, aggregator)
@@ -54,18 +86,31 @@ func main() {
 	serverErrChan := make(chan error, 1)
 
 	// --- Metrics router on a 2nd port ---
-	go func() {
-		//Metrics---------------------------------
-		cleanup.InitMetrics()
-		metricsRouter := chi.NewRouter()
-		metricsRouter.Handle("/metrics", promhttp.Handler())
-		logger.Info("Prometheus metrics available on :2115/metrics")
-		serverErrChan <- http.ListenAndServe(":2115", metricsRouter)
-	}()
+	go startMetricsServer(serverErrChan)
 
 	// Handle shutdown signals.
+	waitForShutdown(serverErrChan, schedulers, cancel)
+	logger.Info("Server shut down successfully.")
+}
+
+// startMetricsServer runs the Prometheus metrics endpoint.
+func startMetricsServer(errChan chan<- error) {
+	cleanup.InitMetrics()
+	metricsRouter := chi.NewRouter()
+	metricsRouter.Handle("/metrics", promhttp.Handler())
+	logger.Info("Prometheus metrics available on :2115/metrics")
+	errChan <- http.ListenAndServe(":2115", metricsRouter)
+}
+
+// waitForShutdown handles graceful shutdown and resource cleanup.
+func waitForShutdown(
+	serverErrChan <-chan error,
+	schedulers []*scheduler.Scheduler,
+	cancel context.CancelFunc,
+) {
 	stopChan := make(chan os.Signal, 1)
 	signal.Notify(stopChan, os.Interrupt, syscall.SIGTERM)
+
 	select {
 	case err := <-serverErrChan:
 		logger.Error("Server error", "error", err)
@@ -73,16 +118,12 @@ func main() {
 		logger.Info("Shutdown signal received. Stopping scheduler and consumer...")
 	}
 
-	// Stop the scheduler.
-	unsavedScheduler.Stop()
-	cleanupScheduler.Stop()
-	clickFlushScheduler.Stop()
-	aggregatorScheduler.Stop()
+	// Stop all schedulers gracefully.
+	for _, s := range schedulers {
+		s.Stop()
+	}
 
-	// Cancel the consumer context to shut it down gracefully.
+	// Cancel the consumer context.
 	cancel()
-
-	// Optionally, wait a bit for cleanup.
-	time.Sleep(5 * time.Second)
-	logger.Info("Server shut down successfully.")
+	time.Sleep(5 * time.Second) // Allow time for cleanup if needed.
 }

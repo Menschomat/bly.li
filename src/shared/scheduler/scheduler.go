@@ -6,34 +6,41 @@ import (
 	"time"
 )
 
-// Scheduler struct with a user-defined function
+// Job defines the contract for tasks that can be scheduled.
+type Job interface {
+	Run()
+}
+type FuncJob func()
+
+func (f FuncJob) Run() { f() }
+
+// Scheduler runs a Job periodically with proper resource management.
 type Scheduler struct {
 	ctx    context.Context
 	name   string
 	cancel context.CancelFunc
 	ticker *time.Ticker
-	job    func() // Function to execute
+	job    Job
 	logger *slog.Logger
 }
 
-// NewScheduler initializes a scheduler with a custom function
-func NewScheduler(name string, interval time.Duration, job func(), logger *slog.Logger) *Scheduler {
+// NewScheduler initializes a scheduler with a Job interface.
+func NewScheduler(name string, interval time.Duration, job Job, logger *slog.Logger) *Scheduler {
 	ctx, cancel := context.WithCancel(context.Background())
 	s := &Scheduler{
 		ctx:    ctx,
 		name:   name,
 		cancel: cancel,
 		ticker: time.NewTicker(interval),
-		job:    job, // Store the provided function
+		job:    job,
 		logger: logger,
 	}
 	s.logger.Info("Scheduler created", "name", s.name)
-	// Start scheduler in a separate goroutine
 	go s.start()
 	return s
 }
 
-// Start running tasks at intervals
+// start runs the scheduled job at defined intervals.
 func (s *Scheduler) start() {
 	s.logger.Info("Scheduler starting", "name", s.name)
 	for {
@@ -42,15 +49,14 @@ func (s *Scheduler) start() {
 			s.logger.Info("Scheduler stopped", "name", s.name)
 			return
 		case <-s.ticker.C:
-			// Run the user-defined function in a separate goroutine
-			go s.job()
+			go s.job.Run() // Run the Job in a separate goroutine
 		}
 	}
 }
 
-// Stop the scheduler
+// Stop stops the scheduler and releases resources.
 func (s *Scheduler) Stop() {
-	s.cancel() // Cancel context
+	s.cancel()
 	s.ticker.Stop()
 	s.logger.Info("Scheduler fully stopped", "name", s.name)
 }

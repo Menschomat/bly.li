@@ -7,62 +7,74 @@ import (
 	"github.com/Menschomat/bly.li/services/perso/logging"
 	r "github.com/Menschomat/bly.li/shared/redis"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/redis/go-redis/v9"
 )
 
 var (
 	cleanedStreamEvents = prometheus.NewCounter(prometheus.CounterOpts{
 		Name: "blyli_stream_events_cleaned_total",
-		Help: "Total number of clicks handled by blowup",
+		Help: "Total number of cleaned stream events",
 	})
 	logger = logging.GetLogger()
 )
 
+// InitMetrics registers Prometheus metrics for cleanup events.
 func InitMetrics() {
 	prometheus.MustRegister(cleanedStreamEvents)
 }
 
-// cleanupStream is a scheduled job that deletes messages that have been fully acknowledged.
-// It determines a "safe" cutoff using XPENDING and then deletes messages with IDs less than that cutoff.
+// CleanupStream deletes fully acknowledged messages from the Redis stream.
+// It works by determining a "safe" cutoff ID using XPENDING, then deleting messages older than this.
 func CleanupStream() {
-	// Create a short-lived context for cleanup.
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	// Create a new Redis client.
 	client := r.GetRedisClient()
-	streamKey := "blowup_action_click"
-	groupName := "blowup_action_click_group"
+	const (
+		streamKey = "blowup_action_click"
+		groupName = "blowup_action_click_group"
+		batchSize = 100
+	)
 
-	// Get pending message info for the consumer group.
+	trimUpToID, ok := findCleanupBoundary(ctx, client, streamKey, groupName)
+	if !ok {
+		return // Already logged; nothing to delete or error occurred.
+	}
+
+	deletedCount := deleteMessagesBeforeID(ctx, client, streamKey, trimUpToID, batchSize)
+	cleanedStreamEvents.Add(float64(deletedCount))
+	logger.Info("Cleanup completed", "deleted", deletedCount, "safeID", trimUpToID)
+}
+
+// findCleanupBoundary computes the "safe" ID up to which messages can be deleted.
+func findCleanupBoundary(ctx context.Context, client *redis.Client, streamKey, groupName string) (string, bool) {
 	pending, err := client.XPending(ctx, streamKey, groupName).Result()
 	if err != nil {
 		logger.Error("Error getting XPENDING info", "err", err)
-		return
+		return "", false
 	}
-
-	var trimUpToID string
 	if pending.Count > 0 {
-		trimUpToID = pending.Lower
-	} else {
-		// Get the ID of the newest message in the stream
-		entries, err := client.XRevRangeN(ctx, streamKey, "+", "-", 1).Result()
-		if err != nil {
-			logger.Error("Error getting latest stream ID", "err", err)
-			return
-		}
-		if len(entries) == 0 {
-			// Stream is already empty
-			logger.Info("Stream already empty, nothing to clean.")
-			return
-		}
-		trimUpToID = entries[0].ID
+		return pending.Lower, true
 	}
 
-	// Delete messages with IDs less than safeID in batches.
+	entries, err := client.XRevRangeN(ctx, streamKey, "+", "-", 1).Result()
+	if err != nil {
+		logger.Error("Error getting latest stream ID", "err", err)
+		return "", false
+	}
+	if len(entries) == 0 {
+		logger.Info("Stream already empty, nothing to clean.")
+		return "", false
+	}
+	return entries[0].ID, true
+}
+
+// deleteMessagesBeforeID repeatedly deletes batches of messages before the provided ID.
+func deleteMessagesBeforeID(ctx context.Context, client *redis.Client, streamKey, upToID string, batchSize int) int64 {
 	var totalDeleted int64
+
 	for {
-		// Fetch a batch of up to 100 messages older than safeID.
-		entries, err := client.XRangeN(ctx, streamKey, "-", trimUpToID, 100).Result()
+		entries, err := client.XRangeN(ctx, streamKey, "-", upToID, int64(batchSize)).Result()
 		if err != nil {
 			logger.Error("Error reading XRANGE", "err", err)
 			break
@@ -71,12 +83,11 @@ func CleanupStream() {
 			break
 		}
 
-		ids := make([]string, 0, len(entries))
-		for _, entry := range entries {
-			ids = append(ids, entry.ID)
+		ids := make([]string, len(entries))
+		for i, entry := range entries {
+			ids[i] = entry.ID
 		}
 
-		// Delete the batch of messages.
 		n, err := client.XDel(ctx, streamKey, ids...).Result()
 		if err != nil {
 			logger.Error("Error deleting messages", "err", err)
@@ -84,14 +95,10 @@ func CleanupStream() {
 		}
 		totalDeleted += n
 
-		// If fewer than 100 messages were returned, we assume we're done.
-		if len(entries) < 100 {
+		if len(entries) < batchSize {
 			break
 		}
 	}
-	cleanedStreamEvents.Add(float64(totalDeleted))
-	logger.Info("Cleanup completed",
-		"deleted", totalDeleted,
-		"safeID", trimUpToID,
-	)
+
+	return totalDeleted
 }

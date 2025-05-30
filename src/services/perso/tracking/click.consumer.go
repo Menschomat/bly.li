@@ -38,103 +38,134 @@ func NewClickAggregator() *ClickAggregator {
 func (agg *ClickAggregator) Add(click model.ShortClick) {
 	agg.mu.Lock()
 	defer agg.mu.Unlock()
-
-	// Append click to the slice for the given short.
 	agg.groups[click.Short] = append(agg.groups[click.Short], click)
 }
 
-// Flush retrieves and resets the current groups.
+// Flush retrieves and resets the current groups atomically.
 func (agg *ClickAggregator) Flush() map[string][]model.ShortClick {
 	agg.mu.Lock()
 	defer agg.mu.Unlock()
-
-	// Copy current groups and reset.
 	flushed := agg.groups
 	agg.groups = make(map[string][]model.ShortClick)
 	return flushed
 }
 
-// persistAggregatedClicks processes the aggregated clicks.
-// For each short, it calls your persist function (e.g., saving to MongoDB).
+// PersistAggregatedClicks processes the aggregated clicks per short.
+// For each short, it persists the click count and updates necessary stores.
 func PersistAggregatedClicks(aggregated map[string][]model.ShortClick) {
-	summedClicks := []model.ShortClick{}
+	var allClicks []model.ShortClick
 	for short, clicks := range aggregated {
-		increment := len(clicks)
-		logger.Info("Persisting clicks for short",
-			"clicks", increment,
-			"short", short,
-		)
-		mongo.InsetTimeseriesDoc(short, increment, time.Now())
+		count := len(clicks)
+		logger.Info("Persisting clicks for short", "clicks", count, "short", short)
+
+		// Persist count in time series (MongoDB)
+		mongo.InsetTimeseriesDoc(short, count, time.Now())
+
+		// Update the short's total click count in both redis and mark as unsaved
 		s := data.GetShort(short)
 		if s != nil {
-			s.Count += increment
-			err := r.StoreUrl(s.Short, s.URL, s.Count, s.Owner)
-			l.LogRedisError(err)
+			s.Count += count
+			if err := r.StoreUrl(s.Short, s.URL, s.Count, s.Owner); err != nil {
+				l.LogRedisError(err)
+			}
 			r.MarkUnsaved(s.Short)
 		}
-		summedClicks = append(summedClicks, clicks...)
+		allClicks = append(allClicks, clicks...)
 	}
-	mongo.InsetTimeseriesData("clicks", summedClicks)
+	mongo.InsetTimeseriesData("clicks", allClicks)
 }
 
-// runConsumer starts a Redis stream consumer that aggregates click events.
+// RunConsumer continuously reads click events from a Redis stream and aggregates them.
 func RunConsumer(ctx context.Context, aggregator *ClickAggregator) {
 	client := r.GetRedisClient()
+	const (
+		streamKey = "blowup_action_click"
+		groupName = "blowup_action_click_group"
+		blockTime = 5 * time.Second
+		batchSize = 1
+	)
+	consumerName := uuid.NewString() // Unique consumer name for this instance
 
-	streamKey := "blowup_action_click"
-	groupName := "blowup_action_click_group"
-	consumerName := uuid.NewString() // Unique consumer name
-
-	// Create the consumer group if it doesn't exist.
-	err := client.XGroupCreateMkStream(ctx, streamKey, groupName, "0").Err()
-	if err != nil && err.Error() != "BUSYGROUP Consumer Group name already exists" {
+	if err := createConsumerGroup(ctx, client, streamKey, groupName); err != nil {
 		logger.Error("Could not create consumer group", "err", err)
 		os.Exit(1)
 	}
 	logger.Info("Consumer started. Waiting for messages...")
+
 	for {
 		select {
 		case <-ctx.Done():
 			logger.Info("Consumer shutting down...")
 			return
 		default:
-			// XREADGROUP blocks for 5 seconds if no messages are available.
-			streams, err := client.XReadGroup(ctx, &redis.XReadGroupArgs{
-				Group:    groupName,
-				Consumer: consumerName,
-				Streams:  []string{streamKey, ">"},
-				Count:    1,
-				Block:    5 * time.Second,
-			}).Result()
+			processStreamMessages(ctx, client, aggregator, streamKey, groupName, consumerName, batchSize, blockTime)
+		}
+	}
+}
 
-			if err != nil {
-				if err == redis.Nil {
-					continue // No messages available.
-				}
-				logger.Error("Error reading from stream", "err", err)
+// createConsumerGroup ensures the Redis consumer group exists.
+func createConsumerGroup(ctx context.Context, client *redis.Client, streamKey, groupName string) error {
+	err := client.XGroupCreateMkStream(ctx, streamKey, groupName, "0").Err()
+	if err != nil && err.Error() != "BUSYGROUP Consumer Group name already exists" {
+		return err
+	}
+	return nil
+}
+
+// processStreamMessages reads and acknowledges messages from the Redis stream.
+func processStreamMessages(
+	ctx context.Context,
+	client *redis.Client,
+	aggregator *ClickAggregator,
+	streamKey, groupName, consumerName string,
+	batchSize int,
+	block time.Duration,
+) {
+	streams, err := client.XReadGroup(ctx, &redis.XReadGroupArgs{
+		Group:    groupName,
+		Consumer: consumerName,
+		Streams:  []string{streamKey, ">"},
+		Count:    int64(batchSize),
+		Block:    block,
+	}).Result()
+	if err != nil {
+		if err == redis.Nil {
+			return // No messages available, continue loop
+		}
+		logger.Error("Error reading from stream", "err", err)
+		return
+	}
+
+	for _, stream := range streams {
+		for _, message := range stream.Messages {
+			clickEvent, ok := parseClickEvent(message)
+			if !ok {
 				continue
 			}
-			// Process messages.
-			for _, stream := range streams {
-				for _, message := range stream.Messages {
-					dataStr, ok := message.Values["data"].(string)
-					if !ok {
-						logger.Warn("Message missing 'data' field or it is not a string", "message_id", message.ID)
-						continue
-					}
-					var clickEvent model.ShortClick
-					if err := json.Unmarshal([]byte(dataStr), &clickEvent); err != nil {
-						logger.Error("Error unmarshaling message", "message_id", message.ID, "err", err)
-						continue
-					}
-					// Add the click event to the aggregator.
-					aggregator.Add(clickEvent)
-					// Acknowledge the message.
-					if _, err := client.XAck(ctx, streamKey, groupName, message.ID).Result(); err != nil {
-						logger.Error("Error acknowledging message", "message_id", message.ID, "err", err)
-					}
-				}
-			}
+			aggregator.Add(clickEvent)
+			acknowledgeMessage(ctx, client, streamKey, groupName, message.ID)
 		}
+	}
+}
+
+// parseClickEvent safely extracts and unmarshals a ShortClick event from a Redis message.
+func parseClickEvent(message redis.XMessage) (model.ShortClick, bool) {
+	dataStr, ok := message.Values["data"].(string)
+	if !ok {
+		logger.Warn("Message missing 'data' field or it is not a string", "message_id", message.ID)
+		return model.ShortClick{}, false
+	}
+	var clickEvent model.ShortClick
+	if err := json.Unmarshal([]byte(dataStr), &clickEvent); err != nil {
+		logger.Error("Error unmarshaling message", "message_id", message.ID, "err", err)
+		return model.ShortClick{}, false
+	}
+	return clickEvent, true
+}
+
+// acknowledgeMessage acknowledges the consumption of a message in the Redis stream.
+func acknowledgeMessage(ctx context.Context, client *redis.Client, streamKey, groupName, messageID string) {
+	if _, err := client.XAck(ctx, streamKey, groupName, messageID).Result(); err != nil {
+		logger.Error("Error acknowledging message", "message_id", messageID, "err", err)
 	}
 }

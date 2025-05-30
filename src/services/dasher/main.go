@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -18,70 +19,95 @@ import (
 
 var (
 	logger                     = logging.GetLogger()
-	_      api.ServerInterface = (*Server)(nil)
+	_      api.ServerInterface = (*DasherServer)(nil)
 )
 
-type Server struct{}
+// DasherServer implements the API interface.
+type DasherServer struct{}
 
-func checkOwner(short string) (string, error) {
-	u, err := redis.GetShort(short)
-	if err == nil && u != nil && u.Owner != "" {
+// getShortURLOwner attempts to find the owner of the short url in Redis and MongoDB.
+func getShortURLOwner(ctx context.Context, short string) (string, error) {
+	if u, err := redis.GetShort(short); err == nil && u != nil && u.Owner != "" {
 		return u.Owner, nil
 	}
-	u, err = mongo.GetShortURLByShort(short)
-	if err == nil && u != nil && u.Owner != "" {
+	if u, err := mongo.GetShortURLByShort(short); err == nil && u != nil && u.Owner != "" {
 		return u.Owner, nil
 	}
 	return "", errors.New("owner not found")
 }
 
-func (p *Server) DeleteShortShort(w http.ResponseWriter, r *http.Request, short string) {
+// DeleteShortShort deletes a short URL if the current user is the owner.
+func (s *DasherServer) DeleteShortShort(w http.ResponseWriter, r *http.Request, short string) {
 	usrInfo, err := oidc.GetUsrInfoFromCtx(r.Context())
 	if err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		logger.Error("Failed to get user info from context", "error", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 
-	owner, err := checkOwner(short)
+	owner, err := getShortURLOwner(r.Context(), short)
 	if err != nil || owner != usrInfo.Email {
-		http.Error(w, "Forbidden", http.StatusForbidden)
+		http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
 		return
 	}
 
-	if err := redis.DeleteUrl(short); err != nil && redis.ShortExists(short) {
-		http.Error(w, "Failed to delete from Redis", http.StatusInternalServerError)
+	if err := deleteShortFromStores(short); err != nil {
+		logger.Error("Failed to delete short URL", "short", short, "error", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
-	if err := mongo.DeleteShortURLByShort(short); err != nil && mongo.ShortExists(short) {
-		http.Error(w, "Failed to delete from Mongo", http.StatusInternalServerError)
-		return
-	}
+	w.WriteHeader(http.StatusNoContent)
 }
-func (p *Server) GetShortAll(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
+
+// deleteShortFromStores attempts to remove the short URL from both Redis and MongoDB.
+func deleteShortFromStores(short string) error {
+	// Attempt deletion from Redis (ignore not found)
+	if err := redis.DeleteUrl(short); err != nil && redis.ShortExists(short) {
+		return errors.New("failed to delete from Redis")
+	}
+
+	// Attempt deletion from MongoDB (ignore not found)
+	if err := mongo.DeleteShortURLByShort(short); err != nil && mongo.ShortExists(short) {
+		return errors.New("failed to delete from MongoDB")
+	}
+
+	return nil
+}
+
+// GetShortAll returns all short URLs owned by the authenticated user.
+func (s *DasherServer) GetShortAll(w http.ResponseWriter, r *http.Request) {
 	usrInfo, err := oidc.GetUsrInfoFromCtx(r.Context())
 	if err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		logger.Error("Failed to get user info from context", "error", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
+
 	shorts := mongo.GetShortsByOwner(usrInfo.Email)
-	payload, err := json.Marshal(shorts)
-	if err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+	responseJSON(w, shorts, http.StatusOK)
+}
+
+// responseJSON marshals data to JSON and writes it to the response.
+func responseJSON(w http.ResponseWriter, data interface{}, status int) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	if err := json.NewEncoder(w).Encode(data); err != nil {
+		// If JSON encoding fails, log and return 500.
+		logger.Error("Failed to encode response JSON", "error", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}
-	w.WriteHeader(http.StatusOK)
-	w.Write(payload)
 }
 
 func main() {
-	logger.Info("Starting")
+	logger.Info("Starting dasher service")
 	mongo.InitMongoPackage(logger)
-	r := chi.NewRouter()
-	r.Use(mw.SlogLogger(logger))
-	r.Use(mw.InstrumentHandler)
-	r.Use(oidc.JWTVerifier)
-	r.Use(cors.Handler(cors.Options{
+	defer mongo.CloseClientDB()
+
+	router := chi.NewRouter()
+	router.Use(mw.SlogLogger(logger))
+	router.Use(mw.InstrumentHandler)
+	router.Use(oidc.JWTVerifier)
+	router.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   []string{"https://*", "http://*"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"*"},
@@ -89,11 +115,11 @@ func main() {
 		AllowCredentials: false,
 		MaxAge:           300,
 	}))
-	server := &Server{}
-	api.HandlerFromMux(server, r)
-	if err := http.ListenAndServe(":8083", r); err != nil {
-		logger.Error("There's an error with the server", "error", err)
-		return
+
+	apiHandler := &DasherServer{}
+	api.HandlerFromMux(apiHandler, router)
+
+	if err := http.ListenAndServe(":8083", router); err != nil {
+		logger.Error("Server error", "error", err)
 	}
-	defer mongo.CloseClientDB()
 }
