@@ -31,6 +31,8 @@ FROM nginx:alpine-slim
 # Remove the default NGINX website
 RUN rm -rf /usr/share/nginx/html/*
 
+COPY nginx.conf /etc/nginx/nginx.conf
+
 # Copy the built Angular app from the build stage
 COPY --from=build /app/dist/front/browser /usr/share/nginx/html
 
