@@ -84,7 +84,7 @@ jobs:
     needs: setup_docker
     strategy:
       matrix:
-        service: [blowup, shortn, dasher]
+        service: [blowup, shortn, dasher, perso]
     steps:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
