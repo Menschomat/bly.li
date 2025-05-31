@@ -2,7 +2,7 @@
 
 # bly.li
 
-### Welcome to bly.li: A calable Short URL Service in GoLang
+### Welcome to bly.li: A scalable Short URL Service in GoLang
 
 Easily create and share memorable links to any webpage with bly.li! Simply input the URL you want to shorten, and our service will generate a concise link that you can share on social media, via email, or anywhere else.
 
@@ -25,44 +25,103 @@ Easily create and share memorable links to any webpage with bly.li! Simply input
 - **Statelessness**: All services are stateless, ensuring seamless performance even in the event of node failures. This also makes it easy to maintain and update individual components without affecting the overall system.
 - **Flexible Cache Management**: Redis can be used as a shared cache cluster or per-node read cache, providing flexibility in scaling depending on your specific needs.
 - **MongoDB Scalability**: MongoDB can be scaled using a shared cluster or via a cloud-based solution like MongoDB Atlas.
+- **Configurable Logging**: Centralized logging with Loki, configurable log levels and endpoints.
+- **OpenID Connect Integration**: Built-in OIDC support for secure authentication.
+- **Metrics & Monitoring**: Each service exposes a dedicated Prometheus metrics endpoint for comprehensive monitoring.
+- **Graceful Shutdown**: All services support graceful shutdown and cleanup of resources.
 
 <image style="background:darkgray; padding:1rem; margin:auto; border-radius:1rem" src="./etc/assets/blyli.arch.svg">
 
-| Service | Description                                                                                 |
-| ------- | ------------------------------------------------------------------------------------------- |
-| Traefik | Reverse-Proxy and Load-balancer                                                             |
-| Shortn  | Shortener-Service - Handels new shortn-requests and stores them into redis                  |
-| BlowUp  | Redirects to the saved URL - So it blows up the short-url to full and redirects via 302     |
-| Front   | Serves the Angular-Frontend for the stack                                                   |
-| Redis   | The data-platform for this app. Caches shortens and is used for messaging via redis Pub/Sub |
-| MongoDB | Used for Persistency                                                                        |
+### Services
 
-### Project-Structur
+| Service | Description                                                                                                        | Main Port | Metrics Port |
+| ------- | ------------------------------------------------------------------------------------------------------------------ | --------- | ------------ |
+| Traefik | Reverse-Proxy and Load-balancer                                                                                    | :80/:443  | -            |
+| Shortn  | Shortener-Service - Handles new shortn-requests, manages URL shortening with distributed counter system            | :8082     | :9082        |
+| BlowUp  | URL Resolution Service - Resolves short URLs to their original form and handles redirects with configurable status | :8081     | :9081        |
+| Dasher  | Dashboard Service - Provides analytics and management interface for shortened URLs                                 | :8083     | :9083        |
+| Perso   | Personalization Service - Handles user preferences and custom URL management with periodic cleanup                 | :8084     | :9084        |
+| Front   | Angular-based frontend with modern UI/UX, built with Tailwind CSS                                                  | :80       | -            |
+| Redis   | High-performance data store for URL mappings and inter-service communication via Pub/Sub                           | :6379     | -            |
+| MongoDB | Persistent storage for URL data and analytics                                                                      | :27017    | -            |
+
+### Environment Variables
+
+#### Shared Configuration
+| Variable    | Default                           | Description                           |
+| ----------- | --------------------------------- | ------------------------------------- |
+| LOKI_URL    | http://loki:3100/loki/api/v1/push | Loki logging endpoint                 |
+| LOKI_TENANT | single                            | Loki tenant ID                        |
+| LOG_LEVEL   | info                              | Logging level (debug/info/warn/error) |
+| INSTANCE_ID | [hostname]                        | Instance identifier for logging       |
+
+#### MongoDB Configuration
+| Variable         | Default                 | Description            |
+| ---------------- | ----------------------- | ---------------------- |
+| MONGO_DATABASE   | short_url_db            | MongoDB database name  |
+| MONGN_SERVER_URL | mongodb://mongodb:27017 | MongoDB connection URL |
+
+#### OIDC Configuration
+| Variable       | Default          | Description                 |
+| -------------- | ---------------- | --------------------------- |
+| OIDC_CLIENT_ID | 12345            | OpenID Connect client ID    |
+| OIDC_URL       | http://127.0.0.1 | OpenID Connect provider URL |
+
+#### Shortn Service Configuration
+| Variable               | Default            | Description                            |
+| ---------------------- | ------------------ | -------------------------------------- |
+| SERVER_PORT            | :8082              | HTTP server port                       |
+| METRICS_PORT           | :9082              | Prometheus metrics endpoint port       |
+| CORS_ALLOWED_ORIGINS   | https://*,http://* | Allowed CORS origins (comma-separated) |
+| CORS_MAX_AGE           | 300                | CORS preflight max age                 |
+| ZOOKEEPER_URL          | http://localhost   | Zookeeper server URL                   |
+| ZOOKEEPER_COUNTER_PATH | /counter           | Zookeeper counter path                 |
+
+#### BlowUp Service Configuration
+| Variable      | Default | Description                      |
+| ------------- | ------- | -------------------------------- |
+| SERVER_PORT   | :8081   | HTTP server port                 |
+| METRICS_PORT  | :9081   | Prometheus metrics endpoint port |
+| REDIRECT_CODE | 302     | HTTP redirect status code        |
+
+#### Dasher Service Configuration
+| Variable     | Default | Description                      |
+| ------------ | ------- | -------------------------------- |
+| SERVER_PORT  | :8083   | HTTP server port                 |
+| METRICS_PORT | :9083   | Prometheus metrics endpoint port |
+
+#### Perso Service Configuration
+| Variable         | Default | Description                      |
+| ---------------- | ------- | -------------------------------- |
+| SERVER_PORT      | :8084   | HTTP server port                 |
+| METRICS_PORT     | :9084   | Prometheus metrics endpoint port |
+| CLEANUP_INTERVAL | 24h     | Interval for cleanup operations  |
+
+### Project Structure
 
 ```
 └──src
     └──services
-    |   ├─-front
-    │   ├──shortn
-    │   └──blowup
-    └──shared
+    |   ├─-front    # Angular frontend application
+    │   ├──shortn   # URL shortening service with metrics
+    │   ├──blowup   # URL resolution service with metrics
+    │   ├──dasher   # Analytics dashboard service with metrics
+    │   └──perso    # User personalization service with metrics
+    └──shared       # Shared Go packages and utilities
+        ├──config   # Configuration management
+        ├──model    # Data models
+        ├──mongo    # MongoDB client and operations
+        ├──redis    # Redis client and operations
+        └──utils    # Shared utilities
 ```
-
-#### front - The Front-End
-
-The frontend is built using Angular. It serves as a single-page-application.
-For an easy styling the project uses tailwindcss.
-To manage dependencies and build tasks, we're using Bun as an alternative to npm.
-Bun performs great and speeds up package installations and building tasks.
 
 ### Deployment
 
-Deployment works via docker.
-Images are hosted on dockerhub. Feel free to use the docker-compose.demo.yml as a blueprint for your deployment.
+Deployment works via Docker. Images are hosted on DockerHub. Use the docker-compose.demo.yml as a blueprint for your deployment.
 
 | Service                  | URL                                                                                  | Tag    | Description                     |
 | ------------------------ | ------------------------------------------------------------------------------------ | ------ | ------------------------------- |
-| mensch0mat/bly.li.blowup | [hub.docker.com](https://hub.docker.com/repository/docker/mensch0mat/bly.li.blowup/) | latest | latest stable version           |
-| "                        | [hub.docker.com](https://hub.docker.com/repository/docker/mensch0mat/bly.li.blowup/) | main   | on push builds from main-branch |
-| mensch0mat/bly.li.shortn | [hub.docker.com](https://hub.docker.com/repository/docker/mensch0mat/bly.li.shortn/) | latest | latest stable version           |
-| "                        | [hub.docker.com](https://hub.docker.com/repository/docker/mensch0mat/bly.li.shortn/) | main   | on push builds from main-branch |
+| mensch0mat/bly.li.blowup | [hub.docker.com](https://hub.docker.com/repository/docker/mensch0mat/bly.li.blowup/) | latest | Latest stable version           |
+| "                        | [hub.docker.com](https://hub.docker.com/repository/docker/mensch0mat/bly.li.blowup/) | main   | On push builds from main branch |
+| mensch0mat/bly.li.shortn | [hub.docker.com](https://hub.docker.com/repository/docker/mensch0mat/bly.li.shortn/) | latest | Latest stable version           |
+| "                        | [hub.docker.com](https://hub.docker.com/repository/docker/mensch0mat/bly.li.shortn/) | main   | On push builds from main branch |

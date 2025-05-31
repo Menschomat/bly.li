@@ -5,6 +5,7 @@ import (
 	"os"
 	"sync"
 
+	"github.com/Menschomat/bly.li/shared/config"
 	"github.com/grafana/loki-client-go/loki"
 	slogloki "github.com/samber/slog-loki/v3"
 	slogmulti "github.com/samber/slog-multi"
@@ -17,14 +18,31 @@ var (
 
 func getHandler() slog.Handler {
 	once.Do(func() {
-		config, _ := loki.NewDefaultConfig("http://loki:3100/loki/api/v1/push")
-		config.TenantID = "single"
+		cfg := config.LoggingConfig()
+
+		config, _ := loki.NewDefaultConfig(cfg.LokiUrl)
+		config.TenantID = cfg.LokiTenant
 		client, _ := loki.New(config)
+
 		// Stdout handler
 		stdoutHandler := slog.NewJSONHandler(os.Stdout, nil)
+
+		// Parse log level
+		var logLevel slog.Level
+		switch cfg.LogLevel {
+		case "debug":
+			logLevel = slog.LevelDebug
+		case "warn":
+			logLevel = slog.LevelWarn
+		case "error":
+			logLevel = slog.LevelError
+		default:
+			logLevel = slog.LevelInfo
+		}
+
 		// Loki handler
 		lokiHandler := slogloki.Option{
-			Level:  slog.LevelInfo,
+			Level:  logLevel,
 			Client: client,
 			ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
 				// Remove all user fields (let only Labels map set the Loki labels)

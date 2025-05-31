@@ -49,13 +49,37 @@ func MongoConfig() *m.MongoDdConfig {
 	return managers.Mongo.MustGet()
 }
 
+func LoggingConfig() *m.LoggingConfig {
+	return managers.Logging.MustGet()
+}
+
+func BlowupConfig() *m.BlowupConfig {
+	return managers.Blowup.MustGet()
+}
+
+func DasherConfig() *m.DasherConfig {
+	return managers.Dasher.MustGet()
+}
+
+func PersoConfig() *m.PersoConfig {
+	return managers.Perso.MustGet()
+}
+
 // Manager registry
 var managers = struct {
-	Shortn *ConfigManager[m.ShortnConfig]
-	Oidc   *ConfigManager[m.OidcConfig]
-	Mongo  *ConfigManager[m.MongoDdConfig]
+	Shortn  *ConfigManager[m.ShortnConfig]
+	Oidc    *ConfigManager[m.OidcConfig]
+	Mongo   *ConfigManager[m.MongoDdConfig]
+	Logging *ConfigManager[m.LoggingConfig]
+	Blowup  *ConfigManager[m.BlowupConfig]
+	Dasher  *ConfigManager[m.DasherConfig]
+	Perso   *ConfigManager[m.PersoConfig]
 }{
-	Shortn: NewConfigManager[m.ShortnConfig](),
-	Oidc:   NewConfigManager[m.OidcConfig](),
-	Mongo:  NewConfigManager[m.MongoDdConfig](),
+	Shortn:  NewConfigManager[m.ShortnConfig](),
+	Oidc:    NewConfigManager[m.OidcConfig](),
+	Mongo:   NewConfigManager[m.MongoDdConfig](),
+	Logging: NewConfigManager[m.LoggingConfig](),
+	Blowup:  NewConfigManager[m.BlowupConfig](),
+	Dasher:  NewConfigManager[m.DasherConfig](),
+	Perso:   NewConfigManager[m.PersoConfig](),
 }

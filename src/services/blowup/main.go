@@ -11,6 +11,7 @@ import (
 	"github.com/Menschomat/bly.li/services/blowup/api"
 	"github.com/Menschomat/bly.li/services/blowup/logging"
 	mw "github.com/Menschomat/bly.li/shared/api/middleware"
+	"github.com/Menschomat/bly.li/shared/config"
 	"github.com/Menschomat/bly.li/shared/data"
 	"github.com/Menschomat/bly.li/shared/model"
 	"github.com/Menschomat/bly.li/shared/mongo"
@@ -37,6 +38,7 @@ var (
 	})
 
 	logger                     = logging.GetLogger()
+	cfg                        = config.BlowupConfig()
 	_      api.ServerInterface = (*server)(nil)
 )
 
@@ -67,7 +69,7 @@ func (s *server) GetShort(w http.ResponseWriter, r *http.Request, short string) 
 	})
 
 	clicksRegistered.Inc()
-	http.Redirect(w, r, shortURL.URL, http.StatusTemporaryRedirect)
+	http.Redirect(w, r, shortURL.URL, cfg.RedirectCode)
 }
 
 func main() {
@@ -113,14 +115,14 @@ func serveMetrics(errChan chan<- error) {
 	metricsRouter := chi.NewRouter()
 	metricsRouter.Handle("/metrics", promhttp.Handler())
 
-	logger.Info("Prometheus metrics available on :2114/metrics")
-	errChan <- http.ListenAndServe(":2114", metricsRouter)
+	logger.Info("Prometheus metrics available on " + cfg.MetricsPort + "/metrics")
+	errChan <- http.ListenAndServe(cfg.MetricsPort, metricsRouter)
 }
 
-// serveMainHTTP starts the main HTTP API on port 8081.
+// serveMainHTTP starts the main HTTP API.
 func serveMainHTTP(errChan chan<- error, handler http.Handler) {
-	logger.Info("Backend runs on :8081")
-	errChan <- http.ListenAndServe(":8081", handler)
+	logger.Info("Backend runs on " + cfg.ServerPort)
+	errChan <- http.ListenAndServe(cfg.ServerPort, handler)
 }
 
 // handleShutdown waits for server errors or shutdown signals and handles shutdown logic.

@@ -47,4 +47,31 @@ type MongoDdConfig struct {
 type ShortnConfig struct {
 	ZookeeperUrl         string `env:"ZOOKEEPER_URL, default=http://localhost"`
 	ZookeeperCounterPath string `env:"ZOOKEEPER_COUNTER_PATH, default=/counter"`
+	ServerPort           string `env:"SERVER_PORT, default=:8082"`
+	MetricsPort          string `env:"METRICS_PORT, default=:9082"`
+	CorsAllowedOrigins   string `env:"CORS_ALLOWED_ORIGINS, default=https://*,http://*"`
+	CorsMaxAge           int    `env:"CORS_MAX_AGE, default=300"`
+}
+
+type BlowupConfig struct {
+	ServerPort   string `env:"SERVER_PORT, default=:8081"`
+	MetricsPort  string `env:"METRICS_PORT, default=:9081"`
+	RedirectCode int    `env:"REDIRECT_CODE, default=302"`
+}
+
+type DasherConfig struct {
+	ServerPort  string `env:"SERVER_PORT, default=:8083"`
+	MetricsPort string `env:"METRICS_PORT, default=:9083"`
+}
+
+type PersoConfig struct {
+	ServerPort      string `env:"SERVER_PORT, default=:8084"`
+	MetricsPort     string `env:"METRICS_PORT, default=:9084"`
+	CleanupInterval string `env:"CLEANUP_INTERVAL, default=24h"`
+}
+
+type LoggingConfig struct {
+	LokiUrl    string `env:"LOKI_URL, default=http://loki:3100/loki/api/v1/push"`
+	LokiTenant string `env:"LOKI_TENANT, default=single"`
+	LogLevel   string `env:"LOG_LEVEL, default=info"`
 }

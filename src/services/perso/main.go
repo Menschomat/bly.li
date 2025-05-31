@@ -12,6 +12,7 @@ import (
 	"github.com/Menschomat/bly.li/services/perso/logging"
 	"github.com/Menschomat/bly.li/services/perso/persistence"
 	"github.com/Menschomat/bly.li/services/perso/tracking"
+	"github.com/Menschomat/bly.li/shared/config"
 	"github.com/Menschomat/bly.li/shared/mongo"
 	"github.com/Menschomat/bly.li/shared/scheduler"
 
@@ -21,6 +22,7 @@ import (
 
 var (
 	logger = logging.GetLogger()
+	cfg    = config.PersoConfig()
 )
 
 // schedulerJob wraps configuration for background scheduler tasks.
@@ -37,6 +39,12 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	cleanupInterval, err := time.ParseDuration(cfg.CleanupInterval)
+	if err != nil {
+		logger.Error("Invalid cleanup interval", "error", err)
+		cleanupInterval = 24 * time.Hour // fallback to default
+	}
+
 	// Set up all scheduler jobs in a slice for consistency and easier maintenance.
 	aggregator := tracking.NewClickAggregator()
 	jobs := []struct {
@@ -51,7 +59,7 @@ func main() {
 		},
 		{
 			name:     "clean-up",
-			interval: 10 * time.Second,
+			interval: cleanupInterval,
 			job:      scheduler.FuncJob(cleanup.CleanupStream),
 		},
 		{
@@ -85,7 +93,9 @@ func main() {
 
 	serverErrChan := make(chan error, 1)
 
-	// --- Metrics router on a 2nd port ---
+	// Start the main HTTP server
+	go startMainServer(serverErrChan)
+	// Start the metrics server
 	go startMetricsServer(serverErrChan)
 
 	// Handle shutdown signals.
@@ -93,13 +103,21 @@ func main() {
 	logger.Info("Server shut down successfully.")
 }
 
+// startMainServer runs the main HTTP server
+func startMainServer(errChan chan<- error) {
+	mainRouter := chi.NewRouter()
+	// Add your HTTP endpoints here
+	logger.Info("Main server running on " + cfg.ServerPort)
+	errChan <- http.ListenAndServe(cfg.ServerPort, mainRouter)
+}
+
 // startMetricsServer runs the Prometheus metrics endpoint.
 func startMetricsServer(errChan chan<- error) {
 	cleanup.InitMetrics()
 	metricsRouter := chi.NewRouter()
 	metricsRouter.Handle("/metrics", promhttp.Handler())
-	logger.Info("Prometheus metrics available on :2115/metrics")
-	errChan <- http.ListenAndServe(":2115", metricsRouter)
+	logger.Info("Prometheus metrics available on " + cfg.MetricsPort + "/metrics")
+	errChan <- http.ListenAndServe(cfg.MetricsPort, metricsRouter)
 }
 
 // waitForShutdown handles graceful shutdown and resource cleanup.
