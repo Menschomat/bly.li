@@ -74,8 +74,8 @@ Easily create and share memorable links to any webpage with bly.li! Simply input
 | METRICS_PORT           | :9082              | Prometheus metrics endpoint port       |
 | CORS_ALLOWED_ORIGINS   | https://*,http://* | Allowed CORS origins (comma-separated) |
 | CORS_MAX_AGE           | 300                | CORS preflight max age                 |
-| ZOOKEEPER_URL          | http://localhost   | Zookeeper server URL                   |
-| ZOOKEEPER_COUNTER_PATH | /counter           | Zookeeper counter path                 |
+| ZOOKEEPER_HOST         | zookeeper:2181     | Zookeeper connection host              |
+| ZOOKEEPER_COUNTER_PATH | /shortn-ranges     | Zookeeper counter root path           |
 
 #### BlowUp Service Configuration
 | Variable      | Default | Description                      |

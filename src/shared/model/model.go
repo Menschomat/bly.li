@@ -45,8 +45,8 @@ type MongoDdConfig struct {
 }
 
 type ShortnConfig struct {
-	ZookeeperUrl         string `env:"ZOOKEEPER_URL, default=http://localhost"`
-	ZookeeperCounterPath string `env:"ZOOKEEPER_COUNTER_PATH, default=/counter"`
+	ZookeeperHost        string `env:"ZOOKEEPER_HOST, default=zookeeper:2181"`
+	ZookeeperCounterPath string `env:"ZOOKEEPER_COUNTER_PATH, default=/shortn-ranges"`
 	ServerPort           string `env:"SERVER_PORT, default=:8082"`
 	MetricsPort          string `env:"METRICS_PORT, default=:9082"`
 	CorsAllowedOrigins   string `env:"CORS_ALLOWED_ORIGINS, default=https://*,http://*"`

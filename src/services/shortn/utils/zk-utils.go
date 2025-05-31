@@ -6,16 +6,19 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Menschomat/bly.li/shared/config"
 	"github.com/go-zookeeper/zk"
 )
 
 const (
-	zookeeperHosts    = "zookeeper:2181" // Zookeeper connection string
-	rootPath          = "/shortn-ranges" // Root znode for ranges
-	initialCounter    = 1                // Starting counter value
+	initialCounter    = 1 // Starting counter value
 	rangeMin          = 200
 	rangeMax          = 500             // Range size for each node
 	connectionTimeout = 5 * time.Second // Zookeeper connection timeout
+)
+
+var (
+	cfg = config.ShortnConfig()
 )
 
 type zkLogger struct{}
@@ -26,13 +29,13 @@ func (zkLogger) Printf(format string, v ...interface{}) {
 
 func createZkConnection() *zk.Conn {
 	// Connect to Zookeeper
-	conn, _, err := zk.Connect([]string{zookeeperHosts}, connectionTimeout, zk.WithLogger(zkLogger{}))
+	conn, _, err := zk.Connect([]string{cfg.ZookeeperHost}, connectionTimeout, zk.WithLogger(zkLogger{}))
 	if err != nil {
 		logger.Error("Failed to connect to Zookeeper", "err", err)
 		os.Exit(1)
 	}
 	//defer conn.Close()
-	ensurePathExists(conn, rootPath)
+	ensurePathExists(conn, cfg.ZookeeperCounterPath)
 	return conn
 }
 
@@ -64,7 +67,7 @@ func AllocateRange() (int, int, error) {
 	conn := createZkConnection()
 	defer conn.Close()
 
-	counterPath := fmt.Sprintf("%s/counter", rootPath)
+	counterPath := fmt.Sprintf("%s/counter", cfg.ZookeeperCounterPath)
 
 	// Check if the counter node exists
 	exists, _, err := conn.Exists(counterPath)
@@ -93,7 +96,7 @@ func AllocateRange() (int, int, error) {
 		currentCounter := bytesToInt(data)
 
 		start := currentCounter
-		end := currentCounter + GetRandomIntInRange(200, 500) - 1
+		end := currentCounter + GetRandomIntInRange(rangeMin, rangeMax) - 1
 
 		_, err = conn.Set(counterPath, intToBytes(end+1), stat.Version)
 		if err == zk.ErrBadVersion {
