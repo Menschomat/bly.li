@@ -8,7 +8,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/Menschomat/bly.li/services/blowup/logging"
+	"github.com/Menschomat/bly.li/services/shortn/logging"
 	"github.com/Menschomat/bly.li/shared/mongo"
 	"github.com/Menschomat/bly.li/shared/redis"
 	"github.com/sqids/sqids-go"

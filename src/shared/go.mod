@@ -10,6 +10,7 @@ require (
 	github.com/coreos/go-oidc/v3 v3.14.1
 	github.com/go-chi/chi/v5 v5.2.1
 	github.com/grafana/loki-client-go v0.0.0-20240913122146-e119d400c3a5
+	github.com/prometheus/client_golang v1.20.4
 	github.com/samber/slog-loki/v3 v3.5.4
 	github.com/samber/slog-multi v1.4.0
 	github.com/sethvargo/go-envconfig v1.3.0
@@ -43,7 +44,6 @@ require (
 	github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/prometheus/client_golang v1.20.4 // indirect
 	github.com/prometheus/client_model v0.6.1 // indirect
 	github.com/prometheus/common v0.61.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
