@@ -4,7 +4,7 @@ import { DashboardComponent } from './views/dashboard/dashboard.component';
 
 export const routes: Routes = [
   {
-    path: 'front',
+    path: 'main',
     component: LandingPageComponent,
   },
   {
@@ -14,13 +14,13 @@ export const routes: Routes = [
   {
     // Standardroute: Umleitung auf '/home'
     path: '',
-    redirectTo: 'front',
+    redirectTo: 'main',
     pathMatch: 'full',
   },
   {
     // Standardroute: Umleitung auf '/home'
     path: '**',
-    redirectTo: 'front',
+    redirectTo: 'main',
     pathMatch: 'full',
   },
 ];
