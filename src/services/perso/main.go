@@ -100,16 +100,15 @@ func main() {
 	go srv.ServeMetrics(serverErrChan)
 	go srv.ServeHTTP(serverErrChan)
 
-	// Handle shutdown signals.
-	go func() {
-		srv.HandleShutdown(ctx, serverErrChan)
-		// Stop all schedulers gracefully.
-		for _, s := range schedulers {
-			s.Stop()
-		}
-		// Allow time for cleanup if needed.
-		time.Sleep(5 * time.Second)
-	}()
+	// Handle shutdown signals in the main thread
+	srv.HandleShutdown(ctx, serverErrChan)
+
+	// Stop all schedulers gracefully.
+	for _, s := range schedulers {
+		s.Stop()
+	}
+	// Allow time for cleanup if needed.
+	time.Sleep(5 * time.Second)
 
 	logger.Info("Server shut down successfully.")
 }
