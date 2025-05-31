@@ -2,10 +2,7 @@ package main
 
 import (
 	"context"
-	"net/http"
-	"os"
-	"os/signal"
-	"syscall"
+	"strings"
 	"time"
 
 	"github.com/Menschomat/bly.li/services/perso/cleanup"
@@ -15,9 +12,7 @@ import (
 	"github.com/Menschomat/bly.li/shared/config"
 	"github.com/Menschomat/bly.li/shared/mongo"
 	"github.com/Menschomat/bly.li/shared/scheduler"
-
-	"github.com/go-chi/chi/v5"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/Menschomat/bly.li/shared/server"
 )
 
 var (
@@ -42,7 +37,7 @@ func main() {
 	cleanupInterval, err := time.ParseDuration(cfg.CleanupInterval)
 	if err != nil {
 		logger.Error("Invalid cleanup interval", "error", err)
-		cleanupInterval = 24 * time.Hour // fallback to default
+		cleanupInterval = 1 * time.Minute
 	}
 
 	// Set up all scheduler jobs in a slice for consistency and easier maintenance.
@@ -91,57 +86,30 @@ func main() {
 	// Start the Redis stream consumer in its own goroutine.
 	go tracking.RunConsumer(ctx, aggregator)
 
+	srv := server.NewServer(server.Config{
+		ServerPort:         cfg.ServerPort,
+		MetricsPort:        cfg.MetricsPort,
+		CorsAllowedOrigins: strings.Split(cfg.CorsAllowedOrigins, ","),
+		CorsMaxAge:         cfg.CorsMaxAge,
+		Logger:             logger,
+	})
+
+	cleanup.InitMetrics()
 	serverErrChan := make(chan error, 1)
 
-	// Start the main HTTP server
-	go startMainServer(serverErrChan)
-	// Start the metrics server
-	go startMetricsServer(serverErrChan)
+	go srv.ServeMetrics(serverErrChan)
+	go srv.ServeHTTP(serverErrChan)
 
 	// Handle shutdown signals.
-	waitForShutdown(serverErrChan, schedulers, cancel)
+	go func() {
+		srv.HandleShutdown(ctx, serverErrChan)
+		// Stop all schedulers gracefully.
+		for _, s := range schedulers {
+			s.Stop()
+		}
+		// Allow time for cleanup if needed.
+		time.Sleep(5 * time.Second)
+	}()
+
 	logger.Info("Server shut down successfully.")
-}
-
-// startMainServer runs the main HTTP server
-func startMainServer(errChan chan<- error) {
-	mainRouter := chi.NewRouter()
-	// Add your HTTP endpoints here
-	logger.Info("Main server running on " + cfg.ServerPort)
-	errChan <- http.ListenAndServe(cfg.ServerPort, mainRouter)
-}
-
-// startMetricsServer runs the Prometheus metrics endpoint.
-func startMetricsServer(errChan chan<- error) {
-	cleanup.InitMetrics()
-	metricsRouter := chi.NewRouter()
-	metricsRouter.Handle("/metrics", promhttp.Handler())
-	logger.Info("Prometheus metrics available on " + cfg.MetricsPort + "/metrics")
-	errChan <- http.ListenAndServe(cfg.MetricsPort, metricsRouter)
-}
-
-// waitForShutdown handles graceful shutdown and resource cleanup.
-func waitForShutdown(
-	serverErrChan <-chan error,
-	schedulers []*scheduler.Scheduler,
-	cancel context.CancelFunc,
-) {
-	stopChan := make(chan os.Signal, 1)
-	signal.Notify(stopChan, os.Interrupt, syscall.SIGTERM)
-
-	select {
-	case err := <-serverErrChan:
-		logger.Error("Server error", "error", err)
-	case <-stopChan:
-		logger.Info("Shutdown signal received. Stopping scheduler and consumer...")
-	}
-
-	// Stop all schedulers gracefully.
-	for _, s := range schedulers {
-		s.Stop()
-	}
-
-	// Cancel the consumer context.
-	cancel()
-	time.Sleep(5 * time.Second) // Allow time for cleanup if needed.
 }

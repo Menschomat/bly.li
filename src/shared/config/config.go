@@ -23,6 +23,11 @@ func (cm *ConfigManager[T]) Get() (*T, error) {
 		cm.config = new(T)
 		if err := cfgUtils.FillEnvStruct(cm.config); err != nil {
 			cm.err = err
+			return
+		}
+		// Set defaults if the config type implements DefaultSetter
+		if ds, ok := any(cm.config).(interface{ SetDefaults() }); ok {
+			ds.SetDefaults()
 		}
 	})
 	return cm.config, cm.err

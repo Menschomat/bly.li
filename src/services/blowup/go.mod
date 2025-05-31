@@ -10,7 +10,6 @@ require github.com/go-chi/chi/v5 v5.2.1 // direct
 
 require (
 	github.com/Menschomat/bly.li/shared v0.0.0
-	github.com/go-chi/cors v1.2.1
 	github.com/oapi-codegen/runtime v1.1.1
 	github.com/prometheus/client_golang v1.22.0
 )

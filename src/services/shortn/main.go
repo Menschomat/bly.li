@@ -5,24 +5,19 @@ import (
 	"encoding/json"
 	"net/http"
 	"os"
-	"os/signal"
 	"strings"
 	"sync"
-	"syscall"
 
 	"github.com/Menschomat/bly.li/services/shortn/api"
 	"github.com/Menschomat/bly.li/services/shortn/logging"
 	u "github.com/Menschomat/bly.li/services/shortn/utils"
-	mw "github.com/Menschomat/bly.li/shared/api/middleware"
 	"github.com/Menschomat/bly.li/shared/config"
 	m "github.com/Menschomat/bly.li/shared/model"
 	"github.com/Menschomat/bly.li/shared/mongo"
 	"github.com/Menschomat/bly.li/shared/oidc"
 	"github.com/Menschomat/bly.li/shared/redis"
+	"github.com/Menschomat/bly.li/shared/server"
 	apiUtils "github.com/Menschomat/bly.li/shared/utils/api"
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/cors"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 var (
@@ -34,7 +29,8 @@ var (
 /*  Server                                                              */
 /* -------------------------------------------------------------------- */
 
-type Server struct {
+// ShortnServer handles URL shortening and range allocation
+type ShortnServer struct {
 	mu    sync.Mutex // guards start & end
 	start int        // next id to hand out
 	end   int        // inclusive upper bound of current range
@@ -42,7 +38,7 @@ type Server struct {
 
 /* ------------------------- range management ------------------------- */
 
-func (s *Server) allocateRangeLocked() {
+func (s *ShortnServer) allocateRangeLocked() {
 	// called with s.mu held
 	_start, _end, err := u.AllocateRange()
 	if err != nil {
@@ -55,7 +51,7 @@ func (s *Server) allocateRangeLocked() {
 	s.end = _end
 }
 
-func (s *Server) nextShort() (string, error) {
+func (s *ShortnServer) nextShort() (string, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -70,9 +66,9 @@ func (s *Server) nextShort() (string, error) {
 
 /* ---------------------------- handlers ------------------------------ */
 
-var _ api.ServerInterface = (*Server)(nil)
+var _ api.ServerInterface = (*ShortnServer)(nil)
 
-func (s *Server) PostStore(w http.ResponseWriter, r *http.Request) {
+func (s *ShortnServer) PostStore(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	/* ----------- parse body ------------------------------------------------ */
@@ -134,67 +130,28 @@ func main() {
 	mongo.InitMongoPackage(logger)
 	defer mongo.CloseClientDB()
 
-	mainRouter := configureMainRouter()
-	server := &Server{}
-	server.allocateRangeLocked() // grab the first block before serving
-	api.HandlerFromMux(server, mainRouter)
+	srv := server.NewServer(server.Config{
+		ServerPort:         cfg.ServerPort,
+		MetricsPort:        cfg.MetricsPort,
+		CorsAllowedOrigins: strings.Split(cfg.CorsAllowedOrigins, ","),
+		CorsMaxAge:         cfg.CorsMaxAge,
+		Logger:             logger,
+	})
+
+	srv.ConfigureCommonMiddleware()
+	srv.Router().Use(oidc.JWTVerifier)
+
+	apiServer := &ShortnServer{}
+	apiServer.allocateRangeLocked() // grab the first block before serving
+	api.HandlerFromMux(apiServer, srv.Router())
 
 	serverErrChan := make(chan error, 1)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	go serveMetrics(serverErrChan)
-	go serveMainHTTP(serverErrChan, mainRouter)
+	go srv.ServeMetrics(serverErrChan)
+	go srv.ServeHTTP(serverErrChan)
 
-	handleShutdown(ctx, serverErrChan)
+	srv.HandleShutdown(ctx, serverErrChan)
 	logger.Info("Server shut down successfully.")
-}
-
-// configureMainRouter initialises and configures the HTTP router.
-func configureMainRouter() *chi.Mux {
-	r := chi.NewRouter()
-	r.Use(mw.SlogLogger(logger))
-	r.Use(mw.InstrumentHandler)
-	r.Use(oidc.JWTVerifier)
-	r.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   strings.Split(cfg.CorsAllowedOrigins, ","),
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"*"},
-		ExposedHeaders:   []string{"Link"},
-		AllowCredentials: false,
-		MaxAge:           cfg.CorsMaxAge,
-	}))
-	return r
-}
-
-// serveMetrics starts the Prometheus metrics endpoint.
-func serveMetrics(errChan chan<- error) {
-	metricsRouter := chi.NewRouter()
-	metricsRouter.Handle("/metrics", promhttp.Handler())
-
-	logger.Info("Prometheus metrics available on " + cfg.MetricsPort + "/metrics")
-	errChan <- http.ListenAndServe(cfg.MetricsPort, metricsRouter)
-}
-
-// serveMainHTTP starts the main HTTP API.
-func serveMainHTTP(errChan chan<- error, handler http.Handler) {
-	logger.Info("Backend runs on " + cfg.ServerPort)
-	errChan <- http.ListenAndServe(cfg.ServerPort, handler)
-}
-
-// handleShutdown waits for server errors or shutdown signals and handles shutdown logic.
-func handleShutdown(ctx context.Context, serverErrChan <-chan error) {
-	stopChan := make(chan os.Signal, 1)
-	signal.Notify(stopChan, os.Interrupt, syscall.SIGTERM)
-
-	select {
-	case err := <-serverErrChan:
-		if err != nil {
-			logger.Error("Server error", "error", err)
-		}
-	case <-stopChan:
-		logger.Info("Shutdown signal received. Stopping server...")
-	case <-ctx.Done():
-		logger.Info("Context cancelled, shutting down.")
-	}
 }

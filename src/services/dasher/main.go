@@ -5,21 +5,15 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
-	"os"
-	"os/signal"
-	"syscall"
+	"strings"
 
 	"github.com/Menschomat/bly.li/services/dasher/api"
 	"github.com/Menschomat/bly.li/services/dasher/logging"
-	mw "github.com/Menschomat/bly.li/shared/api/middleware"
 	"github.com/Menschomat/bly.li/shared/config"
 	"github.com/Menschomat/bly.li/shared/mongo"
 	"github.com/Menschomat/bly.li/shared/oidc"
 	"github.com/Menschomat/bly.li/shared/redis"
-
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/cors"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/Menschomat/bly.li/shared/server"
 )
 
 var (
@@ -109,66 +103,27 @@ func main() {
 	mongo.InitMongoPackage(logger)
 	defer mongo.CloseClientDB()
 
-	mainRouter := configureMainRouter()
+	srv := server.NewServer(server.Config{
+		ServerPort:         cfg.ServerPort,
+		MetricsPort:        cfg.MetricsPort,
+		CorsAllowedOrigins: strings.Split(cfg.CorsAllowedOrigins, ","),
+		CorsMaxAge:         cfg.CorsMaxAge,
+		Logger:             logger,
+	})
+
+	srv.ConfigureCommonMiddleware()
+	srv.Router().Use(oidc.JWTVerifier)
+
 	apiHandler := &DasherServer{}
-	api.HandlerFromMux(apiHandler, mainRouter)
+	api.HandlerFromMux(apiHandler, srv.Router())
 
 	serverErrChan := make(chan error, 1)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	go serveMetrics(serverErrChan)
-	go serveMainHTTP(serverErrChan, mainRouter)
+	go srv.ServeMetrics(serverErrChan)
+	go srv.ServeHTTP(serverErrChan)
 
-	handleShutdown(ctx, serverErrChan)
+	srv.HandleShutdown(ctx, serverErrChan)
 	logger.Info("Server shut down successfully.")
-}
-
-// configureMainRouter initialises and configures the HTTP router.
-func configureMainRouter() *chi.Mux {
-	router := chi.NewRouter()
-	router.Use(mw.SlogLogger(logger))
-	router.Use(mw.InstrumentHandler)
-	router.Use(oidc.JWTVerifier)
-	router.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{"https://*", "http://*"},
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"*"},
-		ExposedHeaders:   []string{"Link"},
-		AllowCredentials: false,
-		MaxAge:           300,
-	}))
-	return router
-}
-
-// serveMetrics starts the Prometheus metrics endpoint.
-func serveMetrics(errChan chan<- error) {
-	metricsRouter := chi.NewRouter()
-	metricsRouter.Handle("/metrics", promhttp.Handler())
-
-	logger.Info("Prometheus metrics available on " + cfg.MetricsPort + "/metrics")
-	errChan <- http.ListenAndServe(cfg.MetricsPort, metricsRouter)
-}
-
-// serveMainHTTP starts the main HTTP API.
-func serveMainHTTP(errChan chan<- error, handler http.Handler) {
-	logger.Info("Backend runs on " + cfg.ServerPort)
-	errChan <- http.ListenAndServe(cfg.ServerPort, handler)
-}
-
-// handleShutdown waits for server errors or shutdown signals and handles shutdown logic.
-func handleShutdown(ctx context.Context, serverErrChan <-chan error) {
-	stopChan := make(chan os.Signal, 1)
-	signal.Notify(stopChan, os.Interrupt, syscall.SIGTERM)
-
-	select {
-	case err := <-serverErrChan:
-		if err != nil {
-			logger.Error("Server error", "error", err)
-		}
-	case <-stopChan:
-		logger.Info("Shutdown signal received. Stopping server...")
-	case <-ctx.Done():
-		logger.Info("Context cancelled, shutting down.")
-	}
 }
