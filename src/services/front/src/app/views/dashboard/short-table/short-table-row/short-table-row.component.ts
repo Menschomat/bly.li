@@ -9,9 +9,11 @@ import { ShortURL } from '../../../../api';
   },
   template: `
     <div>
-      <i class="fa-regular fa-copy"></i>&nbsp;&nbsp;<ng-content
-        select="row-title"
-      ></ng-content>
+      <i
+        class="fa-regular fa-copy cursor-pointer"
+        (click)="handleCopyClick($event)"
+      ></i
+      >&nbsp;&nbsp;<ng-content select="row-title"></ng-content>
     </div>
     <div class="truncate overflow-hidden text-ellipsis whitespace-nowrap">
       <ng-content select="row-url"></ng-content>
@@ -33,8 +35,14 @@ import { ShortURL } from '../../../../api';
 export class ShortTableRowComponent {
   @Output()
   public delete = new EventEmitter<MouseEvent>();
+  @Output()
+  public copy = new EventEmitter<MouseEvent>();
 
   public handleDeleteClick(event: MouseEvent) {
     this.delete.emit(event);
+  }
+
+  public handleCopyClick(event: MouseEvent) {
+    this.copy.emit(event);
   }
 }

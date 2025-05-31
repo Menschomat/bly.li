@@ -44,13 +44,3 @@ services:
     volumes:
       - ./backend/prometheus.yml:/etc/prometheus/prometheus.yml:ro
 
-  grafana:
-    image: grafana/grafana-oss:latest
-    container_name: grafana
-    ports:
-      - "3000:3000"
-    restart: unless-stopped
-    environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin
-    volumes:
-      - ./backend/grafana/provisioning:/etc/grafana/provisioning

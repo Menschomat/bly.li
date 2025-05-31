@@ -4,7 +4,13 @@ global:
 scrape_configs:
   - job_name: "perso-service"
     static_configs:
-      - targets: ["perso:2115"] # Change to your app's host:port
+      - targets: ["perso:9084"] # Change to your app's host:port
+  - job_name: "shortn-service"
+    static_configs:
+      - targets: ["shortn:9082"] # Change to your app's host:port
+  - job_name: "dasher-service"
+    static_configs:
+      - targets: ["dasher:9083"] # Change to your app's host:port
   - job_name: "blowup-service"
     static_configs:
-      - targets: ["blowup:2114"] # Change to your app's host:port
+      - targets: ["blowup:9081"] # Change to your app's host:port
