@@ -68,7 +68,7 @@ func AggregateClicksByResolution(
 			Key: "$group",
 			Value: bson.D{
 				{Key: "_id", Value: bson.D{
-					{Key: "shortUrl", Value: "$short"},
+					{Key: "short", Value: "$short"},
 					{Key: "timestamp", Value: bson.D{
 						{Key: "$dateTrunc", Value: bson.D{
 							{Key: "date", Value: "$timestamp"},
@@ -86,7 +86,7 @@ func AggregateClicksByResolution(
 			Key: "$project",
 			Value: bson.D{
 				{Key: "_id", Value: 0},
-				{Key: "shortUrl", Value: "$_id.shortUrl"},
+				{Key: "short", Value: "$_id.short"},
 				{Key: "timestamp", Value: "$_id.timestamp"},
 				{Key: "resolution", Value: "$_id.resolution"},
 				{Key: "count", Value: "$count"},
@@ -97,7 +97,7 @@ func AggregateClicksByResolution(
 			Key: "$merge",
 			Value: bson.D{
 				{Key: "into", Value: CollectionClicksAggregated},
-				{Key: "on", Value: bson.A{"shortUrl", "timestamp", "resolution"}},
+				{Key: "on", Value: bson.A{"short", "timestamp", "resolution"}},
 				{Key: "whenMatched", Value: "replace"},
 				{Key: "whenNotMatched", Value: "insert"},
 			},

@@ -136,17 +136,32 @@ func GetShortsByOwner(owner string) *[]m.ShortURL {
 func DeleteShortURLByShort(short string) error {
 	_client, _err := GetMongoClient()
 	if _err != nil {
-		log.Fatal(_err)
+		log.Printf("Failed to get Mongo client: %v", _err)
 		return _err
 	}
-	collection := _client.Database(database).Collection(CollectionShorts)
+	database := _client.Database(database)
+	collectionShorts := database.Collection(CollectionShorts)
+	clicksSeries := database.Collection(CollectionClicks)
+	aggClicksSeries := database.Collection(CollectionClicksAggregated)
 	filter := bson.M{"short": short}
-	_, err := collection.DeleteOne(context.Background(), filter)
-	if err != nil {
+
+	if _, err := clicksSeries.DeleteMany(context.Background(), filter); err != nil {
+		log.Printf("Failed to delete from clicks series: %v", err)
+		return fmt.Errorf("failed to delete clicks: %v", err)
+	}
+
+	if _, err := aggClicksSeries.DeleteMany(context.Background(), filter); err != nil {
+		log.Printf("Failed to delete from aggregated clicks series: %v", err)
+		return fmt.Errorf("failed to delete aggregated clicks: %v", err)
+	}
+
+	if _, err := collectionShorts.DeleteOne(context.Background(), filter); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			return fmt.Errorf("no document found with the given short value: %v", short)
 		}
-		return fmt.Errorf("failed to find document: %v", err)
+		log.Printf("Failed to delete short URL: %v", err)
+		return fmt.Errorf("failed to delete short URL: %v", err)
 	}
+
 	return nil
 }

@@ -111,7 +111,7 @@ func InitMongoCollections(mongoClient *mongo.Client) {
 	indexes := []mongo.IndexModel{
 		{
 			Keys: bson.D{
-				{Key: "shortUrl", Value: 1},
+				{Key: "short", Value: 1},
 				{Key: "resolution", Value: 1},
 				{Key: "timestamp", Value: 1},
 			},
