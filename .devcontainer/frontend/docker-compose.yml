@@ -78,12 +78,3 @@ services:
     restart: unless-stopped
     volumes:
       - ./frontend/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-
-  grafana:
-    image: grafana/grafana-oss:latest
-    container_name: grafana
-    restart: unless-stopped
-    environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin
-    volumes:
-      - ./frontend/grafana/provisioning:/etc/grafana/provisioning

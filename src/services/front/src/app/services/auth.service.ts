@@ -1,7 +1,7 @@
-import {Injectable} from '@angular/core';
-import {AuthConfig, OAuthService} from 'angular-oauth2-oidc';
-import {BehaviorSubject, Observable} from 'rxjs';
-import {ConfigService} from './config.service';
+import { Injectable } from '@angular/core';
+import { AuthConfig, OAuthService } from 'angular-oauth2-oidc';
+import { BehaviorSubject, Observable } from 'rxjs';
+import { ConfigService } from './config.service';
 
 @Injectable({
   providedIn: 'root',
@@ -49,16 +49,18 @@ export class AuthService {
       redirectUri: window.location.origin + appConfig.oidcRedirectUri,
       // Name der Angular-Anwendung
       clientId: appConfig.oidcClientId,
-
       // Rechte des Benutzers, die die Angular-Anwendung wahrnehmen möchte
       scope: 'openid profile email offline_access',
 
       // Code Flow (PKCE ist standardmäßig bei Nutzung von Code Flow aktiviert)
       responseType: 'code',
-      strictDiscoveryDocumentValidation: false,
+      //strictDiscoveryDocumentValidation: false,
       useRefreshToken: true,
+      customQueryParams: {
+        audience: 'bly.li',
+      },
       //allowUnsafeReuseRefreshToken: true,
-      startCheckSession: true,
+      //startCheckSession: true,
     } as AuthConfig;
   }
 

@@ -43,18 +43,8 @@ func JWTVerifier(next http.Handler) http.Handler {
 	})
 }
 
-func GetUsrInfoFromCtx(ctx context.Context) (*struct {
-	Nickname string `json:"nickname"`
-	Email    string `json:"email"`
-}, error) {
-	var claims struct {
-		Nickname string `json:"nickname"`
-		Email    string `json:"email"`
-	}
-	if err := ctx.Value("token").(*oidc.IDToken).Claims(&claims); err != nil {
-		return nil, err
-	}
-	return &claims, nil
+func SubjectFromCtx(ctx context.Context) string {
+	return ctx.Value("token").(*oidc.IDToken).Subject
 }
 
 func initOidcProvider(ctx context.Context, url string) *oidc.Provider {

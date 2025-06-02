@@ -32,3 +32,11 @@ services:
     ports:
       - "3100:3100"
     command: -log.level=warn -config.file=/etc/loki/local-config.yaml
+  grafana:
+    image: grafana/grafana-oss:latest
+    container_name: grafana
+    restart: unless-stopped
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning

@@ -38,15 +38,15 @@ func getShortURLOwner(ctx context.Context, short string) (string, error) {
 
 // DeleteShortShort deletes a short URL if the current user is the owner.
 func (s *DasherServer) DeleteShortShort(w http.ResponseWriter, r *http.Request, short string) {
-	usrInfo, err := oidc.GetUsrInfoFromCtx(r.Context())
-	if err != nil {
-		logger.Error("Failed to get user info from context", "error", err)
+	subject := oidc.SubjectFromCtx(r.Context())
+	if len(subject) <= 0 {
+		logger.Error("Failed to get user info from context")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 
 	owner, err := getShortURLOwner(r.Context(), short)
-	if err != nil || owner != usrInfo.Email {
+	if err != nil || owner != subject {
 		http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
 		return
 	}
@@ -76,14 +76,14 @@ func deleteShortFromStores(short string) error {
 
 // GetShortAll returns all short URLs owned by the authenticated user.
 func (s *DasherServer) GetShortAll(w http.ResponseWriter, r *http.Request) {
-	usrInfo, err := oidc.GetUsrInfoFromCtx(r.Context())
-	if err != nil {
-		logger.Error("Failed to get user info from context", "error", err)
+	subject := oidc.SubjectFromCtx(r.Context())
+	if len(subject) <= 0 {
+		logger.Error("Failed to get user info from context")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 
-	shorts := mongo.GetShortsByOwner(usrInfo.Email)
+	shorts := mongo.GetShortsByOwner(subject)
 	responseJSON(w, shorts, http.StatusOK)
 }
 

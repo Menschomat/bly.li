@@ -98,10 +98,10 @@ func (s *ShortnServer) PostStore(w http.ResponseWriter, r *http.Request) {
 
 	/* ----------- persist --------------------------------------------------- */
 
-	usrInfo, _ := oidc.GetUsrInfoFromCtx(r.Context()) // ignore "no user" error
+	subject := oidc.SubjectFromCtx(r.Context()) // ignore "no user" error
 	shortURL := m.ShortURL{URL: url, Short: short, Owner: "", Count: 0}
-	if usrInfo != nil {
-		shortURL.Owner = usrInfo.Email
+	if len(subject) > 0 {
+		shortURL.Owner = subject
 	}
 
 	if err := redis.StoreUrl(shortURL.Short, shortURL.URL, shortURL.Count, shortURL.Owner); err != nil {
