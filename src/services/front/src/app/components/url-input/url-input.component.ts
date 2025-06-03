@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { ButtonPrimaryComponent } from '../generic/button-primary/button-primary.component';
 import { FormsModule } from '@angular/forms';
 import { BehaviorSubject } from 'rxjs';

@@ -38,7 +38,7 @@ export class ShortTableComponent {
     this.$allShorts = dasherService.$allShorts;
   }
   public async deleteItem(short: ShortURL) {
-    await this.dasherService.delete(short);
+    this.dasherService.delete(short);
   }
   public async copyItem(short: ShortURL) {
     try {

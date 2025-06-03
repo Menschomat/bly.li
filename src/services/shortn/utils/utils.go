@@ -6,11 +6,8 @@ import (
 	"math/rand"
 	"net/url"
 	"regexp"
-	"strings"
 
 	"github.com/Menschomat/bly.li/services/shortn/logging"
-	"github.com/Menschomat/bly.li/shared/mongo"
-	"github.com/Menschomat/bly.li/shared/redis"
 	"github.com/sqids/sqids-go"
 )
 
@@ -21,15 +18,6 @@ var (
 
 func GetRandomIntInRange(min int, max int) int {
 	return rand.Intn(max-min+1) + min
-}
-
-func GetUniqueShort() string {
-	short := randomString(5, alphabet)
-	if redis.ShortExists(short) || mongo.ShortExists(short) {
-		logger.Info("Collision detected, retrying short", "short", short)
-		return GetUniqueShort()
-	}
-	return short
 }
 
 func GetSquidShort(number uint64) (string, error) {
@@ -61,16 +49,6 @@ func ParseUrl(str string) (string, error) {
 		return "", errors.New("not a valid uri")
 	}
 	return uri.String(), nil
-}
-
-func randomString(n int, alphabet []rune) string {
-	alphabetSize := len(alphabet)
-	var sb strings.Builder
-	for i := 0; i < n; i++ {
-		ch := alphabet[rand.Intn(alphabetSize)]
-		sb.WriteRune(ch)
-	}
-	return sb.String()
 }
 
 func isUrl(str string) bool {
