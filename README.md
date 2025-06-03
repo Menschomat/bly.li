@@ -75,7 +75,7 @@ Easily create and share memorable links to any webpage with bly.li! Simply input
 | CORS_ALLOWED_ORIGINS   | https://*,http://* | Allowed CORS origins (comma-separated) |
 | CORS_MAX_AGE           | 300                | CORS preflight max age                 |
 | ZOOKEEPER_HOST         | zookeeper:2181     | Zookeeper connection host              |
-| ZOOKEEPER_COUNTER_PATH | /shortn-ranges     | Zookeeper counter root path           |
+| ZOOKEEPER_COUNTER_PATH | /shortn-ranges     | Zookeeper counter root path            |
 
 #### BlowUp Service Configuration
 | Variable      | Default | Description                      |
@@ -117,11 +117,18 @@ Easily create and share memorable links to any webpage with bly.li! Simply input
 
 ### Deployment
 
-Deployment works via Docker. Images are hosted on DockerHub. Use the docker-compose.demo.yml as a blueprint for your deployment.
+Deployment works via Docker. Images are hosted on GitHub Container Registry (ghcr.io). Use the docker-compose.yml as a blueprint for your deployment.
 
-| Service                  | URL                                                                                  | Tag    | Description                     |
-| ------------------------ | ------------------------------------------------------------------------------------ | ------ | ------------------------------- |
-| mensch0mat/bly.li.blowup | [hub.docker.com](https://hub.docker.com/repository/docker/mensch0mat/bly.li.blowup/) | latest | Latest stable version           |
-| "                        | [hub.docker.com](https://hub.docker.com/repository/docker/mensch0mat/bly.li.blowup/) | main   | On push builds from main branch |
-| mensch0mat/bly.li.shortn | [hub.docker.com](https://hub.docker.com/repository/docker/mensch0mat/bly.li.shortn/) | latest | Latest stable version           |
-| "                        | [hub.docker.com](https://hub.docker.com/repository/docker/mensch0mat/bly.li.shortn/) | main   | On push builds from main branch |
+| Service                       | Description                  |
+| ----------------------------- | ---------------------------- |
+| ghcr.io/[owner]/bly.li/front  | Frontend Angular application |
+| ghcr.io/[owner]/bly.li/blowup | URL resolution service       |
+| ghcr.io/[owner]/bly.li/shortn | URL shortening service       |
+| ghcr.io/[owner]/bly.li/dasher | Analytics dashboard service  |
+| ghcr.io/[owner]/bly.li/perso  | User personalization service |
+
+Each service is available with the following tags:
+- `latest`: Latest stable release version (from tags)
+- `main`: Latest build from the main branch
+
+The images are built for linux/amd64 platform and include automated build caching via GitHub Actions.
