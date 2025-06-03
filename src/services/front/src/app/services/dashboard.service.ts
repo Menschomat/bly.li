@@ -6,10 +6,10 @@ import { BehaviorSubject, Observable, Subject } from 'rxjs';
   providedIn: 'root',
 })
 export class DashboardService {
-  private allShorts: Subject<ShortURL[]> = new BehaviorSubject(
+  private readonly allShorts: Subject<ShortURL[]> = new BehaviorSubject(
     [] as ShortURL[]
   );
-  constructor(private dasherService: DasherService) {
+  constructor(private readonly dasherService: DasherService) {
     this.refresh();
   }
 

@@ -7,11 +7,11 @@ import { ConfigService } from './config.service';
   providedIn: 'root',
 })
 export class AuthService {
-  private userSubject: BehaviorSubject<Record<string, any> | null>;
+  private readonly userSubject: BehaviorSubject<Record<string, any> | null>;
 
   constructor(
-    private oauthService: OAuthService,
-    private config: ConfigService
+    private readonly oauthService: OAuthService,
+    private readonly config: ConfigService
   ) {
     oauthService.configure(this.getAuthConfig());
 
@@ -29,7 +29,7 @@ export class AuthService {
     oauthService.setupAutomaticSilentRefresh();
     // Initialize the BehaviorSubject with the current user profile or null
     this.userSubject = new BehaviorSubject<Record<string, any> | null>(
-      this.oauthService.getIdentityClaims() || null
+      this.oauthService.getIdentityClaims() ?? null
     );
     // Update the BehaviorSubject whenever the user profile changes
     this.oauthService.events.subscribe((event) => {

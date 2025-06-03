@@ -34,8 +34,8 @@ export class DashboardComponent {
   public $allShorts: Observable<ShortURL[]>;
   public $curFullName: Observable<string | undefined>;
   constructor(
-    private dasherService: DashboardService,
-    private auth: AuthService
+    private readonly dasherService: DashboardService,
+    private readonly auth: AuthService
   ) {
     this.$allShorts = this.dasherService.$allShorts;
 

@@ -38,7 +38,7 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
 })
 export class LoginMenuComponent {
   public curUsrName: Observable<string | undefined>;
-  constructor(private auth: AuthService) {
+  constructor(private readonly auth: AuthService) {
     this.curUsrName = auth.currentUser$.pipe(
       filter((a) => a !== null),
       tap((a) => console.debug(a)),

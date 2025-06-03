@@ -1,5 +1,4 @@
 import { Component, EventEmitter, Output } from '@angular/core';
-import { ShortURL } from '../../../../api';
 
 @Component({
   selector: 'app-short-table-row',

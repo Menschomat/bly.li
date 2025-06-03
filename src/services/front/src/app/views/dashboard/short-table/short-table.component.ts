@@ -32,8 +32,8 @@ export class ShortTableComponent {
   public $allShorts: Observable<ShortURL[]>;
 
   constructor(
-    private dasherService: DashboardService,
-    private config: ConfigService
+    private readonly dasherService: DashboardService,
+    private readonly config: ConfigService
   ) {
     this.$allShorts = dasherService.$allShorts;
   }

@@ -43,7 +43,10 @@ import { ConfigService } from '../../services/config.service';
 })
 export class UrlOutputComponent {
   isCopied: boolean = false;
-  constructor(private urlService: URLService, private config: ConfigService) {}
+  constructor(
+    private readonly urlService: URLService,
+    private readonly config: ConfigService
+  ) {}
   get outUrl$(): Observable<string | undefined> {
     return this.urlService.lastShortUrl$.pipe(
       map((short) =>

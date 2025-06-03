@@ -5,7 +5,7 @@ import { Injectable } from '@angular/core';
   providedIn: 'root',
 })
 export class URLService {
-  private lastShortUrl = new BehaviorSubject<string | undefined>('');
+  private readonly lastShortUrl = new BehaviorSubject<string | undefined>('');
   constructor() {}
   public triggerNextShort(url: string | undefined) {
     this.lastShortUrl.next(url);

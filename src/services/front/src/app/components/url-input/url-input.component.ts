@@ -36,13 +36,15 @@ import { ShortnReq, ShortnService } from '../../api';
     </div>
   `,
 })
-export class UrlInputComponent implements OnInit {
+export class UrlInputComponent {
   public shortInputValue: string = '';
   public baseUrl: string = window.location.origin;
-  private lastShortSubj: BehaviorSubject<string | undefined> =
+  private readonly lastShortSubj: BehaviorSubject<string | undefined> =
     new BehaviorSubject<string | undefined>(undefined);
-  constructor(private api: ShortnService, private urlService: URLService) {}
-  ngOnInit(): void {}
+  constructor(
+    private readonly api: ShortnService,
+    private readonly urlService: URLService
+  ) {}
   requestShort() {
     this.api
       .shortnStorePost({ Url: this.shortInputValue } as ShortnReq)

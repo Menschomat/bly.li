@@ -8,7 +8,7 @@ import { firstValueFrom } from 'rxjs';
 export class ConfigService {
   private config: any;
 
-  constructor(private http: HttpClient) {}
+  constructor(private readonly http: HttpClient) {}
 
   async loadAppConfig(): Promise<void> {
     const configFileName = isDevMode() ? 'dev.config.json' : 'config.json';
