@@ -9,7 +9,7 @@ on:
 
 env:
   REGISTRY: "ghcr.io"
-
+  GITHUB_REPOSITORY: ${{ github.repository }}
 jobs:
   extract_version:
     runs-on: ubuntu-24.04
