@@ -9,7 +9,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  GITHUB_REPOSITORY: ${{ github.repository }}  # e.g. "owner/repo"
+  GITHUB_REPOSITORY: ${{ github.repository }} # e.g. "owner/repo"
 
 jobs:
   extract_version:
@@ -41,9 +41,9 @@ jobs:
     runs-on: ubuntu-24.04
     needs: extract_version
     outputs:
-      version:      ${{ needs.extract_version.outputs.version }}
-      version_tag:  ${{ needs.extract_version.outputs.version_tag }}
-      latest_tag:   ${{ needs.extract_version.outputs.latest_tag }}
+      version: ${{ needs.extract_version.outputs.version }}
+      version_tag: ${{ needs.extract_version.outputs.version_tag }}
+      latest_tag: ${{ needs.extract_version.outputs.latest_tag }}
     steps:
       - name: Read version+latest-tag into ENV
         run: |
@@ -85,12 +85,12 @@ jobs:
       - name: Build and push frontend
         uses: docker/build-push-action@v6
         with:
-          context: src/services/front/
-          file:   Dockerfile
-          push:   true
+          context: "{{defaultContext}}:src/services/front/."
+          file: Dockerfile
+          push: true
           platforms: linux/amd64
           cache-from: type=gha
-          cache-to:   type=gha,mode=max
+          cache-to: type=gha,mode=max
           tags: |
             ${{ env.REGISTRY }}/${{ env.GITHUB_REPOSITORY_LC }}/front:${{ needs.setup_docker.outputs.version_tag }}
             ${{ env.LATEST_TAG && '${{ env.REGISTRY }}/${{ env.GITHUB_REPOSITORY_LC }}/front:latest' || '' }}
@@ -133,12 +133,12 @@ jobs:
       - name: Build and push ${{ matrix.service }}
         uses: docker/build-push-action@v6
         with:
-          context: src/
-          file:   Dockerfile
-          push:   true
+          context: "{{defaultContext}}:src/."
+          file: Dockerfile
+          push: true
           platforms: linux/amd64
           cache-from: type=gha
-          cache-to:   type=gha,mode=max
+          cache-to: type=gha,mode=max
           tags: |
             ${{ env.REGISTRY }}/${{ env.GITHUB_REPOSITORY_LC }}/${{ matrix.service }}:${{ needs.setup_docker.outputs.version_tag }}
             ${{ env.LATEST_TAG && '${{ env.REGISTRY }}/${{ env.GITHUB_REPOSITORY_LC }}/${{ matrix.service }}:latest' || '' }}
