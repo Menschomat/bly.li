@@ -18,6 +18,9 @@ jobs:
       version_tag: ${{ steps.version_step.outputs.version_tag }}
       latest_tag: ${{ steps.version_step.outputs.latest_tag }}
     steps:
+      - name: Set lower case repository
+        run: |
+          echo "REPO_LC=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
       - name: Extract Version
         id: version_step
         run: |
@@ -82,8 +85,8 @@ jobs:
           push: true
           platforms: linux/amd64
           tags: |
-            ${{ env.REGISTRY }}/${{ env.GITHUB_REPOSITORY }}/front:${{ needs.setup_docker.outputs.version_tag }}
-            ${{ env.LATEST_TAG && '${{ env.REGISTRY }}/${{ env.GITHUB_REPOSITORY }}/front:latest' || '' }}
+            ${{ env.REGISTRY }}/${{ env.REPO_LC }}/front:${{ needs.setup_docker.outputs.version_tag }}
+            ${{ env.LATEST_TAG && '${{ env.REGISTRY }}/${{ env.REPO_LC }}/front:latest' || '' }}
           build-args: |
             VERSION=${{ needs.setup_docker.outputs.version }}
             SERVICE=front
@@ -123,8 +126,8 @@ jobs:
           push: true
           platforms: linux/amd64
           tags: |
-            ${{ env.REGISTRY }}/${{ env.GITHUB_REPOSITORY }}/${{ matrix.service }}:${{ needs.setup_docker.outputs.version_tag }}
-            ${{ env.LATEST_TAG && '${{ env.REGISTRY }}/${{ env.GITHUB_REPOSITORY }}/${{ matrix.service }}:latest' || '' }}
+            ${{ env.REGISTRY }}/${{ env.REPO_LC }}/${{ matrix.service }}:${{ needs.setup_docker.outputs.version_tag }}
+            ${{ env.LATEST_TAG && '${{ env.REGISTRY }}/${{ env.REPO_LC }}/${{ matrix.service }}:latest' || '' }}
           build-args: |
             VERSION=${{ needs.setup_docker.outputs.version }}
             SERVICE=${{ matrix.service }}
