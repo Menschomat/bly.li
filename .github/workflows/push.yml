@@ -43,9 +43,11 @@ jobs:
       version_tag: ${{ needs.extract_version.outputs.version_tag }}
       latst_tag: ${{ needs.extract_version.outputs.latest_tag }}
     steps:
-      - name: downcase GITHUB_REPOSITORY
+      - name: Set GITHUB_REPOSITORY_LC
         run: |
-          echo "GITHUB_REPOSITORY_LC=${GITHUB_REPOSITORY@L}" >> "${GITHUB_ENV}"
+          echo "GITHUB_REPOSITORY_LC=${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
+        env:
+          GITHUB_REPOSITORY: ${{ github.repository }}
       - name: Prepare Docker Image Identifiers
         id: read-docker-image-identifiers
         run: |
