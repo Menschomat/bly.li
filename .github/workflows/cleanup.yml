@@ -1,0 +1,36 @@
+name: Cleanup Untagged GHCR Images
+
+on:
+  schedule:
+    - cron: "0 0 */2 * *" # Every two days
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  GITHUB_REPOSITORY: ${{ github.repository }} # e.g. "owner/repo"
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        image:
+          - shortn
+          - dasher
+          - perso
+          - front
+          - blowup
+    steps:
+      - name: Compute lowercase repo name
+        run: |
+          echo "GITHUB_REPOSITORY_LC=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
+      - name: Cleanup untagged images for ${{ matrix.image }}
+        uses: actions/delete-package-versions@v5
+        with:
+          owner: ${{ github.repository_owner }}
+          package-name: ${{ env.GITHUB_REPOSITORY_LC }}/${{ matrix.service }}
+          package-type: container
+          min-versions-to-keep: 5
+          delete-only-untagged-versions: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
