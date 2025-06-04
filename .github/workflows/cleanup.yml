@@ -1,4 +1,4 @@
-name: Cleanup Untagged GHCR Images
+name: bly.li - Cleanup Untagged GHCR Images
 
 on:
   schedule:

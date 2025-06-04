@@ -1,4 +1,4 @@
-name: golang-pipeline
+name: bly.li - CI Pipeline
 
 on:
   push:
