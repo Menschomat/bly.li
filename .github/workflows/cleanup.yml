@@ -25,7 +25,7 @@ jobs:
         run: |
           echo "GITHUB_REPOSITORY_LC=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
       - name: Cleanup untagged images for ${{ matrix.image }}
-        uses: actions/delete-package-versions@v5
+        uses: actions/delete-package-versions@v4
         with:
           owner: ${{ github.repository_owner }}
           package-name: ${{ env.GITHUB_REPOSITORY_LC }}/${{ matrix.service }}
