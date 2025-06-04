@@ -30,6 +30,26 @@ paths:
           description: Server error
 
   /short/{short}:
+    get:
+      tags:
+        - dasher
+      summary: Get details for a Short
+      parameters:
+        - in: path
+          name: short
+          required: true
+          schema:
+            type: string
+          description: The short part of the URL
+      responses:
+        "200":
+          description: A list of aggregated clicks
+          content:
+            application/json:
+              schema:
+                $ref: "./shared.openapi.yml#/components/schemas/ShortURL"
+        "400":
+          description: Invalid input
     delete:
       tags:
         - dasher
@@ -46,3 +66,26 @@ paths:
           description: Deleted successfully
         "404":
           description: Short URL not found
+  /short/{short}/clicks:
+    get:
+      tags:
+        - dasher
+      summary: Get details for a Short
+      parameters:
+        - in: path
+          name: short
+          required: true
+          schema:
+            type: string
+          description: The short part of the URL
+      responses:
+        "200":
+          description: A list of aggregated clicks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "./shared.openapi.yml#/components/schemas/ShortClickCount"
+        "400":
+          description: Invalid input

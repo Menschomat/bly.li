@@ -13,7 +13,6 @@ components:
           type: string
           description: The original URL
           example: "https://example.com"
-
     ShortURL:
       type: object
       properties:
@@ -28,9 +27,35 @@ components:
         Count:
           type: integer
           description: Click count of the item
-          example: "1234"
+          example: 1234
         Owner:
           type: string
           nullable: true
           description: The owner of the item
           example: "cjames"
+        CreatedAt:
+          type: string
+          format: date-time
+          description: The timestamp when the URL was created
+          example: "2023-10-03T12:00:00Z"
+        UpdatedAt:
+          type: string
+          format: date-time
+          description: The timestamp when the URL was last updated
+          example: "2023-10-03T12:30:00Z"
+    ShortClickCount:
+      type: object
+      properties:
+        Short:
+          type: string
+          description: The short path corresponding to the click count
+          example: "abc123"
+        Timestamp:
+          type: string
+          format: date-time
+          description: The timestamp of when the click occurred
+          example: "2023-10-03T12:00:00Z"
+        Count:
+          type: integer
+          description: The number of clicks recorded for the short URL
+          example: 150

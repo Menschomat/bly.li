@@ -15,7 +15,7 @@ func GetShort(short string) *model.ShortURL {
 		if err != nil || url == nil {
 			url, err = mongo.GetShortURLByShort(short)
 			if err == nil {
-				redis.StoreUrl(url.Short, url.URL, url.Count, url.Owner)
+				redis.StoreUrl(*url)
 				return url
 			}
 			logging.LogMongoError(err)

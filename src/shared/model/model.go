@@ -3,10 +3,12 @@ package model
 import "time"
 
 type ShortURL struct {
-	Short string `bson:"short"`
-	URL   string `bson:"url"`
-	Count int    `bson:"count"`
-	Owner string `bson:"owner,omitempty"`
+	Short     string    `bson:"short"`
+	URL       string    `bson:"url"`
+	Count     int       `bson:"count"`
+	Owner     string    `bson:"owner,omitempty"`
+	CreatedAt time.Time `bson:"createdAt"`
+	UpdatedAt time.Time `bson:"updatedAt"`
 }
 
 type ShortClick struct {

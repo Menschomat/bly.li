@@ -8,7 +8,6 @@ import (
 	m "github.com/Menschomat/bly.li/shared/model"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 // CreateTimeSeriesCollection creates the time-series collection and necessary indexes.
@@ -41,43 +40,6 @@ func isNamespaceExistsError(err error) bool {
 	return false
 }
 
-// IncrementShortClickCount handles atomic increments with proper time-series constraints
-func IncrementShortClickCount(client *mongo.Client, dbName, colName, shortID string) error {
-	coll := client.Database(dbName).Collection(colName)
-	now := time.Now().UTC()
-
-	// Magic happens in the document ID structure
-	docID := bson.D{
-		{Key: "short", Value: shortID},
-		{Key: "timestamp", Value: now.Truncate(5 * time.Minute)},
-	}
-
-	update := bson.D{
-		{Key: "$inc", Value: bson.D{{Key: "count", Value: 1}}},
-		{Key: "$setOnInsert", Value: docID}, // For new documents
-	}
-
-	// Leverage upsert through native driver capabilities
-	_, err := coll.UpdateMany(
-		context.Background(),
-		docID, // Exact match on compound ID
-		update,
-		options.Update().SetUpsert(false),
-	)
-
-	return err
-}
-
-func InsetTimeseriesDoc(shortID string, count int, clickTime time.Time) error {
-	data := m.ShortClickCount{
-		Short:     shortID,
-		Timestamp: clickTime,
-		Count:     count,
-	}
-	// Use a slice literal to wrap 'data' as []interface{}
-	return InsetTimeseriesData(string(CollectionClicksCounts), []m.ShortClickCount{data})
-}
-
 func InsetTimeseriesData[T any](colname string, data []T) error {
 	client, err := GetMongoClient()
 	if err != nil {
@@ -98,39 +60,40 @@ func InsetTimeseriesData[T any](colname string, data []T) error {
 	return nil // Successfully inserted
 }
 
-// GetClicksForShort queries all time-series documents for a given short URL.
-// Optionally, you can add date-range filters.
-func GetClicksForShort(client *mongo.Client, dbName, colName, shortID string) ([]m.ShortClickCount, error) {
-	coll := client.Database(dbName).Collection(colName)
+func FetchLastClicks(hours time.Duration) ([]m.ShortClickCount, error) {
+	_client, _err := GetMongoClient()
+	if _err != nil {
+		logger.Error("Error getting Mongo-Client", "error", _err)
+		return nil, _err
+	}
+	collection := _client.Database(database).Collection(CollectionClicksAggregated)
+	now := time.Now()
+	last24h := now.Add(hours * time.Hour * -1)
 
-	pipeline := mongo.Pipeline{
-		bson.D{{Key: "$match", Value: bson.D{{Key: "short", Value: shortID}}}},
-		bson.D{{Key: "$group", Value: bson.D{
-			{Key: "_id", Value: bson.D{
-				{Key: "$dateTrunc", Value: bson.D{
-					{Key: "date", Value: "$timestamp"},
-					{Key: "unit", Value: "minute"},
-					{Key: "binSize", Value: 5},
-				}},
-			}},
-			{Key: "count", Value: bson.D{{Key: "$sum", Value: "$count"}}},
-		}}},
-		bson.D{{Key: "$project", Value: bson.D{
-			{Key: "timestamp", Value: "$_id"},
-			{Key: "count", Value: 1},
-			{Key: "_id", Value: 0},
-		}}},
+	filter := bson.M{
+		"timestamp": bson.M{
+			"$gte": last24h,
+			"$lte": now,
+		},
 	}
 
-	cursor, err := coll.Aggregate(context.Background(), pipeline)
+	cursor, err := collection.Find(context.Background(), filter)
 	if err != nil {
-		return nil, fmt.Errorf("failed to aggregate click counts: %v", err)
+		return nil, err
 	}
 	defer cursor.Close(context.Background())
 
 	var results []m.ShortClickCount
-	if err := cursor.All(context.Background(), &results); err != nil {
+	for cursor.Next(context.Background()) {
+		var result m.ShortClickCount
+		if err := cursor.Decode(&result); err != nil {
+			return nil, err
+		}
+		results = append(results, result)
+	}
+	if err := cursor.Err(); err != nil {
 		return nil, err
 	}
+
 	return results, nil
 }

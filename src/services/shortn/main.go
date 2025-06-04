@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/Menschomat/bly.li/services/shortn/api"
 	"github.com/Menschomat/bly.li/services/shortn/logging"
@@ -99,12 +100,12 @@ func (s *ShortnServer) PostStore(w http.ResponseWriter, r *http.Request) {
 	/* ----------- persist --------------------------------------------------- */
 
 	subject := oidc.SubjectFromCtx(r.Context()) // ignore "no user" error
-	shortURL := m.ShortURL{URL: url, Short: short, Owner: "", Count: 0}
+	shortURL := m.ShortURL{URL: url, Short: short, Owner: "", Count: 0, CreatedAt: time.Now(), UpdatedAt: time.Now()}
 	if len(subject) > 0 {
 		shortURL.Owner = subject
 	}
 
-	if err := redis.StoreUrl(shortURL.Short, shortURL.URL, shortURL.Count, shortURL.Owner); err != nil {
+	if err := redis.StoreUrl(shortURL); err != nil {
 		logger.Error("failed to store url in redis", "short", short, "url", url, "error", err)
 		apiUtils.InternalServerError(w)
 		return

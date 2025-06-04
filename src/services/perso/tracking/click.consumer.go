@@ -57,22 +57,18 @@ func PersistAggregatedClicks(aggregated map[string][]model.ShortClick) {
 	for short, clicks := range aggregated {
 		count := len(clicks)
 		logger.Info("Persisting clicks for short", "clicks", count, "short", short)
-
-		// Persist count in time series (MongoDB)
-		mongo.InsetTimeseriesDoc(short, count, time.Now())
-
 		// Update the short's total click count in both redis and mark as unsaved
 		s := data.GetShort(short)
 		if s != nil {
 			s.Count += count
-			if err := r.StoreUrl(s.Short, s.URL, s.Count, s.Owner); err != nil {
+			if err := r.StoreUrl(*s); err != nil {
 				l.LogRedisError(err)
 			}
 			r.MarkUnsaved(s.Short)
 		}
 		allClicks = append(allClicks, clicks...)
 	}
-	mongo.InsetTimeseriesData("clicks", allClicks)
+	mongo.InsetTimeseriesData(mongo.CollectionClicks, allClicks)
 }
 
 // RunConsumer continuously reads click events from a Redis stream and aggregates them.

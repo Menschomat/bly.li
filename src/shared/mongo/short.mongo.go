@@ -70,8 +70,9 @@ func UpdateShortUrl(shortURL m.ShortURL) (interface{}, error) {
 	filter := bson.D{{Key: "short", Value: shortURL.Short}}
 	update := bson.D{
 		{Key: "$set", Value: bson.M{
-			"url":   shortURL.URL,
-			"count": shortURL.Count,
+			"url":       shortURL.URL,
+			"count":     shortURL.Count,
+			"updatedAt": shortURL.UpdatedAt,
 			// Add other fields you want to update
 		}},
 	}

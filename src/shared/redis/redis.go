@@ -3,6 +3,7 @@ package redis
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"strconv"
 	"time"
@@ -28,12 +29,17 @@ func GetRedisClient() *redis.Client {
 	return cacheClient
 }
 
-func StoreUrl(short, url string, count int, owner string) error {
-	slog.Info("STORING")
-	key := "url:" + short
-
+func StoreUrl(shortUrl model.ShortURL) error {
+	slog.Info("Storing short " + shortUrl.Short)
+	key := "url:" + shortUrl.Short
 	pipe := GetRedisClient().Pipeline()
-	pipe.HSet(ctx, key, "url", url, "count", count, "owner", owner)
+
+	// Set ShortURL properties
+	pipe.HSet(ctx, key, "url", shortUrl.URL, "count", shortUrl.Count, "owner", shortUrl.Owner)
+	pipe.HSet(ctx, key, "createdAt", shortUrl.CreatedAt.Format(time.RFC3339)) // Use RFC3339 for consistent formatting
+	pipe.HSet(ctx, key, "updatedAt", shortUrl.UpdatedAt.Format(time.RFC3339)) // Use RFC3339 for consistent formatting
+
+	// Set TTL
 	pipe.Expire(ctx, key, targetTtl)
 
 	_, err := pipe.Exec(ctx)
@@ -45,18 +51,38 @@ func GetShort(short string) (*model.ShortURL, error) {
 	data, err := GetRedisClient().HGetAll(ctx, key).Result()
 	if err != nil || len(data) == 0 {
 		slog.Info("Could not fetch url from redis!")
-		return nil, err
+		return nil, err // Return error if fetching from Redis fails or no data found
 	}
+
 	if err := GetRedisClient().Expire(ctx, key, targetTtl).Err(); err != nil {
 		slog.Error("Could not refresh TTL in redis!", "error", err)
 	}
 
-	count, _ := strconv.Atoi(data["count"])
+	// Convert count to an integer with error handling
+	count, err := strconv.Atoi(data["count"])
+	if err != nil {
+		return nil, fmt.Errorf("invalid count value for short '%s': %v", short, err)
+	}
+
+	// Parse CreatedAt and UpdatedAt from string to time.Time
+	createdAt, err := time.Parse(time.RFC3339, data["createdAt"])
+	if err != nil {
+		return nil, fmt.Errorf("invalid CreatedAt value for short '%s': %v", short, err)
+	}
+
+	updatedAt, err := time.Parse(time.RFC3339, data["updatedAt"])
+	if err != nil {
+		return nil, fmt.Errorf("invalid UpdatedAt value for short '%s': %v", short, err)
+	}
+
+	// Create and return ShortURL object
 	return &model.ShortURL{
-		Short: short,
-		URL:   data["url"],
-		Count: count,
-		Owner: data["owner"],
+		Short:     short,
+		URL:       data["url"],
+		Count:     count,
+		Owner:     data["owner"],
+		CreatedAt: createdAt,
+		UpdatedAt: updatedAt,
 	}, nil
 }
 
@@ -85,15 +111,7 @@ func ShortExists(short string) bool {
 }
 
 func RegisterClick(click model.ShortClick) {
-	//short := click.Short
 	_cache := GetRedisClient()
-
-	// Concurrently fetch count and URL
-	//countResult := _cache.HGet(ctx, "url:"+short, "count")
-	//count, err1 := strconv.Atoi(countResult.Val())
-	//if err1 == nil && _cache.HSet(ctx, "url:"+short, "count", count+1).Err() != nil {
-	//	slog.Error("Error updating count")
-	//}
 	out, err3 := json.Marshal(click)
 	if err3 != nil {
 		slog.Error("Error marshalling click", "error", err3)
@@ -112,5 +130,4 @@ func RegisterClick(click model.ShortClick) {
 	} else {
 		slog.Debug("Click event added with ID: " + eventID)
 	}
-	//MarkUnsaved(short)
 }

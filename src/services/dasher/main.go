@@ -6,6 +6,7 @@ import (
 	"errors"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/Menschomat/bly.li/services/dasher/api"
 	"github.com/Menschomat/bly.li/services/dasher/logging"
@@ -25,15 +26,43 @@ var (
 // DasherServer implements the API interface.
 type DasherServer struct{}
 
-// getShortURLOwner attempts to find the owner of the short url in Redis and MongoDB.
-func getShortURLOwner(ctx context.Context, short string) (string, error) {
-	if u, err := redis.GetShort(short); err == nil && u != nil && u.Owner != "" {
-		return u.Owner, nil
+// Get details for a Short
+// (GET /short/{short})
+func (s *DasherServer) GetShortShort(w http.ResponseWriter, r *http.Request, short string) {
+	subject := oidc.SubjectFromCtx(r.Context())
+	if len(subject) <= 0 {
+		logger.Error("Failed to get user info from context")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
 	}
-	if u, err := mongo.GetShortURLByShort(short); err == nil && u != nil && u.Owner != "" {
-		return u.Owner, nil
+	shortUrl, err := mongo.GetShortURLByShort(short)
+	if err != nil || shortUrl.Owner != subject {
+		http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+		return
 	}
-	return "", errors.New("owner not found")
+	responseJSON(w, shortUrl, http.StatusOK)
+}
+
+// Get details for a Short
+// (GET /short/{short}/clicks)
+func (s *DasherServer) GetShortShortClicks(w http.ResponseWriter, r *http.Request, short string) {
+	subject := oidc.SubjectFromCtx(r.Context())
+	if len(subject) <= 0 {
+		logger.Error("Failed to get user info from context")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+	owner, err := getShortURLOwner(context.Background(), short)
+	if err != nil || owner != subject {
+		http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+		return
+	}
+	clicks, err := mongo.FetchLastClicks(24 * time.Hour)
+	if err != nil || owner != subject {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+	responseJSON(w, clicks, http.StatusOK)
 }
 
 // DeleteShortShort deletes a short URL if the current user is the owner.
@@ -85,6 +114,17 @@ func (s *DasherServer) GetShortAll(w http.ResponseWriter, r *http.Request) {
 
 	shorts := mongo.GetShortsByOwner(subject)
 	responseJSON(w, shorts, http.StatusOK)
+}
+
+// getShortURLOwner attempts to find the owner of the short url in Redis and MongoDB.
+func getShortURLOwner(ctx context.Context, short string) (string, error) {
+	if u, err := redis.GetShort(short); err == nil && u != nil && u.Owner != "" {
+		return u.Owner, nil
+	}
+	if u, err := mongo.GetShortURLByShort(short); err == nil && u != nil && u.Owner != "" {
+		return u.Owner, nil
+	}
+	return "", errors.New("owner not found")
 }
 
 // responseJSON marshals data to JSON and writes it to the response.

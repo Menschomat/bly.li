@@ -17,7 +17,6 @@ const (
 	// Collection names
 	CollectionShorts           = "shorts"
 	CollectionClicks           = "clicks"
-	CollectionClicksCounts     = "clicks_counts"
 	CollectionClicksCounty     = "clicks_country"
 	CollectionClicksAggregated = "clicks_aggregated"
 )
@@ -99,12 +98,7 @@ func InitMongoCollections(mongoClient *mongo.Client) {
 		log.Fatalf("Could not create time-series collection: %v", err)
 	}
 
-	// 3) Time-series click_counts collection (z. B. für sekundäre Zählungen)
-	if err := CreateTimeSeriesCollection(mongoClient, database, CollectionClicksCounts); err != nil {
-		log.Fatalf("Could not create time-series collection: %v", err)
-	}
-
-	// 4) Aggregierte Klickdaten
+	// 3) Aggregierte Klickdaten
 	aggColl := mongoClient.Database(database).Collection(CollectionClicksAggregated)
 
 	// Neue Struktur: Index auf echte Felder statt auf _id
@@ -117,18 +111,6 @@ func InitMongoCollections(mongoClient *mongo.Client) {
 			},
 			Options: options.Index().SetName("short_resolution_timestamp_idx").SetUnique(true),
 		},
-		// Optional: Für spätere Filter / Drilldowns
-		// {
-		// 	Keys: bson.D{
-		// 		{Key: "shortUrl", Value: 1},
-		// 		{Key: "timestamp", Value: 1},
-		// 		{Key: "browser", Value: 1},
-		// 		{Key: "country", Value: 1},
-		// 	},
-		// 	Options: options.Index().
-		// 		SetName("detailed_access_idx").
-		// 		SetSparse(true),
-		// },
 	}
 
 	if _, err := aggColl.Indexes().CreateMany(ctx, indexes); err != nil {
