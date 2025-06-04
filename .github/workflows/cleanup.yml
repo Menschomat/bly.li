@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        image:
+        service:
           - shortn
           - dasher
           - perso
@@ -24,7 +24,7 @@ jobs:
       - name: Compute lowercase repo name
         run: |
           echo "GITHUB_REPOSITORY_LC=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
-      - name: Cleanup untagged images for ${{ matrix.image }}
+      - name: Cleanup untagged images for ${{ matrix.service }}
         uses: actions/delete-package-versions@v4
         with:
           owner: ${{ github.repository_owner }}
