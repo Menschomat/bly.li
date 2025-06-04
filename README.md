@@ -132,3 +132,7 @@ Each service is available with the following tags:
 - `main`: Latest build from the main branch
 
 The images are built for linux/amd64 platform and include automated build caching via GitHub Actions.
+
+### License
+
+This project is licensed under the GNU Affero General Public License v3.0. You can view the full license text in the LICENSE file. This license ensures that the code remains free and open, promoting collaboration and sharing within the community.
