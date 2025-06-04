@@ -10,6 +10,7 @@ configuration.ts
 encoder.ts
 index.ts
 model/models.ts
+model/short-click-count.ts
 model/short-url.ts
 model/shortn-req.ts
 param.ts

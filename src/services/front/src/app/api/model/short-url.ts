@@ -27,5 +27,13 @@ export interface ShortURL {
      * The owner of the item
      */
     Owner?: string | null;
+    /**
+     * The timestamp when the URL was created
+     */
+    CreatedAt?: string;
+    /**
+     * The timestamp when the URL was last updated
+     */
+    UpdatedAt?: string;
 }
 

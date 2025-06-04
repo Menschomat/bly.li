@@ -12,6 +12,7 @@ import { HttpHeaders }                                       from '@angular/comm
 
 import { Observable }                                        from 'rxjs';
 
+import { ShortClickCount } from '../model/models';
 import { ShortURL } from '../model/models';
 
 
@@ -30,10 +31,24 @@ export interface DasherServiceInterface {
     dasherShortAllGet(extraHttpRequestParams?: any): Observable<Array<ShortURL>>;
 
     /**
+     * Get details for a Short
+     * 
+     * @param _short The short part of the URL
+     */
+    dasherShortShortClicksGet(_short: string, extraHttpRequestParams?: any): Observable<Array<ShortClickCount>>;
+
+    /**
      * Delete a shortened URL
      * 
      * @param _short The short part of the URL
      */
     dasherShortShortDelete(_short: string, extraHttpRequestParams?: any): Observable<{}>;
+
+    /**
+     * Get details for a Short
+     * 
+     * @param _short The short part of the URL
+     */
+    dasherShortShortGet(_short: string, extraHttpRequestParams?: any): Observable<ShortURL>;
 
 }
