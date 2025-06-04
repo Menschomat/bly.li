@@ -61,6 +61,7 @@ func PersistAggregatedClicks(aggregated map[string][]model.ShortClick) {
 		s := data.GetShort(short)
 		if s != nil {
 			s.Count += count
+			s.UpdatedAt = time.Now()
 			if err := r.StoreUrl(*s); err != nil {
 				l.LogRedisError(err)
 			}
