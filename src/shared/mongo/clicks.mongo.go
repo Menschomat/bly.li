@@ -60,7 +60,7 @@ func InsetTimeseriesData[T any](colname string, data []T) error {
 	return nil // Successfully inserted
 }
 
-func FetchLastClicks(hours time.Duration) ([]m.ShortClickCount, error) {
+func FetchLastClicks(hours time.Duration, short string) ([]m.ShortClickCount, error) {
 	_client, _err := GetMongoClient()
 	if _err != nil {
 		logger.Error("Error getting Mongo-Client", "error", _err)
@@ -75,6 +75,7 @@ func FetchLastClicks(hours time.Duration) ([]m.ShortClickCount, error) {
 			"$gte": last24h,
 			"$lte": now,
 		},
+		"short": short,
 	}
 
 	cursor, err := collection.Find(context.Background(), filter)

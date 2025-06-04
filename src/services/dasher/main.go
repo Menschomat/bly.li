@@ -57,7 +57,7 @@ func (s *DasherServer) GetShortShortClicks(w http.ResponseWriter, r *http.Reques
 		http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
 		return
 	}
-	clicks, err := mongo.FetchLastClicks(24 * time.Hour)
+	clicks, err := mongo.FetchLastClicks(24*time.Hour, short)
 	if err != nil || owner != subject {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return

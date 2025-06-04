@@ -10,9 +10,15 @@ import { ShortTableRowComponent } from './short-table-row/short-table-row.compon
 import { DashboardService } from '../../../services/dashboard.service';
 import { ShortNumberPipe } from '../../../pipes/short-number.pipe';
 import { ConfigService } from '../../../services/config.service';
+import { RouterModule } from '@angular/router';
 @Component({
   selector: 'app-short-table',
-  imports: [CommonModule, ShortNumberPipe, ShortTableRowComponent],
+  imports: [
+    CommonModule,
+    RouterModule,
+    ShortNumberPipe,
+    ShortTableRowComponent,
+  ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA],
   host: { class: 'flex-1 flex flex-col gap-4' },
   template: `
@@ -20,7 +26,7 @@ import { ConfigService } from '../../../services/config.service';
     <app-short-table-row (copy)="copyItem(item)" (delete)="deleteItem(item)"
       ><row-title>{{ item.Short }}</row-title>
       <row-url>{{ item.URL }}</row-url>
-      <row-count
+      <row-count [routerLink]="['./detail/' + item.Short]"
         >{{ item.Count ?? 0 | shortNumber }} Clicks</row-count
       ></app-short-table-row
     >
