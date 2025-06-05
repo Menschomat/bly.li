@@ -24,7 +24,7 @@
   },
   //"forwardPorts": [4200],
   "shutdownAction": "stopCompose",
-  "postCreateCommand": "echo '$BLYLI_FRONT_CONFIG' > ./config.json && sudo chown -R $(id -u):$(id -g) /workspace/src/services/front/node_modules && npm install -g bun && bun install",
+  "postCreateCommand": "echo '$BLYLI_FRONT_CONFIG' > /workspace/src/services/front/public/assets/devconfig.json && sudo chown -R $(id -u):$(id -g) /workspace/src/services/front/node_modules && npm install -g bun && bun install",
   "runServices": [
     "zookeeper",
     "mongodb",
