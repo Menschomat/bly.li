@@ -19,10 +19,10 @@ services:
       dockerfile: Dockerfile
       args:
         - SERVICE=shortn
-      depends_on:
-        - mongodb
-        - redis
-        - zookeeper
+    depends_on:
+      - mongodb
+      - redis
+      - zookeeper
     #image: mensch0mat/bly.li.shortn:main
     environment:
       - OIDC_URL=${OIDC_URL}
@@ -36,9 +36,9 @@ services:
       dockerfile: Dockerfile
       args:
         - SERVICE=dasher
-      depends_on:
-        - mongodb
-        - redis
+    depends_on:
+      - mongodb
+      - redis
     #image: mensch0mat/bly.li.shortn:main
     environment:
       - OIDC_URL=${OIDC_URL}
@@ -51,9 +51,9 @@ services:
       dockerfile: Dockerfile
       args:
         - SERVICE=perso
-      depends_on:
-        - mongodb
-        - redis
+    depends_on:
+      - mongodb
+      - redis
     #image: mensch0mat/bly.li.shortn:main
     environment:
       - TZ=${TZ}
@@ -64,9 +64,9 @@ services:
       dockerfile: Dockerfile
       args:
         - SERVICE=blowup
-      depends_on:
-        - mongodb
-        - redis
+    depends_on:
+      - mongodb
+      - redis
     #image: mensch0mat/bly.li.blowup:main
     environment:
       - TZ=${TZ}
