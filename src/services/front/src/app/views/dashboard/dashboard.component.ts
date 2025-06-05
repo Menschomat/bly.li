@@ -18,7 +18,8 @@ import { AuthService } from '../../services/auth.service';
         <h3 class="text-xl py-2" *ngIf="$curFullName | async as fullname">
           Welcome back <b>{{ fullname }}</b
           >. Currently you have
-          <b>{{ ($allShorts | async)?.length ?? 0 | numberToWords }}</b> shorts.
+          <b>{{ ($allShorts | async)?.length ?? 0 | numberToWords }}</b>
+          {{ (($allShorts | async)?.length ?? 0) > 1 ? 'shorts' : 'short' }}.
         </h3>
       </div>
     </header>

@@ -11,17 +11,17 @@ import { ShortnReq, ShortnService } from '../../api';
   imports: [ButtonPrimaryComponent, CommonModule, FormsModule],
   template: `
     <div
-      class="mt-2 max-w-2xl px-8 py-4 backdrop-blur-md bg-white/30 shadow dark:bg-gray-800/50 rounded-lg"
+      class="mt-2 max-w-2xl px-8 py-4 backdrop-blur-md bg-white/30 shadow dark:bg-gray-800/50 rounded-2xl"
     >
       <div class=" flex flex-col">
         <a
           href="#"
-          class="text-xl font-bold text-gray-700 dark:text-white"
+          class="text-lg  text-gray-700 dark:text-white"
           tabindex="0"
           role="link"
           >Enter a long URL to create your short:</a
         >
-        <div class="flex flex-row items-center">
+        <div class="flex flex-row items-center gap-2">
           <input
             type="text"
             [(ngModel)]="shortInputValue"
