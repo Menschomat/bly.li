@@ -4,10 +4,11 @@ import { catchError, map, Observable, of, startWith, switchMap } from 'rxjs';
 import { DashboardService } from '../../../services/dashboard.service';
 import { ShortClickCount } from '../../../api';
 import { CommonModule } from '@angular/common';
+import { LineChartComponent } from '../../../components/graphs/line-chart/line-chart.component';
 
 @Component({
   selector: 'app-short-details',
-  imports: [CommonModule],
+  imports: [CommonModule, LineChartComponent],
   host: { class: 'flex-1 flex' },
   template: `
     <main
@@ -15,18 +16,31 @@ import { CommonModule } from '@angular/common';
     >
       @if (clickHistory$ | async; as result) { @if (result.status === 'loading')
       {
-      <div class="flex-1 flex items-center"><h3 class="text-xl"><b>Loading…</b></h3></div>
+      <div class="flex-1 flex items-center">
+        <h3 class="text-xl"><b>Loading…</b></h3>
+      </div>
       } @else if (result.status === 'error') {
-      <div class="flex-1 flex items-center"><h3 class="text-xl"><b class="text-red-600 dark:text-red-400">Error:</b> {{ result.message }}</h3></div>
+      <div class="flex-1 flex items-center">
+        <h3 class="text-xl">
+          <b class="text-red-600 dark:text-red-400">Error:</b>
+          {{ result.message }}
+        </h3>
+      </div>
       } @else if (result.status === 'success') { @if (result.data.length === 0)
       {
-      <div class="flex-1 flex items-center"><h3 class="text-xl"><b>No data yet.</b> Looks like your short URL hasn't been clicked. <b>Share it to get started!</b></h3></div>
+      <div class="flex-1 flex items-center">
+        <h3 class="text-xl">
+          <b>No data yet.</b> Looks like your short URL hasn't been clicked.
+          <b>Share it to get started!</b>
+        </h3>
+      </div>
       }
       <ul>
         @for (item of result.data; track item.Timestamp) {
         <li>{{ item.Timestamp }} – {{ item.Count }}</li>
         }
       </ul>
+      <app-line-chart></app-line-chart>
       } }
     </main>
   `,
