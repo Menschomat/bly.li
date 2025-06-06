@@ -4,11 +4,10 @@ import { catchError, map, Observable, of, startWith, switchMap } from 'rxjs';
 import { DashboardService } from '../../../services/dashboard.service';
 import { ShortClickCount } from '../../../api';
 import { CommonModule } from '@angular/common';
-import { LineChartComponent } from '../../../components/graphs/line-chart/line-chart.component';
 
 @Component({
   selector: 'app-short-details',
-  imports: [CommonModule, LineChartComponent],
+  imports: [CommonModule],
   host: { class: 'flex-1 flex' },
   template: `
     <main
@@ -40,7 +39,6 @@ import { LineChartComponent } from '../../../components/graphs/line-chart/line-c
         <li>{{ item.Timestamp }} – {{ item.Count }}</li>
         }
       </ul>
-      <app-line-chart></app-line-chart>
       } }
     </main>
   `,
