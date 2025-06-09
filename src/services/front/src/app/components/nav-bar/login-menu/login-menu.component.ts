@@ -1,12 +1,25 @@
-import { Component } from '@angular/core';
+import {
+  Component,
+  CUSTOM_ELEMENTS_SCHEMA,
+  NO_ERRORS_SCHEMA,
+} from '@angular/core';
 import { AuthService } from '../../../services/auth.service';
 import { filter, map, tap, Observable } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive } from '@angular/router';
+import { DropdownComponent } from '../../generic/dropdown/dropdown.component';
+import { MenuItemComponent } from '../../generic/dropdown/menu-item/menu-item.component';
 
 @Component({
   selector: 'app-login-menu',
-  imports: [CommonModule, RouterLink, RouterLinkActive],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA],
+  imports: [
+    CommonModule,
+    RouterLink,
+    RouterLinkActive,
+    DropdownComponent,
+    MenuItemComponent,
+  ],
   template: `
     <div
       *ngIf="!(curUsrName | async)"
@@ -16,24 +29,21 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
         Login<i class="ml-2 fa-solid fa-arrow-right-to-bracket"></i
       ></a>
     </div>
-    <div
-      *ngIf="curUsrName | async as username"
-      class=" flex flex-col sm:flex-row  items-end gap-4 transition-colors duration-300 transform text-gray-800 dark:text-gray-200"
-    >
-      <a
-        routerLink="/dash"
-        routerLinkActive="active"
-        class="text-lg cursor-pointer align-middle"
-      >
-        <i class="ml-2 fa-solid fa-chart-line"></i
-      ></a>
-      <a class="text-lg align-middle "
-        >{{ username }}<i class="ml-2 fa-regular fa-user"></i
-      ></a>
-      <a (click)="logout()" class="text-lg cursor-pointer align-middle">
-        Logout<i class="ml-2 fa-solid fa-arrow-right-from-bracket"></i
-      ></a>
-    </div>
+    <app-dropdown *ngIf="curUsrName | async as username">
+      <user-name>{{ username }}</user-name>
+      <item-list>
+        <app-menu-item routerLink="/dash" routerLinkActive="active">
+          <item-content>
+            <i class="mr-2 fa-solid fa-chart-line"></i>Dashboard
+          </item-content>
+        </app-menu-item>
+        <app-menu-item (click)="logout()">
+          <item-content>
+            <i class="mr-2 fa-solid fa-arrow-right-from-bracket"></i>Logout
+          </item-content>
+        </app-menu-item>
+      </item-list>
+    </app-dropdown>
   `,
 })
 export class LoginMenuComponent {
