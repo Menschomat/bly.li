@@ -19,7 +19,7 @@ import { Component, ElementRef, HostListener } from '@angular/core';
     <!-- Dropdown menu -->
     <div
       id="dropdownAvatarName"
-      class="z-10 absolute mt-2 bg-white divide-y divide-gray-100 rounded-lg shadow-sm w-44 dark:bg-gray-700 dark:divide-gray-600"
+      class="z-10 absolute mt-2 divide-y divide-gray-100 rounded-lg shadow-sm w-44 dark:divide-gray-600 backdrop-blur-md bg-white/30 shadow dark:bg-gray-800/50 rounded-2xl backdrop-blur-md"
     >
       <ul class="py-2 text-sm text-gray-700 dark:text-gray-200">
         <ng-content select="item-list"></ng-content>
