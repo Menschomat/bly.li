@@ -7,11 +7,26 @@ import { Component, ElementRef, HostListener } from '@angular/core';
   template: `
     <button
       (click)="open = !open"
-      class="flex items-center text-lg pe-1  text-gray-900 focus:outline-hidden rounded-lg cursor-pointer hover:text-indigo-600 dark:hover:text-indigo-500 md:me-0 focus:ring-0 focus:ring-gray-100 dark:focus:ring-gray-700 dark:text-white"
+      class="
+        flex items-center 
+        cursor-pointer 
+        rounded-lg 
+        pe-1 
+        text-lg 
+        text-gray-900 
+        hover:text-indigo-600 
+        md:me-0 
+        focus:outline-hidden 
+        focus:ring-0 
+        focus:ring-gray-100 
+        dark:text-white 
+        dark:hover:text-indigo-500 
+        dark:focus:ring-gray-700
+      "
       type="button"
     >
       <span class="sr-only">Open user menu</span>
-      <i class=" fa-regular fa-user mr-3"></i>
+      <i class="fa-regular fa-user mr-3"></i>
       <ng-content select="user-name"></ng-content>
       <i class="ml-2 fa-solid fa-chevron-down"></i>
     </button>
@@ -19,7 +34,20 @@ import { Component, ElementRef, HostListener } from '@angular/core';
     <!-- Dropdown menu -->
     <div
       id="dropdownAvatarName"
-      class="z-10 absolute mt-2 divide-y divide-gray-100 rounded-lg shadow-sm w-44 dark:divide-gray-600 backdrop-blur-md bg-white/30 shadow dark:bg-gray-800/50 rounded-2xl backdrop-blur-md"
+      class="
+        z-10 
+        absolute 
+        mt-2 
+        w-38 
+        bg-white 
+        rounded-2xl 
+        shadow 
+        shadow-sm 
+        border 
+        border-gray-100 
+        dark:bg-black 
+        dark:border-gray-900
+      "
     >
       <ul class="py-2 text-sm text-gray-700 dark:text-gray-200">
         <ng-content select="item-list"></ng-content>

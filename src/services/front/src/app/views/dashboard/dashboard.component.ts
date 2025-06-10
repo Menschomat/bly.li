@@ -10,12 +10,12 @@ import { AuthService } from '../../services/auth.service';
 @Component({
   selector: 'app-dashboard',
   imports: [CommonModule, NumberToWordsPipe, ShortTableComponent],
-  host: { class: 'flex-1 ' },
+  host: { class: 'flex-1 px-2 py-4' },
   template: `
     <header>
       <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-        <h1 class="text-3xl font-bold  ">Dashboard</h1>
-        <h3 class="text-xl py-2" *ngIf="$curFullName | async as fullname">
+        <h1 class="text-3xl font-bold">Dashboard</h1>
+        <h3 class="py-2 text-xl" *ngIf="$curFullName | async as fullname">
           Welcome back <b>{{ fullname }}</b
           >. Currently you have
           <b>{{ ($allShorts | async)?.length ?? 0 | numberToWords }}</b>
@@ -24,7 +24,16 @@ import { AuthService } from '../../services/auth.service';
       </div>
     </header>
     <main
-      class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 flex flex-col gap-4"
+      class="
+        mx-auto max-w-7xl px-4 py-6 
+        sm:px-6 lg:px-8 
+        flex flex-col gap-4 
+        backdrop-blur-md 
+        rounded-3xl 
+        border border-gray-100 
+        shadow-sm 
+        dark:border-gray-900
+      "
     >
       <app-short-table></app-short-table>
     </main>

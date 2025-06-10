@@ -37,6 +37,7 @@ import { MenuItemComponent } from '../../generic/dropdown/menu-item/menu-item.co
             <i class="mr-2 fa-solid fa-chart-line"></i>Dashboard
           </item-content>
         </app-menu-item>
+        <hr class="mx-3 border-t border-gray-200 dark:border-gray-800">
         <app-menu-item (click)="logout()">
           <item-content>
             <i class="mr-2 fa-solid fa-arrow-right-from-bracket"></i>Logout

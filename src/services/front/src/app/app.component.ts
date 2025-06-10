@@ -1,14 +1,21 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { NavBarComponent } from './components/nav-bar/nav-bar.component';
 import { ThemeService, ThemeMode } from './services/theme.service';
 import { RouterOutlet } from '@angular/router';
 import { CommonModule } from '@angular/common';
+
 const MODES: ThemeMode[] = ['system', 'lite', 'dark'];
 @Component({
   selector: 'app-root',
   imports: [CommonModule, NavBarComponent, RouterOutlet],
-  host: { class: 'flex flex-col h-full text-gray-800 dark:text-gray-200' },
+  host: {
+    class: 'flex flex-col h-full text-gray-800 dark:text-gray-200'
+  },
   template: `
+  <div
+  style="z-index: -1"
+  class="absolute inset-0 h-full w-full bg-white dark:bg-black bg-[radial-gradient(#cfcfcf_1px,transparent_1px)] dark:bg-[radial-gradient(#313131_1px,transparent_1px)] [background-size:24px_24px]"
+></div>
     <app-nav-bar></app-nav-bar>
     <div class="flex flex-1 flex-col">
       <router-outlet></router-outlet>
@@ -26,10 +33,11 @@ const MODES: ThemeMode[] = ['system', 'lite', 'dark'];
     </div>
   `,
 })
-export class AppComponent {
+export class AppComponent implements OnInit {
   mode: ThemeMode = 'system';
   title = 'front';
-  constructor(private readonly themeService: ThemeService) {
+  constructor(private readonly themeService: ThemeService) {}
+  ngOnInit(): void {
     this.themeService.mode$.subscribe((m) => (this.mode = m));
   }
   public setMode(mode: ThemeMode) {

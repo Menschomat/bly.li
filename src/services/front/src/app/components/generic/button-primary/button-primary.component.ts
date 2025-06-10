@@ -15,11 +15,11 @@ type ButtonColorConfig = {
   template: `
     <button
       
-      class="bg-animate p-0.5 rounded-lg min-w-22"
+      class="bg-animate p-0.5 rounded-full min-w-22"
       [ngClass]="getSelectedColorConfig().buttonGradient"
     >
       <div
-        class="px-4 py-2 bg-white dark:bg-gray-900 rounded-md text-transparent hover:bg-transparent"
+        class="px-4 py-2 bg-white dark:bg-gray-900 rounded-full text-transparent hover:bg-transparent"
         [ngClass]="getSelectedColorConfig().hoverTextColor || 'hover:text-white'"
       >
         <span

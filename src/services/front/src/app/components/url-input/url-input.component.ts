@@ -11,12 +11,12 @@ import { ShortnReq, ShortnService } from '../../api';
   imports: [ButtonPrimaryComponent, CommonModule, FormsModule],
   template: `
     <div
-      class="mt-2 max-w-2xl px-8 py-4 backdrop-blur-md bg-white/30 shadow dark:bg-gray-800/50 rounded-2xl"
+      class="mt-2 max-w-2xl px-6 py-4 backdrop-blur-md  rounded-3xl border border-gray-100  shadow-md dark:border-gray-900"
     >
       <div class=" flex flex-col">
         <a
           href="#"
-          class="text-lg  text-gray-700 dark:text-white"
+          class="text-lg  text-gray-700 dark:text-white px-2"
           tabindex="0"
           role="link"
           >Enter a long URL to create your short:</a
@@ -26,7 +26,7 @@ import { ShortnReq, ShortnService } from '../../api';
             type="text"
             [(ngModel)]="shortInputValue"
             placeholder="https://example.url..."
-            class="block mt-2 w-full placeholder-gray-400/70 dark:placeholder-gray-500 rounded-lg border border-gray-200 bg-white px-5 py-2.5 text-gray-700 focus:border-blue-400 focus:outline-none focus:ring focus:ring-blue-300 focus:ring-opacity-40 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-300 dark:focus:border-blue-300"
+            class="block mt-2 w-full placeholder-gray-400/70 dark:placeholder-gray-500 rounded-full border border-gray-200 bg-white px-5 py-2.5 text-gray-700 focus:border-blue-400 focus:outline-none focus:ring focus:ring-blue-300 focus:ring-opacity-40 dark:border-gray-600 dark:bg-transparent dark:text-gray-300 dark:focus:border-blue-300"
           />
           <app-button-primary (click)="requestShort()" class="flex-1 mt-2 pl-1"
             >shrink</app-button-primary

@@ -4,7 +4,7 @@ import { Component, EventEmitter, Output } from '@angular/core';
   selector: 'app-short-table-row',
   imports: [],
   host: {
-    class: 'flex-1 grid grid-cols-[5rem_1fr_10rem_auto] grid-rows-1 gap-4',
+    class: 'flex-1 grid grid-cols-[6rem_1fr_5rem_auto] grid-rows-1 gap-4',
   },
   template: `
     <div>

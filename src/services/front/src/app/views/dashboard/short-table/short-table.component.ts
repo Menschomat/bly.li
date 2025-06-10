@@ -22,7 +22,8 @@ import { RouterModule } from '@angular/router';
   schemas: [CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA],
   host: { class: 'flex-1 flex flex-col gap-4' },
   template: `
-    @for (item of $allShorts | async; track item.Short) {
+    @for (item of $allShorts | async; track item.Short; let i = $index; let
+    count = $count) {
     <app-short-table-row (copy)="copyItem(item)" (delete)="deleteItem(item)"
       ><row-title>{{ item.Short }}</row-title>
       <row-url>{{ item.URL }}</row-url>
@@ -30,7 +31,9 @@ import { RouterModule } from '@angular/router';
         >{{ item.Count ?? 0 | shortNumber }} Clicks</row-count
       ></app-short-table-row
     >
-    }
+    @if (i < count - 1){
+    <hr class="border-t border-gray-100 dark:border-gray-900" />
+    } }
   `,
   styles: ``,
 })
