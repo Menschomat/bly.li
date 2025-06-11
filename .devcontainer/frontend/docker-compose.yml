@@ -14,11 +14,7 @@ services:
       - mongodb
       - redis
   shortn:
-    build:
-      context: ../src/.
-      dockerfile: Dockerfile
-      args:
-        - SERVICE=shortn
+    image: ghcr.io/menschomat/bly.li/shortn:main
     depends_on:
       - mongodb
       - redis
@@ -31,11 +27,7 @@ services:
     restart: unless-stopped
 
   dasher:
-    build:
-      context: ../src/.
-      dockerfile: Dockerfile
-      args:
-        - SERVICE=dasher
+    image: ghcr.io/menschomat/bly.li/dasher:main
     depends_on:
       - mongodb
       - redis
@@ -46,11 +38,7 @@ services:
       - TZ=${TZ}
     restart: unless-stopped
   perso:
-    build:
-      context: ../src/.
-      dockerfile: Dockerfile
-      args:
-        - SERVICE=perso
+    image: ghcr.io/menschomat/bly.li/perso:main
     depends_on:
       - mongodb
       - redis
@@ -59,11 +47,7 @@ services:
       - TZ=${TZ}
     restart: unless-stopped
   blowup:
-    build:
-      context: ../src/.
-      dockerfile: Dockerfile
-      args:
-        - SERVICE=blowup
+    image: ghcr.io/menschomat/bly.li/blowup:main
     depends_on:
       - mongodb
       - redis
