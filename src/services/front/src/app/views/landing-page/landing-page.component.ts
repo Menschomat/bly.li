@@ -6,7 +6,7 @@ import { UrlOutputComponent } from '../../components/url-output/url-output.compo
   selector: 'app-landing-page',
   standalone: true,
   imports: [UrlInputComponent, UrlOutputComponent],
-  host: { class: 'flex flex-1 flex-col items-center justify-center' },
+  host: { class: 'flex flex-1 flex-col items-center justify-center  px-2 sm:px-6 lg:px-8 py-4' },
   template: `
     <h2
       class="bg-animate text-center mb-5 text-6xl font-montserrat font-black leading-snug text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-pink-600 to-purple-600"

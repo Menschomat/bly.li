@@ -11,7 +11,9 @@ import { ButtonPrimaryComponent } from '../generic/button-primary/button-primary
   template: `
     <div
       *ngIf="outUrl$ | async as outUrl"
-      class=" max-w-2xl px-8 py-4  backdrop-blur-md bg-white/30 shadow dark:bg-gray-800/50 rounded-xl"
+      class="mt-0 max-w-2xl px-6 py-4 rounded-3xl shadow-md 
+                border border-gray-100 backdrop-blur-md 
+                dark:border-gray-900"
     >
       <div class="flex flex-row items-center gap-2">
         <input
@@ -20,12 +22,19 @@ import { ButtonPrimaryComponent } from '../generic/button-primary/button-primary
           type="text"
           [value]="outUrl"
           placeholder="https://bly.li/...."
-          class="block mt-2 w-full placeholder-gray-400/70 dark:placeholder-gray-500 rounded-lg border border-gray-200 bg-white px-5 py-2.5 text-gray-700 focus:border-blue-400 focus:outline-none focus:ring focus:ring-blue-300 focus:ring-opacity-40 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-300 dark:focus:border-blue-300"
+          class="block w-full px-5 py-2.5 rounded-full 
+                   border border-gray-200 bg-white 
+                   text-gray-700 placeholder-gray-400/70 
+                   focus:border-blue-400 focus:outline-none 
+                   focus:ring focus:ring-blue-300 focus:ring-opacity-40 
+                   dark:border-gray-600 dark:bg-transparent 
+                   dark:text-gray-300 dark:placeholder-gray-500 
+                   dark:focus:border-blue-300"
         />
         <app-button-primary
           [color]="'green'"
           (click)="copyToClipboard(outUrl)"
-          class="flex-1 mt-2 pl-1"
+          class="flex-1 pl-1"
           >copy</app-button-primary
         >
       </div>

@@ -15,7 +15,7 @@ type ButtonColorConfig = {
   template: `
     <button
       
-      class="bg-animate p-0.5 rounded-full min-w-22"
+      class="bg-animate p-0.5 rounded-full min-w-22 cursor-pointer"
       [ngClass]="getSelectedColorConfig().buttonGradient"
     >
       <div

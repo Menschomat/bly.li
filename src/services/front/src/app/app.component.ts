@@ -14,7 +14,7 @@ const MODES: ThemeMode[] = ['system', 'lite', 'dark'];
   template: `
   <div
   style="z-index: -1"
-  class="absolute inset-0 h-full w-full bg-white dark:bg-black bg-[radial-gradient(#cfcfcf_1px,transparent_1px)] dark:bg-[radial-gradient(#313131_1px,transparent_1px)] [background-size:24px_24px]"
+  class="absolute inset-0 h-full w-full bg-white dark:bg-black bg-[radial-gradient(#d7d7d7_1px,transparent_1px)] dark:bg-[radial-gradient(#2b2b2b_1px,transparent_1px)] [background-size:24px_24px]"
 ></div>
     <app-nav-bar></app-nav-bar>
     <div class="flex flex-1 flex-col">
