@@ -9,7 +9,9 @@ export type ThemeMode = 'lite' | 'dark' | 'system';
   providedIn: 'root',
 })
 export class ThemeService {
-  private modeSubject = new BehaviorSubject<ThemeMode>(this.loadMode());
+  private readonly modeSubject = new BehaviorSubject<ThemeMode>(
+    this.loadMode()
+  );
   public mode$ = this.modeSubject.asObservable();
 
   constructor() {

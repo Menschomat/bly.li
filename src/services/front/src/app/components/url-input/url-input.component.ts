@@ -78,7 +78,7 @@ export class UrlInputComponent {
       },
       error: (err) => {
         this.errorMessage =
-          err.message || 'Failed to shorten URL. Please try again.';
+          err.message ?? 'Failed to shorten URL. Please try again.';
         this.isLoading = false;
       },
     });

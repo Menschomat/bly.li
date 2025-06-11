@@ -24,7 +24,7 @@ export class SystemMessageBannerComponent implements OnInit {
     default: 'bg-gray-100 text-gray-700 border-gray-400'
   };
 
-  private commonClasses: string = 'p-4 rounded-md border'; // Common classes for all banners
+  private readonly commonClasses: string = 'p-4 rounded-md border'; // Common classes for all banners
 
   constructor() {}
 

@@ -35,7 +35,7 @@ export class ButtonPrimaryComponent implements OnInit {
   @Input() color: 'default' | 'green' | 'purple-pink' | 'blue-emerald' = 'default';
   @Output() clickEvent: EventEmitter<MouseEvent> = new EventEmitter<MouseEvent>();
 
-  private colorConfigurations: Record<string, ButtonColorConfig> = {
+  private readonly colorConfigurations: Record<string, ButtonColorConfig> = {
     'default': {
       buttonGradient: 'from-indigo-400 via-pink-500 to-purple-500 bg-gradient-to-r',
       // CORRECTED: Added bg-gradient-to-r

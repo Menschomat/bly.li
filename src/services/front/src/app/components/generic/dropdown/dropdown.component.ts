@@ -59,7 +59,7 @@ import { Component, ElementRef, HostListener } from '@angular/core';
 })
 export class DropdownComponent {
   public open: boolean = false;
-  constructor(private elementRef: ElementRef) {}
+  constructor(private readonly elementRef: ElementRef) {}
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent) {

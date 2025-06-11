@@ -1,6 +1,5 @@
 import { Component } from '@angular/core';
 import { NavBarComponent } from './components/nav-bar/nav-bar.component';
-import { ThemeService } from './services/theme.service';
 import { RouterOutlet } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { ThemeToggleComponent } from './components/theme-toggle/theme-toggle.component';

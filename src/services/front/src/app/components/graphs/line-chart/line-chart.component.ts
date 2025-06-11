@@ -1,13 +1,10 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input } from '@angular/core';
-import { Observable, of } from 'rxjs';
+import { Component } from '@angular/core';
 
 @Component({
   selector: 'app-line-chart',
   imports: [CommonModule],
-  template: `
-
-  `,
+  template: ``,
   providers: [],
   styles: ``,
 })
