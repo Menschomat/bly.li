@@ -27,7 +27,7 @@ services:
   nginx:
     image: nginx:latest
     ports:
-      - "4200:8080"
+      - 127.0.0.1:4200:8080
     depends_on:
       - backend-container
     volumes:
@@ -39,7 +39,7 @@ services:
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
     ports:
-      - "9090:9090"
+      - 127.0.0.1:9090:9090
     restart: unless-stopped
     volumes:
       - ./backend/prometheus.yml:/etc/prometheus/prometheus.yml:ro

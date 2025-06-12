@@ -3,8 +3,8 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve --host 0.0.0.0 --poll 2000 --disable-host-check --proxy-config proxy/devcontainer.proxy.conf.json",
-    "start:blyli": "ng serve --host 0.0.0.0 --poll 2000 --disable-host-check --proxy-config proxy/blyli.proxy.conf.json",
+    "start": "ng serve --host 127.0.0.1 --poll 2000 --disable-host-check --proxy-config proxy/devcontainer.proxy.conf.json",
+    "start:dev.bly.li": "ng serve --host 127.0.0.1 --poll 2000 --disable-host-check --proxy-config proxy/blyli.proxy.conf.json",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
@@ -23,6 +23,8 @@
     "@fortawesome/fontawesome-free": "^6.7.2",
     "@tailwindcss/postcss": "^4.1.7",
     "angular-oauth2-oidc": "^19.0.0",
+    "apexcharts": "^4.7.0",
+    "ng-apexcharts": "^1.15.0",
     "rxjs": "~7.8.2",
     "tslib": "^2.8.1",
     "zone.js": "~0.15.1"

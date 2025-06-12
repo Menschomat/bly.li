@@ -1,15 +1,28 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { catchError, map, Observable, of, startWith, switchMap } from 'rxjs';
+import {
+  catchError,
+  filter,
+  map,
+  Observable,
+  of,
+  startWith,
+  switchMap,
+} from 'rxjs';
 import { DashboardService } from '../../../services/dashboard.service';
 import { ShortClickCount } from '../../../api';
 import { CommonModule } from '@angular/common';
+import {
+  DataPoint,
+  LineChartComponent,
+} from '../../../components/graphs/line-chart/line-chart.component';
 
 @Component({
   selector: 'app-short-details',
-  imports: [CommonModule],
+  imports: [CommonModule, LineChartComponent],
   host: { class: 'flex-1 flex' },
   template: `
+    <app-line-chart [title]="'Click histogram'" [data$]="chartClickHistory$"></app-line-chart>
     <main
       class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 flex flex-col gap-4"
     >
@@ -46,6 +59,7 @@ import { CommonModule } from '@angular/common';
 })
 export class ShortDetailsComponent implements OnInit {
   clickHistory$!: Observable<ClickHistoryState>;
+  chartClickHistory$!: Observable<DataPoint[]>;
 
   constructor(
     private route: ActivatedRoute,
@@ -79,6 +93,17 @@ export class ShortDetailsComponent implements OnInit {
           }),
           startWith({ status: 'loading' } as ClickHistoryState)
         );
+      })
+    );
+    this.chartClickHistory$ = this.clickHistory$.pipe(
+      filter((hist) => hist.status === 'success'),
+      map((hist) => {
+        return hist.data.map((a) => {
+          return {
+            x: new Date(a.Timestamp ?? 0).getTime(),
+            y: a.Count,
+          } as DataPoint;
+        });
       })
     );
   }

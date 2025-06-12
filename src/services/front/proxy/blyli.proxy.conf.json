@@ -1,6 +1,6 @@
 {
   "/shortn/**": {
-    "target": "https://bly.li",
+    "target": "https://dev.bly.li",
     "secure": true,
     "changeOrigin": true
   }

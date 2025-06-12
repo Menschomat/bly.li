@@ -22,7 +22,7 @@
       ]
     }
   },
-  //"forwardPorts": [4200],
+  "forwardPorts": [4200],
   "shutdownAction": "stopCompose",
   "postCreateCommand": "echo $BLYLI_FRONT_CONFIG > /workspace/src/services/front/public/assets/dev.config.json && sudo chown -R $(id -u):$(id -g) /workspace/src/services/front/node_modules && npm install -g bun && bun install",
   "runServices": [
