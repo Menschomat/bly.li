@@ -47,82 +47,85 @@ const COLOR_PALET = 'palette6';
   selector: 'app-line-chart',
   imports: [CommonModule, NgApexchartsModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { class: 'flex-1 flex' },
   template: `
-    <div>
-      <apx-chart
-        id="chart"
-        #chart
-        [series]="chartOptions.series"
-        [chart]="chartOptions.chart"
-        [xaxis]="chartOptions.xaxis"
-        [dataLabels]="chartOptions.dataLabels"
-        [grid]="chartOptions.grid"
-        [stroke]="chartOptions.stroke"
-        [title]="chartOptions.title"
-        [markers]="chartOptions.markers"
-        [theme]="chartOptions.theme"
-      ></apx-chart>
-    </div>
+    <apx-chart
+      class=" flex-1"
+      id="chart"
+      #chart
+      [series]="chartOptions.series"
+      [chart]="chartOptions.chart"
+      [xaxis]="chartOptions.xaxis"
+      [dataLabels]="chartOptions.dataLabels"
+      [grid]="chartOptions.grid"
+      [stroke]="chartOptions.stroke"
+      [title]="chartOptions.title"
+      [markers]="chartOptions.markers"
+      [theme]="chartOptions.theme"
+    ></apx-chart>
   `,
   providers: [],
   styles: ``,
 })
 export class LineChartComponent implements OnInit {
+  public chartOptions: ChartOptions;
+
+  private _chartTitle: string = '';
+
   @ViewChild('chart') chart!: ChartComponent;
 
   @Input()
   public data$!: Observable<DataPoint[]>;
 
   @Input()
-  public title: string = "";
+  set chartTitle(newValue: string) {
+    this._chartTitle = newValue;
+    //  this.chart.updateOptions(this.chartOptions);
+  }
 
-  public chartOptions: ChartOptions 
+  get chartTitle(): string {
+    return this._chartTitle ?? '';
+  }
 
   constructor(private readonly themeService: ThemeService) {
-       this.chartOptions = {
-    series: [],
-    chart: {
-      height: 350,
-      type: 'line',
-      zoom: {
+    this.chartOptions = {
+      series: [],
+      chart: {
+        height: '100%',
+        width: '100%',
+        type: 'line',
+        zoom: {
+          enabled: true,
+        },
+        background: 'transparent',
+      },
+      dataLabels: {
         enabled: false,
       },
-      background: 'transparent',
-    },
-    dataLabels: {
-      enabled: false,
-    },
-    stroke: {
-      curve: 'smooth',
-    },
-    title: {
-      text: this.title,
-      align: 'left',
-    },
-    grid: {
-      //row: {
-      //  colors: ['#f3f3f3', 'transparent'], // takes an array which will be repeated on columns
-      //  opacity: 0.5,
-      //},
-    },
-    xaxis: {
-      type: 'datetime',
-      // No categories for a datetime x-axis
-    },
-    markers: {
-      size: 3,
-      hover: {
-        size: 5,
+      stroke: {
+        curve: 'smooth',
       },
-    },
-    theme: {
-      palette: COLOR_PALET,
-    },
-  };
+      title: {
+        text: this._chartTitle,
+        align: 'left',
+      },
+      grid: {},
+      xaxis: {
+        type: 'datetime',
+      },
+      markers: {
+        size: 3,
+        hover: {
+          size: 5,
+        },
+      },
+      theme: {
+        palette: COLOR_PALET,
+      },
+    };
   }
 
   ngOnInit(): void {
- 
     this.themeService.theme$
       .pipe(map((theme) => (theme === 'lite' ? 'light' : 'dark')))
       .subscribe((theme) => {
@@ -136,13 +139,15 @@ export class LineChartComponent implements OnInit {
     const tenMinMs = 10 * 60 * 1000;
     this.data$.subscribe((data) => {
       if (!data) return;
-      (this.chartOptions.series[0] = {
-        name: 'Desktops',
-        data: resampleData(data ?? [], tenMinMs).map((pt) => {
-          return [pt.x, pt.y];
-        }),
-      }),
-        this.chart?.updateOptions(this.chartOptions);
+      this.chartOptions.series = [
+        {
+          name: 'Desktops',
+          data: resampleData(data ?? [], tenMinMs).map((pt) => {
+            return [pt.x, pt.y];
+          }),
+        },
+      ];
+      this.chart?.updateOptions(this.chartOptions);
     });
   }
 }

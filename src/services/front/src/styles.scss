@@ -7,6 +7,12 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 
+html,
+body {
+  height: 100vh;
+  width: 100vw;
+}
+
 .bg-animate {
   background-size: 200%;
   -webkit-animation: bg-animate 10s ease infinite;

@@ -20,11 +20,10 @@ import {
 @Component({
   selector: 'app-short-details',
   imports: [CommonModule, LineChartComponent],
-  host: { class: 'flex-1 flex' },
+  host: { class: 'flex-1 flex w-full  justify-center' },
   template: `
-    <app-line-chart [title]="'Click histogram'" [data$]="chartClickHistory$"></app-line-chart>
     <main
-      class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 flex flex-col gap-4"
+      class="w-full max-w-6xl px-4 py-6 sm:px-6 lg:px-8 flex flex-col gap-4 overflow-auto"
     >
       @if (clickHistory$ | async; as result) { @if (result.status === 'loading')
       {
@@ -46,13 +45,33 @@ import {
           <b>Share it to get started!</b>
         </h3>
       </div>
-      }
+      } @else {
+      <app-line-chart
+      class="max-h-[30rem] min-h-[20rem]"
+        [chartTitle]="'Click histogram'"
+        [data$]="chartClickHistory$"
+      ></app-line-chart>
+      <!--<app-line-chart
+      class="max-h-[30rem] min-h-[20rem]"
+        [chartTitle]="'Click histogram'"
+        [data$]="chartClickHistory$"
+      ></app-line-chart>
+            <app-line-chart
+      class="max-h-[30rem] min-h-[20rem]"
+        [chartTitle]="'Click histogram'"
+        [data$]="chartClickHistory$"
+      ></app-line-chart>
+            <app-line-chart
+      class="max-h-[30rem] min-h-[20rem]"
+        [chartTitle]="'Click histogram'"
+        [data$]="chartClickHistory$"
+      ></app-line-chart>-->
       <ul>
         @for (item of result.data; track item.Timestamp) {
         <li>{{ item.Timestamp }} – {{ item.Count }}</li>
         }
       </ul>
-      } }
+      } } }
     </main>
   `,
   styles: ``,

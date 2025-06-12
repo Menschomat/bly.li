@@ -9,24 +9,33 @@ import { ThemeToggleComponent } from './components/theme-toggle/theme-toggle.com
   standalone: true,
   imports: [CommonModule, NavBarComponent, RouterOutlet, ThemeToggleComponent],
   host: {
-    class: 'flex flex-col h-full text-gray-800 dark:text-gray-200',
+    // 1) use h-screen to guarantee full-viewport height
+    class: 'grid grid-rows-[auto_1fr_auto] h-screen text-gray-800 dark:text-gray-200',
   },
   template: `
     <div
-      style="z-index: -1"
-      class="absolute inset-0 h-full w-full bg-white dark:bg-black bg-[radial-gradient(#d7d7d7_1px,transparent_1px)] dark:bg-[radial-gradient(#2b2b2b_1px,transparent_1px)] [background-size:24px_24px]"
-    ></div>
-    <app-nav-bar></app-nav-bar>
-    <div class="flex flex-1 flex-col">
+      class="absolute inset-0 bg-[radial-gradient(#d7d7d7_1px,transparent_1px)] 
+             dark:bg-[radial-gradient(#2b2b2b_1px,transparent_1px)]
+             [background-size:24px_24px]">
+    </div>
+
+    <app-nav-bar class="row-start-1 row-end-2 z-10"></app-nav-bar>
+
+    <!-- 2) flex/grow + min-h-0 + overflow-auto -->
+    <main class="row-start-2 row-end-3 w-full min-h-0 overflow-auto flex">
       <router-outlet></router-outlet>
-    </div>
-    <div class="m-2 text-gray-700 dark:text-white flex justify-between">
+    </main>
+
+    <footer
+      class="row-start-3 row-end-4 flex items-center justify-between p-2
+             text-gray-700 dark:text-white z-10">
       <div></div>
-      <div>©Mensch0 - 2025</div>
+      <div>© Mensch0 – 2025</div>
       <app-theme-toggle></app-theme-toggle>
-    </div>
+    </footer>
   `,
 })
 export class AppComponent {
   title = 'front';
 }
+
