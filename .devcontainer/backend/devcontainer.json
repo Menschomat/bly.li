@@ -1,6 +1,9 @@
 {
   "name": "Backend-Container - GoLang",
-  "dockerComposeFile": ["../docker-compose.yml", "docker-compose.yml"],
+  "dockerComposeFile": [
+    "../docker-compose.yml",
+    "docker-compose.yml"
+  ],
   "service": "backend-container",
   "workspaceFolder": "/workspace",
   "features": {
@@ -17,9 +20,15 @@
         "ms-azuretools.vscode-docker",
         "christian-kohler.path-intellisense"
       ]
+    },
+    "settings": {
+      "files.watcherExclude": {
+        "**/.git/objects/**": true,
+        "**/.git/subtree-cache/**": true,
+        "**/node_modules/*/**": true
+      }
     }
   },
-
   "overrideCommand": false,
   "postCreateCommand": "sh .devcontainer/backend/devcontainer-setup.sh",
   "runServices": [

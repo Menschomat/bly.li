@@ -47,7 +47,7 @@ const COLOR_PALET = 'palette6';
   selector: 'app-line-chart',
   imports: [CommonModule, NgApexchartsModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  host: { class: 'flex-1 flex' },
+  host: { class: 'flex-1 flex bg-white dark:bg-black' },
   template: `
     <apx-chart
       class=" flex-1"

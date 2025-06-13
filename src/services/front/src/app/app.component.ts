@@ -10,32 +10,30 @@ import { ThemeToggleComponent } from './components/theme-toggle/theme-toggle.com
   imports: [CommonModule, NavBarComponent, RouterOutlet, ThemeToggleComponent],
   host: {
     // 1) use h-screen to guarantee full-viewport height
-    class: 'grid grid-rows-[auto_1fr_auto] h-screen text-gray-800 dark:text-gray-200',
+    class: 'flex-1 flex flex-col text-gray-800 dark:text-gray-200',
   },
   template: `
     <div
-      class="absolute inset-0 bg-[radial-gradient(#d7d7d7_1px,transparent_1px)] 
+      class="fixed top-0 inset-0 bg-[radial-gradient(#d8d8d8_1px,transparent_1px)] 
              dark:bg-[radial-gradient(#2b2b2b_1px,transparent_1px)]
-             [background-size:24px_24px]">
-    </div>
+             [background-size:24px_24px] -z-1"
+    ></div>
 
-    <app-nav-bar class="row-start-1 row-end-2 z-10"></app-nav-bar>
+    <app-nav-bar class="fixed top-0 z-15 top-0 left-0 right-0"></app-nav-bar>
 
     <!-- 2) flex/grow + min-h-0 + overflow-auto -->
-    <main class="row-start-2 row-end-3 w-full min-h-0 overflow-auto flex">
+    <main class="mt-16 flex-1 flex w-full min-h-0 overflow-auto">
       <router-outlet></router-outlet>
     </main>
-
+    <app-theme-toggle class="fixed bottom-5 right-5 z-1"></app-theme-toggle>
     <footer
-      class="row-start-3 row-end-4 flex items-center justify-between p-2
-             text-gray-700 dark:text-white z-10">
-      <div></div>
+      class="flex w-full items-center justify-center p-2
+             text-gray-700 dark:text-white"
+    >
       <div>© Mensch0 – 2025</div>
-      <app-theme-toggle></app-theme-toggle>
     </footer>
   `,
 })
 export class AppComponent {
   title = 'front';
 }
-
