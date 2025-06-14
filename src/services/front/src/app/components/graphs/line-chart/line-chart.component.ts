@@ -35,6 +35,7 @@ export type ChartOptions = {
   title: ApexTitleSubtitle;
   markers: ApexMarkers;
   theme: ApexTheme;
+  tooltip: ApexTooltip;
 };
 
 export interface DataPoint {
@@ -62,6 +63,7 @@ const COLOR_PALET = 'palette6';
       [title]="chartOptions.title"
       [markers]="chartOptions.markers"
       [theme]="chartOptions.theme"
+      [tooltip]="chartOptions.tooltip"
     ></apx-chart>
   `,
   providers: [],
@@ -95,7 +97,7 @@ export class LineChartComponent implements OnInit {
         width: '100%',
         type: 'line',
         zoom: {
-          enabled: true,
+          enabled: false,
         },
         background: 'transparent',
       },
@@ -112,13 +114,22 @@ export class LineChartComponent implements OnInit {
       grid: {},
       xaxis: {
         type: 'datetime',
-      },
-      markers: {
-        size: 3,
-        hover: {
-          size: 5,
+        labels: {
+          datetimeFormatter: {
+            year: 'yyyy',
+            month: "MMM 'yy",
+            day: 'dd MMM',
+            hour: 'HH:mm',
+          },
         },
       },
+      tooltip:{
+        x:{
+          format: "HH:mm dd.MM.yyyy"
+        }
+
+      },
+      markers: {},
       theme: {
         palette: COLOR_PALET,
       },
@@ -141,7 +152,7 @@ export class LineChartComponent implements OnInit {
       if (!data) return;
       this.chartOptions.series = [
         {
-          name: 'Desktops',
+          name: 'Clicks',
           data: resampleData(data ?? [], tenMinMs).map((pt) => {
             return [pt.x, pt.y];
           }),
