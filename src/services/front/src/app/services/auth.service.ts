@@ -26,7 +26,7 @@ export class AuthService {
         // The user will click the login button to initiate the login process
       }
     });
-    oauthService.setupAutomaticSilentRefresh();
+    //oauthService.setupAutomaticSilentRefresh();
     // Initialize the BehaviorSubject with the current user profile or null
     this.userSubject = new BehaviorSubject<Record<string, any> | null>(
       this.oauthService.getIdentityClaims() ?? null

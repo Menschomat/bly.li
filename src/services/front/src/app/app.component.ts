@@ -9,22 +9,29 @@ import { ThemeToggleComponent } from './components/theme-toggle/theme-toggle.com
   standalone: true,
   imports: [CommonModule, NavBarComponent, RouterOutlet, ThemeToggleComponent],
   host: {
-    class: 'flex flex-col h-full text-gray-800 dark:text-gray-200',
+    // 1) use h-screen to guarantee full-viewport height
+    class: 'flex-1 flex flex-col text-gray-800 dark:text-gray-200',
   },
   template: `
     <div
-      style="z-index: -1"
-      class="absolute inset-0 h-full w-full bg-white dark:bg-black bg-[radial-gradient(#d7d7d7_1px,transparent_1px)] dark:bg-[radial-gradient(#2b2b2b_1px,transparent_1px)] [background-size:24px_24px]"
+      class="fixed top-0 inset-0 bg-[radial-gradient(#d8d8d8_1px,transparent_1px)] 
+             dark:bg-[radial-gradient(#2b2b2b_1px,transparent_1px)]
+             [background-size:24px_24px] -z-1"
     ></div>
-    <app-nav-bar></app-nav-bar>
-    <div class="flex flex-1 flex-col">
+
+    <app-nav-bar class="fixed top-0 z-15 top-0 left-0 right-0"></app-nav-bar>
+
+    <!-- 2) flex/grow + min-h-0 + overflow-auto -->
+    <main class="mt-16 flex-1 flex w-full min-h-0 overflow-auto">
       <router-outlet></router-outlet>
-    </div>
-    <div class="m-2 text-gray-700 dark:text-white flex justify-between">
-      <div></div>
-      <div>©Mensch0 - 2025</div>
-      <app-theme-toggle></app-theme-toggle>
-    </div>
+    </main>
+    <app-theme-toggle class="fixed bottom-5 right-5 z-1"></app-theme-toggle>
+    <footer
+      class="flex w-full items-center justify-center p-2
+             text-gray-700 dark:text-white"
+    >
+      <div>© Mensch0 – 2025</div>
+    </footer>
   `,
 })
 export class AppComponent {

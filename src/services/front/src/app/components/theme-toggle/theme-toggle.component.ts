@@ -8,6 +8,7 @@ const MODES: ThemeMode[] = ['system', 'lite', 'dark'];
   selector: 'app-theme-toggle',
   standalone: true,
   imports: [CommonModule],
+  host: { class: '' },
   template: `
     <div
       class="flex items-center min-w-6 cursor-pointer"

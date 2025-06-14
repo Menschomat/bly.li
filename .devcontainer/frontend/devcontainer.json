@@ -1,7 +1,10 @@
 {
   "name": "Frontend-Container - Bun",
   //"image": "mcr.microsoft.com/devcontainers/typescript-node:1-20",
-  "dockerComposeFile": ["../docker-compose.yml", "docker-compose.yml"],
+  "dockerComposeFile": [
+    "../docker-compose.yml",
+    "docker-compose.yml"
+  ],
   "service": "frontend-container",
   "workspaceFolder": "/workspace/src/services/front",
   "customizations": {
@@ -20,9 +23,18 @@
         "formulahendry.auto-close-tag",
         "eamodio.gitlens"
       ]
+    },
+    "settings": {
+      "files.watcherExclude": {
+        "**/.git/objects/**": true,
+        "**/.git/subtree-cache/**": true,
+        "**/node_modules/*/**": true
+      }
     }
   },
-  //"forwardPorts": [4200],
+  "forwardPorts": [
+    4200
+  ],
   "shutdownAction": "stopCompose",
   "postCreateCommand": "echo $BLYLI_FRONT_CONFIG > /workspace/src/services/front/public/assets/dev.config.json && sudo chown -R $(id -u):$(id -g) /workspace/src/services/front/node_modules && npm install -g bun && bun install",
   "runServices": [

@@ -1,7 +1,7 @@
 // src/app/services/theme.service.ts
 
 import { Injectable } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, map, Observable } from 'rxjs';
 
 export type ThemeMode = 'lite' | 'dark' | 'system';
 
@@ -13,6 +13,15 @@ export class ThemeService {
     this.loadMode()
   );
   public mode$ = this.modeSubject.asObservable();
+
+  public theme$: Observable<'dark' | 'lite'> = this.modeSubject.pipe(
+    map((a) => {
+      if (a !== 'system') return a;
+      return window.matchMedia('(prefers-color-scheme: dark)').matches
+        ? 'dark'
+        : 'lite';
+    })
+  );
 
   constructor() {
     this.applyTheme(this.modeSubject.value);
