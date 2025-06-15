@@ -10,7 +10,7 @@ env:
   GITHUB_REPOSITORY: ${{ github.repository }}
 jobs:
   extract_version:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       version: ${{ steps.version_step.outputs.version }}
       version_tag: ${{ steps.version_step.outputs.version_tag }}
@@ -33,7 +33,7 @@ jobs:
           echo "version_tag=${{ steps.version_step.outputs.version_tag }}"
           echo "latest_tag= ${{ steps.version_step.outputs.latest_tag }}"
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -44,7 +44,7 @@ jobs:
         with:
           extra_args: --results=verified,unknown
   setup_docker:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: extract_version
     outputs:
       version: ${{ needs.extract_version.outputs.version }}
@@ -64,8 +64,8 @@ jobs:
     strategy:
       matrix:
         platform:
-          - { name: "amd64", runner: "ubuntu-latest", suffix: "amd64" }
-          - { name: "arm64", runner: "ubuntu-latest-arm64", suffix: "arm64" }
+          - { name: "amd64", runner: "ubuntu-24.04", suffix: "amd64" }
+          - { name: "arm64", runner: "ubuntu-24.04-arm", suffix: "arm64" }
     steps:
       - name: Compute lowercase repo name
         run: |
@@ -101,8 +101,8 @@ jobs:
       matrix:
         service: [blowup, shortn, dasher, perso]
         platform:
-          - { name: "amd64", runner: "ubuntu-latest", suffix: "amd64" }
-          - { name: "arm64", runner: "ubuntu-latest-arm64", suffix: "arm64" }
+          - { name: "amd64", runner: "ubuntu-24.04", suffix: "amd64" }
+          - { name: "arm64", runner: "ubuntu-24.04-arm", suffix: "arm64" }
     steps:
       - name: Compute lowercase repo name
         run: |
@@ -132,7 +132,7 @@ jobs:
             VERSION=${{ needs.setup_docker.outputs.version }}
             SERVICE=${{ matrix.service }}
   create_manifests:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [build_frontend, build_backend, setup_docker]
     steps:
       - name: Compute lowercase repo name
@@ -151,7 +151,7 @@ jobs:
           docker manifest create \
             ${{ env.REGISTRY }}/${{ env.GITHUB_REPOSITORY_LC }}/front:${{ needs.setup_docker.outputs.version_tag }} \
             ${{ env.REGISTRY }}/${{ env.GITHUB_REPOSITORY_LC }}/front:${{ needs.setup_docker.outputs.version_tag }}-amd64 \
-            ${{ env.REGISTRY }}/${{ env.GITHUB_REPOSITORY_LC }}/front:${{ needs.setup_docker.outputs.version_tag }}-arm64
+            ${{ env.REGISTRY }}/${{ env.GITHUB_REPOSITORY_LC }}/front:${{ needs.setup_docker.outputs.version_tag }}-arm
           
           docker manifest push ${{ env.REGISTRY }}/${{ env.GITHUB_REPOSITORY_LC }}/front:${{ needs.setup_docker.outputs.version_tag }}
           
@@ -159,7 +159,7 @@ jobs:
             docker manifest create \
               ${{ env.REGISTRY }}/${{ env.GITHUB_REPOSITORY_LC }}/front:latest \
               ${{ env.REGISTRY }}/${{ env.GITHUB_REPOSITORY_LC }}/front:${{ needs.setup_docker.outputs.version_tag }}-amd64 \
-              ${{ env.REGISTRY }}/${{ env.GITHUB_REPOSITORY_LC }}/front:${{ needs.setup_docker.outputs.version_tag }}-arm64
+              ${{ env.REGISTRY }}/${{ env.GITHUB_REPOSITORY_LC }}/front:${{ needs.setup_docker.outputs.version_tag }}-arm
               
             docker manifest push ${{ env.REGISTRY }}/${{ env.GITHUB_REPOSITORY_LC }}/front:latest
           fi
@@ -170,7 +170,7 @@ jobs:
             docker manifest create \
               ${{ env.REGISTRY }}/${{ env.GITHUB_REPOSITORY_LC }}/$service:${{ needs.setup_docker.outputs.version_tag }} \
               ${{ env.REGISTRY }}/${{ env.GITHUB_REPOSITORY_LC }}/$service:${{ needs.setup_docker.outputs.version_tag }}-amd64 \
-              ${{ env.REGISTRY }}/${{ env.GITHUB_REPOSITORY_LC }}/$service:${{ needs.setup_docker.outputs.version_tag }}-arm64
+              ${{ env.REGISTRY }}/${{ env.GITHUB_REPOSITORY_LC }}/$service:${{ needs.setup_docker.outputs.version_tag }}-arm
               
             docker manifest push ${{ env.REGISTRY }}/${{ env.GITHUB_REPOSITORY_LC }}/$service:${{ needs.setup_docker.outputs.version_tag }}
             
@@ -178,7 +178,7 @@ jobs:
               docker manifest create \
                 ${{ env.REGISTRY }}/${{ env.GITHUB_REPOSITORY_LC }}/$service:latest \
                 ${{ env.REGISTRY }}/${{ env.GITHUB_REPOSITORY_LC }}/$service:${{ needs.setup_docker.outputs.version_tag }}-amd64 \
-                ${{ env.REGISTRY }}/${{ env.GITHUB_REPOSITORY_LC }}/$service:${{ needs.setup_docker.outputs.version_tag }}-arm64
+                ${{ env.REGISTRY }}/${{ env.GITHUB_REPOSITORY_LC }}/$service:${{ needs.setup_docker.outputs.version_tag }}-arm
                 
               docker manifest push ${{ env.REGISTRY }}/${{ env.GITHUB_REPOSITORY_LC }}/$service:latest
             fi
