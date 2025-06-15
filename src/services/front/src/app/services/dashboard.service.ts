@@ -16,6 +16,11 @@ export class DashboardService {
   public get $allShorts(): Observable<ShortURL[]> {
     return this.allShorts.asObservable();
   }
+
+    public  getShortDetails(shortUrl:string): Observable<ShortURL> {
+    return this.dasherService.dasherShortShortGet(shortUrl);
+  }
+
   public delete(short: ShortURL) {
     this.dasherService
       .dasherShortShortDelete(short.Short ?? '')
