@@ -7,6 +7,12 @@
   ],
   "service": "frontend-container",
   "workspaceFolder": "/workspace/src/services/front",
+  "features": {
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1.6.3": {
+      "version": "latest",
+      "moby": true
+    }
+  },
   "customizations": {
     "vscode": {
       "extensions": [
@@ -36,7 +42,7 @@
     4200
   ],
   "shutdownAction": "stopCompose",
-  "postCreateCommand": "echo $BLYLI_FRONT_CONFIG > /workspace/src/services/front/public/assets/dev.config.json && sudo chown -R $(id -u):$(id -g) /workspace/src/services/front/node_modules && npm install -g bun && bun install && sudo apt-get update && sudo apt-get install -y ca-certificates curl gnupg && sudo install -m 0755 -d /etc/apt/keyrings && curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg && sudo chmod a+r /etc/apt/keyrings/docker.gpg && echo \"deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian $(. /etc/os-release && echo $VERSION_CODENAME) stable\" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null && sudo apt-get update && sudo apt-get install -y docker-ce-cli",
+  "postCreateCommand": "echo $BLYLI_FRONT_CONFIG > /workspace/src/services/front/public/assets/dev.config.json && sudo chown -R $(id -u):$(id -g) /workspace/src/services/front/node_modules && npm install -g bun && bun install",
   "runServices": [
     "zookeeper",
     "mongodb",
@@ -51,7 +57,6 @@
     "grafana"
   ],
   "mounts": [
-    "type=bind,source=${localEnv:HOME}${localEnv:USERPROFILE}/.ssh,target=/home/vscode/.ssh,readonly",
-    "type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock"
+    "type=bind,source=${localEnv:HOME}${localEnv:USERPROFILE}/.ssh,target=/home/vscode/.ssh,readonly"
   ]
 }
