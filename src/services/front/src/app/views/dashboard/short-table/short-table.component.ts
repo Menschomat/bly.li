@@ -10,7 +10,7 @@ import { ShortTableRowComponent } from './short-table-row/short-table-row.compon
 import { DashboardService } from '../../../services/dashboard.service';
 import { ShortNumberPipe } from '../../../pipes/short-number.pipe';
 import { ConfigService } from '../../../services/config.service';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 @Component({
   selector: 'app-short-table',
   imports: [
@@ -27,7 +27,7 @@ import { RouterModule } from '@angular/router';
     <app-short-table-row (copy)="copyItem(item)" (delete)="deleteItem(item)"
       ><row-title>{{ item.Short }}</row-title>
       <row-url>{{ item.URL }}</row-url>
-      <row-count [routerLink]="['./detail/' + item.Short]"
+      <row-count (click)="routeToIdemDetails(item)"
         >{{ item.Count ?? 0 | shortNumber }} Clicks</row-count
       ></app-short-table-row
     >
@@ -41,10 +41,19 @@ export class ShortTableComponent {
   public $allShorts: Observable<ShortURL[]>;
 
   constructor(
+    private readonly router: Router,
     private readonly dasherService: DashboardService,
     private readonly config: ConfigService
   ) {
     this.$allShorts = dasherService.$allShorts;
+  }
+
+  routeToIdemDetails(short: ShortURL) {
+    console.log(short);
+    
+    this.router.navigate(['/dash/detail/' + short.Short], {
+      state: { short },
+    });
   }
   public async deleteItem(short: ShortURL) {
     this.dasherService.delete(short);

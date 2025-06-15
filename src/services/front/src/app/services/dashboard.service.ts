@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { DasherService, ShortClickCount, ShortURL } from '../api';
-import { BehaviorSubject, Observable, Subject } from 'rxjs';
+import { BehaviorSubject, map, Observable, Subject } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
@@ -16,6 +16,11 @@ export class DashboardService {
   public get $allShorts(): Observable<ShortURL[]> {
     return this.allShorts.asObservable();
   }
+
+  public getShortDetails(shortUrl: string): Observable<ShortURL> {
+    return this.dasherService.dasherShortShortGet(shortUrl);
+  }
+
   public delete(short: ShortURL) {
     this.dasherService
       .dasherShortShortDelete(short.Short ?? '')
@@ -29,9 +34,11 @@ export class DashboardService {
   }
 
   public clickHistoryByShort(short: string): Observable<ShortClickCount[]> {
-    console.log("SHORT",short);
-    
-    return this.dasherService.dasherShortShortClicksGet(short ?? '');
+    console.log('SHORT', short);
+
+    return this.dasherService
+      .dasherShortShortClicksGet(short ?? '')
+      .pipe(map((a) => a ?? []));
   }
 
   public refresh() {
