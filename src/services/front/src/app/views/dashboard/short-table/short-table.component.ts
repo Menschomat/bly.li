@@ -49,12 +49,11 @@ export class ShortTableComponent {
   }
 
   routeToIdemDetails(short: ShortURL) {
-    console.log(short);
-    
     this.router.navigate(['/dash/detail/' + short.Short], {
       state: { short },
     });
   }
+
   public async deleteItem(short: ShortURL) {
     this.dasherService.delete(short);
   }

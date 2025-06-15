@@ -1,4 +1,6 @@
 import { Component, EventEmitter, Output } from '@angular/core';
+import { ModalService } from '../../../../services/modal.service';
+import { ConfirmationModalComponent } from '../../../../components/modal/confirmation-modal/confirmation-modal.component';
 
 @Component({
   selector: 'app-short-table-row',
@@ -25,7 +27,7 @@ import { Component, EventEmitter, Output } from '@angular/core';
     <div>
       <i
         class="fa-regular fa-trash-can cursor-pointer"
-        (click)="handleDeleteClick($event)"
+        (click)="openConfirmation($event)"
       ></i>
     </div>
   `,
@@ -36,6 +38,16 @@ export class ShortTableRowComponent {
   public delete = new EventEmitter<MouseEvent>();
   @Output()
   public copy = new EventEmitter<MouseEvent>();
+
+  constructor(private readonly modalService: ModalService) {}
+
+  openConfirmation(event: MouseEvent): void {
+    this.modalService.open(ConfirmationModalComponent, {
+      title: 'Delete Item',
+      message: 'This action cannot be undone',
+      onConfirmHandler: () => this.handleDeleteClick(event),
+    });
+  }
 
   public handleDeleteClick(event: MouseEvent) {
     this.delete.emit(event);

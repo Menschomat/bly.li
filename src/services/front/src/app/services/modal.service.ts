@@ -1,43 +1,56 @@
+// modal.service.ts
 import {
   Injectable,
-  ViewContainerRef,
   ComponentRef,
   Type,
+  EnvironmentInjector,
 } from '@angular/core';
+import { ModalHostComponent } from './../components/modal/modal-host/modal-host.component';
 
 @Injectable({ providedIn: 'root' })
 export class ModalService {
-  private rootContainer?: ViewContainerRef;
+  private modalHost?: ModalHostComponent;
   private currentModal?: ComponentRef<any>;
 
-  setRootContainer(container: ViewContainerRef): void {
-    this.rootContainer = container;
+  constructor(private injector: EnvironmentInjector) {}
+
+  registerHost(host: ModalHostComponent): void {
+    this.modalHost = host;
   }
 
   open<T>(component: Type<T>, inputs?: Record<string, any>): ComponentRef<T> {
     this.close();
 
-    if (!this.rootContainer) {
-      throw new Error('Root container not set. Call setRootContainer() first');
+    if (!this.modalHost) {
+      throw new Error('Modal host not registered');
     }
 
-    const componentRef = this.rootContainer.createComponent(component);
+    // ① Create in the host's ViewContainerRef
+    const componentRef = this.modalHost.container.createComponent(component, {
+      environmentInjector: this.injector,
+    });
 
-    // Set input properties
+    // ② Pass inputs
     if (inputs) {
-      Object.keys(inputs).forEach((key) => {
-        componentRef.setInput(key, inputs[key]);
+      Object.entries(inputs).forEach(([key, value]) => {
+        componentRef.setInput(key, value);
       });
     }
 
+    // ③ Show backdrop & keep ref
+    this.modalHost.showBackdrop = true;
     this.currentModal = componentRef;
     return componentRef;
   }
 
   close(): void {
-    if (this.currentModal) {
-      this.currentModal.destroy();
-      this.currentModal = undefined;
+    if (this.modalHost) {
+      // Remove any dynamic components + their DOM
+      this.modalHost.container.clear();
+
+      // Hide backdrop
+      this.modalHost.showBackdrop = false;
     }
+    this.currentModal = undefined;
   }
 }
