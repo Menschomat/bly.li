@@ -3,11 +3,18 @@ import { NavBarComponent } from './components/nav-bar/nav-bar.component';
 import { RouterOutlet } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { ThemeToggleComponent } from './components/theme-toggle/theme-toggle.component';
+import { ModalHostComponent } from './components/modal/modal-host/modal-host.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, NavBarComponent, RouterOutlet, ThemeToggleComponent],
+  imports: [
+    CommonModule,
+    NavBarComponent,
+    ModalHostComponent,
+    RouterOutlet,
+    ThemeToggleComponent,
+  ],
   host: {
     // 1) use h-screen to guarantee full-viewport height
     class: 'flex-1 flex flex-col text-gray-800 dark:text-gray-200',
@@ -32,6 +39,7 @@ import { ThemeToggleComponent } from './components/theme-toggle/theme-toggle.com
     >
       <div>© Mensch0 – 2025</div>
     </footer>
+    <app-modal-host></app-modal-host>
   `,
 })
 export class AppComponent {
