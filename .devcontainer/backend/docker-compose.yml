@@ -14,10 +14,7 @@ services:
       - redis
 
   front:
-    build:
-      context: ../src/services/front/.
-      dockerfile: Dockerfile
-    image: mensch0mat/bly.li.front:main
+    image: ghcr.io/menschomat/bly.li/front:main
     volumes:
       - ${CONFIG_PATH}:/usr/share/nginx/html/assets/config.json
     environment:

@@ -3,11 +3,9 @@ info:
   title: Dasher API
   version: 1.0.0
   description: API for Statistics-Dashboards etc.
-
 servers:
   - url: http://blyli.localhost
   - url: https://bly.li
-
 tags:
   - name: dasher
     description: Endpoints for retrieving shortened URLs and statistics.
@@ -28,7 +26,6 @@ paths:
                   $ref: "./shared.openapi.yml#/components/schemas/ShortURL"
         "500":
           description: Server error
-
   /short/{short}:
     get:
       tags:
@@ -78,6 +75,20 @@ paths:
           schema:
             type: string
           description: The short part of the URL
+        - in: query
+          name: from
+          required: false
+          schema:
+            type: string
+            format: date-time
+          description: The start of the time range (inclusive, ISO 8601 format)
+        - in: query
+          name: to
+          required: false
+          schema:
+            type: string
+            format: date-time
+          description: The end of the time range (exclusive, ISO 8601 format)
       responses:
         "200":
           description: A list of aggregated clicks
