@@ -45,7 +45,7 @@ func (s *DasherServer) GetShortShort(w http.ResponseWriter, r *http.Request, sho
 
 // Get details for a Short
 // (GET /short/{short}/clicks)
-func (s *DasherServer) GetShortShortClicks(w http.ResponseWriter, r *http.Request, short string) {
+func (s *DasherServer) GetShortShortClicks(w http.ResponseWriter, r *http.Request, short string, params api.GetShortShortClicksParams) {
 	subject := oidc.SubjectFromCtx(r.Context())
 	if len(subject) <= 0 {
 		logger.Error("Failed to get user info from context")
@@ -57,8 +57,36 @@ func (s *DasherServer) GetShortShortClicks(w http.ResponseWriter, r *http.Reques
 		http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
 		return
 	}
-	clicks, err := mongo.FetchLastClicks(24*time.Hour, short)
-	if err != nil || owner != subject {
+	var (
+		from time.Time
+		to   time.Time
+	)
+	// Handle the optional params.From and params.To
+	if params.From != nil {
+		from = *params.From
+	} else {
+		// Default: 24 hours ago
+		from = time.Now().Add(-24 * time.Hour)
+	}
+	if params.To != nil {
+		to = *params.To
+	} else {
+		to = time.Now()
+	}
+
+	// Range check: Limit to maximum one year
+	const maxRange = 365 * 24 * time.Hour
+	if to.Before(from) {
+		http.Error(w, "Invalid time range: to is before from", http.StatusBadRequest)
+		return
+	}
+	if to.Sub(from) > maxRange {
+		http.Error(w, "Time range too large (max one year)", http.StatusBadRequest)
+		return
+	}
+
+	clicks, err := mongo.FetchClicksRange(from, to, short)
+	if err != nil {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}

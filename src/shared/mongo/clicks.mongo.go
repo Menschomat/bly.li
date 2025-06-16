@@ -60,41 +60,53 @@ func InsetTimeseriesData[T any](colname string, data []T) error {
 	return nil // Successfully inserted
 }
 
-func FetchLastClicks(hours time.Duration, short string) ([]m.ShortClickCount, error) {
+// FetchClicksRange queries clicks from 'from' (inclusive) to 'to' (exclusive)
+func FetchClicksRange(from, to time.Time, short string) ([]m.ShortClickCount, error) {
 	_client, _err := GetMongoClient()
 	if _err != nil {
 		logger.Error("Error getting Mongo-Client", "error", _err)
 		return nil, _err
 	}
 	collection := _client.Database(database).Collection(CollectionClicksAggregated)
-	now := time.Now()
-	last24h := now.Add(hours * time.Hour * -1)
+	interval := 10 * time.Minute // or your actual interval
+
+	// ensure UTC and truncation for slots
+	from = from.UTC().Truncate(interval)
+	to = to.UTC().Truncate(interval)
 
 	filter := bson.M{
 		"timestamp": bson.M{
-			"$gte": last24h,
-			"$lte": now,
+			"$gte": from,
+			"$lt":  to,
 		},
 		"short": short,
 	}
-
 	cursor, err := collection.Find(context.Background(), filter)
 	if err != nil {
 		return nil, err
 	}
 	defer cursor.Close(context.Background())
 
-	var results []m.ShortClickCount
+	resultsMap := make(map[time.Time]int)
 	for cursor.Next(context.Background()) {
 		var result m.ShortClickCount
 		if err := cursor.Decode(&result); err != nil {
 			return nil, err
 		}
-		results = append(results, result)
+		slot := result.Timestamp.UTC().Truncate(interval)
+		resultsMap[slot] += result.Count
 	}
 	if err := cursor.Err(); err != nil {
 		return nil, err
 	}
 
+	var results []m.ShortClickCount
+	for t := from; t.Before(to); t = t.Add(interval) {
+		results = append(results, m.ShortClickCount{
+			Short:     short,
+			Timestamp: t,
+			Count:     resultsMap[t],
+		})
+	}
 	return results, nil
 }
