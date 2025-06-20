@@ -95,7 +95,7 @@ Easily create and share memorable links to any webpage with bly.li! Simply input
 | ---------------- | ------- | -------------------------------- |
 | SERVER_PORT      | :8084   | HTTP server port                 |
 | METRICS_PORT     | :9084   | Prometheus metrics endpoint port |
-| CLEANUP_INTERVAL | 24h     | Interval for cleanup operations  |
+| CLEANUP_INTERVAL | 1m      | Interval for cleanup operations  |
 
 ### Project Structure
 
