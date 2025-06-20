@@ -9,7 +9,7 @@ type OidcConfig struct {
 
 type MongoDdConfig struct {
 	Database       string `env:"MONGO_DATABASE, default=short_url_db"`
-	MongoServerUrl string `env:"MONGN_SERVER_URL, default=mongodb://mongodb:27017"`
+	MongoServerUrl string `env:"MONGO_SERVER_URL, default=mongodb://mongodb:27017"`
 }
 
 // BaseServerConfig contains common server configuration fields
