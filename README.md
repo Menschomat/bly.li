@@ -59,7 +59,7 @@ Easily create and share memorable links to any webpage with bly.li! Simply input
 | Variable         | Default                 | Description            |
 | ---------------- | ----------------------- | ---------------------- |
 | MONGO_DATABASE   | short_url_db            | MongoDB database name  |
-| MONGN_SERVER_URL | mongodb://mongodb:27017 | MongoDB connection URL |
+| MONGO_SERVER_URL | mongodb://mongodb:27017 | MongoDB connection URL |
 
 #### OIDC Configuration
 | Variable       | Default          | Description                 |
