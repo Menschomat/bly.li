@@ -4,9 +4,8 @@ import {
   ViewChild,
   Input,
   OnInit,
-  AfterViewInit,
-  AfterContentInit,
   ChangeDetectionStrategy,
+  effect,
 } from '@angular/core';
 import { resampleData } from '../../../utils/chart.utils';
 import {
@@ -22,7 +21,7 @@ import {
   NgApexchartsModule,
   ApexTheme,
 } from 'ng-apexcharts';
-import { map, Observable } from 'rxjs';
+import { Observable } from 'rxjs';
 import { ThemeService } from '../../../services/theme.service';
 
 export type ChartOptions = {
@@ -123,29 +122,28 @@ export class LineChartComponent implements OnInit {
           },
         },
       },
-      tooltip:{
-        x:{
-          format: "HH:mm dd.MM.yyyy"
-        }
-
+      tooltip: {
+        x: {
+          format: 'HH:mm dd.MM.yyyy',
+        },
       },
       markers: {},
       theme: {
         palette: COLOR_PALET,
       },
     };
+
+    effect(() => {
+      const theme = this.themeService.theme() === 'lite' ? 'light' : 'dark';
+      this.chartOptions.theme = {
+        mode: theme,
+        palette: COLOR_PALET,
+      };
+      this.chart?.updateOptions(this.chartOptions);
+    });
   }
 
   ngOnInit(): void {
-    this.themeService.theme$
-      .pipe(map((theme) => (theme === 'lite' ? 'light' : 'dark')))
-      .subscribe((theme) => {
-        this.chartOptions.theme = {
-          mode: theme,
-          palette: COLOR_PALET,
-        };
-        this.chart?.updateOptions(this.chartOptions);
-      });
     // Resample at 1-hour intervals (3600000 ms)
     const tenMinMs = 10 * 60 * 1000;
     this.data$.subscribe((data) => {
