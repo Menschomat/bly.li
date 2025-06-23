@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/Menschomat/bly.li/shared/config"
 	"github.com/Menschomat/bly.li/shared/model"
 	"github.com/redis/go-redis/v9"
 )
@@ -21,7 +22,7 @@ var (
 func GetRedisClient() *redis.Client {
 	if cacheClient == nil {
 		cacheClient = redis.NewClient(&redis.Options{
-			Addr:     "redis:6379",
+			Addr:     config.RedisConfig().RedisServerUrl,
 			Password: "",
 			DB:       0,
 		})

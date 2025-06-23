@@ -58,6 +58,10 @@ func LoggingConfig() *m.LoggingConfig {
 	return managers.Logging.MustGet()
 }
 
+func RedisConfig() *m.RedisConfig {
+	return managers.Redis.MustGet()
+}
+
 func BlowupConfig() *m.BlowupConfig {
 	return managers.Blowup.MustGet()
 }
@@ -76,6 +80,7 @@ var managers = struct {
 	Oidc    *ConfigManager[m.OidcConfig]
 	Mongo   *ConfigManager[m.MongoDdConfig]
 	Logging *ConfigManager[m.LoggingConfig]
+	Redis   *ConfigManager[m.RedisConfig]
 	Blowup  *ConfigManager[m.BlowupConfig]
 	Dasher  *ConfigManager[m.DasherConfig]
 	Perso   *ConfigManager[m.PersoConfig]
@@ -84,6 +89,7 @@ var managers = struct {
 	Oidc:    NewConfigManager[m.OidcConfig](),
 	Mongo:   NewConfigManager[m.MongoDdConfig](),
 	Logging: NewConfigManager[m.LoggingConfig](),
+	Redis:   NewConfigManager[m.RedisConfig](),
 	Blowup:  NewConfigManager[m.BlowupConfig](),
 	Dasher:  NewConfigManager[m.DasherConfig](),
 	Perso:   NewConfigManager[m.PersoConfig](),

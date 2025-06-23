@@ -65,3 +65,7 @@ type LoggingConfig struct {
 	LokiTenant string `env:"LOKI_TENANT, default=single"`
 	LogLevel   string `env:"LOG_LEVEL, default=info"`
 }
+
+type RedisConfig struct {
+	RedisServerUrl string `env:"REDIS_SERVER_URL, default=redis:6379"`
+}
