@@ -4,8 +4,6 @@ import {
   ViewChild,
   Input,
   OnInit,
-  AfterViewInit,
-  AfterContentInit,
   ChangeDetectionStrategy,
   effect,
 } from '@angular/core';
@@ -124,11 +122,10 @@ export class LineChartComponent implements OnInit {
           },
         },
       },
-      tooltip:{
-        x:{
-          format: "HH:mm dd.MM.yyyy"
-        }
-
+      tooltip: {
+        x: {
+          format: 'HH:mm dd.MM.yyyy',
+        },
       },
       markers: {},
       theme: {
@@ -137,8 +134,7 @@ export class LineChartComponent implements OnInit {
     };
 
     effect(() => {
-      const theme =
-        this.themeService.theme() === 'lite' ? 'light' : 'dark';
+      const theme = this.themeService.theme() === 'lite' ? 'light' : 'dark';
       this.chartOptions.theme = {
         mode: theme,
         palette: COLOR_PALET,

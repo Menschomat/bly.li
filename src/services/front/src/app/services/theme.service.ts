@@ -22,7 +22,6 @@ export class ThemeService {
 
   constructor() {
     effect(() => this.applyTheme(this.mode()));
-
     window
       .matchMedia('(prefers-color-scheme: dark)')
       .addEventListener('change', () => {
