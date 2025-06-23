@@ -135,9 +135,7 @@ export class LineChartComponent implements OnInit {
         palette: COLOR_PALET,
       },
     };
-  }
 
-  ngOnInit(): void {
     effect(() => {
       const theme =
         this.themeService.theme() === 'lite' ? 'light' : 'dark';
@@ -147,6 +145,9 @@ export class LineChartComponent implements OnInit {
       };
       this.chart?.updateOptions(this.chartOptions);
     });
+  }
+
+  ngOnInit(): void {
     // Resample at 1-hour intervals (3600000 ms)
     const tenMinMs = 10 * 60 * 1000;
     this.data$.subscribe((data) => {
