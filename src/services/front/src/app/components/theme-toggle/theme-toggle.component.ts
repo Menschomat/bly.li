@@ -20,27 +20,26 @@ const MODES: ThemeMode[] = ['system', 'lite', 'dark'];
   `,
 })
 export class ThemeToggleComponent {
-  mode: ThemeMode = 'system';
-
-  constructor(private readonly themeService: ThemeService) {
-    this.themeService.mode$.subscribe((m) => (this.mode = m));
-  }
+  constructor(private readonly themeService: ThemeService) {}
 
   cycleMode() {
-    const idx = MODES.indexOf(this.mode);
+    const current = this.themeService.mode();
+    const idx = MODES.indexOf(current);
     const nextMode = MODES[(idx + 1) % MODES.length];
     this.themeService.setMode(nextMode);
   }
 
   get modeLabel() {
-    if (this.mode === 'system') return 'System';
-    if (this.mode === 'lite') return 'Light';
+    const mode = this.themeService.mode();
+    if (mode === 'system') return 'System';
+    if (mode === 'lite') return 'Light';
     return 'Dark';
   }
 
   get modeClass() {
-    if (this.mode === 'system') return 'fa-regular fa-compass';
-    if (this.mode === 'lite') return 'fa-regular fa-sun';
+    const mode = this.themeService.mode();
+    if (mode === 'system') return 'fa-regular fa-compass';
+    if (mode === 'lite') return 'fa-regular fa-sun';
     return 'fa-regular fa-moon';
   }
 }

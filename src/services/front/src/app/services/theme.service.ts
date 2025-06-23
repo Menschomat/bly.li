@@ -1,13 +1,6 @@
 // src/app/services/theme.service.ts
 
-import {
-  Injectable,
-  computed,
-  effect,
-  signal,
-} from '@angular/core';
-import { toObservable } from '@angular/core/rxjs-interop';
-import { Observable } from 'rxjs';
+import { Injectable, computed, effect, signal } from '@angular/core';
 
 export type ThemeMode = 'lite' | 'dark' | 'system';
 
@@ -17,8 +10,6 @@ export type ThemeMode = 'lite' | 'dark' | 'system';
 export class ThemeService {
   /** Current theme mode */
   readonly mode = signal<ThemeMode>(this.loadMode());
-  /** Observable view of the current mode for legacy consumers */
-  readonly mode$: Observable<ThemeMode> = toObservable(this.mode);
 
   /** Derived signal representing the active theme */
   readonly theme = computed<'dark' | 'lite'>(() => {
@@ -28,8 +19,6 @@ export class ThemeService {
       ? 'dark'
       : 'lite';
   });
-  /** Observable view of the current theme for legacy consumers */
-  readonly theme$: Observable<'dark' | 'lite'> = toObservable(this.theme);
 
   constructor() {
     effect(() => this.applyTheme(this.mode()));
