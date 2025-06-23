@@ -1,7 +1,13 @@
 // src/app/services/theme.service.ts
 
-import { Injectable } from '@angular/core';
-import { BehaviorSubject, map, Observable } from 'rxjs';
+import {
+  Injectable,
+  computed,
+  effect,
+  signal,
+} from '@angular/core';
+import { toObservable } from '@angular/core/rxjs-interop';
+import { Observable } from 'rxjs';
 
 export type ThemeMode = 'lite' | 'dark' | 'system';
 
@@ -9,34 +15,35 @@ export type ThemeMode = 'lite' | 'dark' | 'system';
   providedIn: 'root',
 })
 export class ThemeService {
-  private readonly modeSubject = new BehaviorSubject<ThemeMode>(
-    this.loadMode()
-  );
-  public mode$ = this.modeSubject.asObservable();
+  /** Current theme mode */
+  readonly mode = signal<ThemeMode>(this.loadMode());
+  /** Observable view of the current mode for legacy consumers */
+  readonly mode$: Observable<ThemeMode> = toObservable(this.mode);
 
-  public theme$: Observable<'dark' | 'lite'> = this.modeSubject.pipe(
-    map((a) => {
-      if (a !== 'system') return a;
-      return window.matchMedia('(prefers-color-scheme: dark)').matches
-        ? 'dark'
-        : 'lite';
-    })
-  );
+  /** Derived signal representing the active theme */
+  readonly theme = computed<'dark' | 'lite'>(() => {
+    const m = this.mode();
+    if (m !== 'system') return m;
+    return window.matchMedia('(prefers-color-scheme: dark)').matches
+      ? 'dark'
+      : 'lite';
+  });
+  /** Observable view of the current theme for legacy consumers */
+  readonly theme$: Observable<'dark' | 'lite'> = toObservable(this.theme);
 
   constructor() {
-    this.applyTheme(this.modeSubject.value);
+    effect(() => this.applyTheme(this.mode()));
 
     window
       .matchMedia('(prefers-color-scheme: dark)')
       .addEventListener('change', () => {
-        if (this.modeSubject.value === 'system') this.applyTheme('system');
+        if (this.mode() === 'system') this.applyTheme('system');
       });
   }
 
   setMode(mode: ThemeMode) {
-    this.modeSubject.next(mode);
+    this.mode.set(mode);
     this.saveMode(mode);
-    this.applyTheme(mode);
   }
 
   private applyTheme(mode: ThemeMode) {
