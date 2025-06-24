@@ -12,7 +12,6 @@ Easily create and share memorable links to any webpage with bly.li! Simply input
 <image style=" padding:1rem; margin:auto; border-radius:1rem; height: 6rem;" src="./etc/assets/logos/go_logo.png">
 <image style=" padding:1rem; margin:auto; border-radius:1rem; height: 4rem;  padding-bottom:1.5rem;" src="./etc/assets/logos/redis_mark.svg">
 <image style=" padding:1rem; margin:auto; border-radius:1rem; height: 5rem" src="./etc/assets/logos/mongo_db.svg">
-<image style=" padding:1rem; margin:auto; border-radius:1rem; height: 5rem" src="./etc/assets/logos/traefik.svg">
 <image style=" padding:1rem; margin:auto; border-radius:1rem; width: 5rem" src="./etc/assets/logos/angular_gradient.png">
 <image style=" padding:1rem; margin:auto; border-radius:1rem; width: 5rem; padding-bottom:1.7rem; " src="./etc/assets/logos/tailwindcss.svg">
 <image style=" padding:1rem; margin:auto; border-radius:1rem; width: 5rem" src="./etc/assets/logos/bun_logo.svg">
@@ -30,13 +29,16 @@ Easily create and share memorable links to any webpage with bly.li! Simply input
 - **Metrics & Monitoring**: Each service exposes a dedicated Prometheus metrics endpoint for comprehensive monitoring.
 - **Graceful Shutdown**: All services support graceful shutdown and cleanup of resources.
 
-<image style="background:darkgray; padding:1rem; margin:auto; border-radius:1rem" src="./etc/assets/blyli.arch.svg">
+<picture>
+  <source srcset="./etc/assets/bly-li-arch-dark.svg" media="(prefers-color-scheme: dark)">
+  <img src="./etc/assets/bly-li-arch-lite.svg" alt="Project Logo">
+</picture>
 
 ### Services
 
 | Service | Description                                                                                                        | Main Port | Metrics Port |
 | ------- | ------------------------------------------------------------------------------------------------------------------ | --------- | ------------ |
-| Traefik | Reverse-Proxy and Load-balancer                                                                                    | :80/:443  | -            |
+| Nginx   | Reverse-Proxy and Load-balancer                                                                                    | :80/:443  | -            |
 | Shortn  | Shortener-Service - Handles new shortn-requests, manages URL shortening with distributed counter system            | :8082     | :9082        |
 | BlowUp  | URL Resolution Service - Resolves short URLs to their original form and handles redirects with configurable status | :8081     | :9081        |
 | Dasher  | Dashboard Service - Provides analytics and management interface for shortened URLs                                 | :8083     | :9083        |
