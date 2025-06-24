@@ -61,6 +61,11 @@ Easily create and share memorable links to any webpage with bly.li! Simply input
 | MONGO_DATABASE   | short_url_db            | MongoDB database name  |
 | MONGO_SERVER_URL | mongodb://mongodb:27017 | MongoDB connection URL |
 
+#### Redis Configuration
+| Variable         | Default   | Description          |
+| ---------------- | --------- | -------------------- |
+| REDIS_SERVER_URL | redis:6379 | Redis connection URL |
+
 #### OIDC Configuration
 | Variable       | Default          | Description                 |
 | -------------- | ---------------- | --------------------------- |
