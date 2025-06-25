@@ -1,14 +1,27 @@
 package model
 
-import "time"
+import (
+	"time"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
+)
 
 type ShortURL struct {
+	Name      string    `bson:"name"`
 	Short     string    `bson:"short"`
 	URL       string    `bson:"url"`
 	Count     int       `bson:"count"`
 	Owner     string    `bson:"owner,omitempty"`
 	CreatedAt time.Time `bson:"createdAt"`
 	UpdatedAt time.Time `bson:"updatedAt"`
+}
+
+type QrCode struct {
+	ID        primitive.ObjectID `bson:"_id,omitempty"` // MongoDB primary key
+	Short     string             `bson:"short"`         // Reference to short code or object
+	Owner     string             `bson:"owner"`
+	CreatedAt time.Time          `bson:"createdAt"`
+	UpdatedAt time.Time          `bson:"updatedAt"`
 }
 
 type ShortClick struct {

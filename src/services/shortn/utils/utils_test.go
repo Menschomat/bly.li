@@ -2,7 +2,6 @@ package utils
 
 import (
 	"fmt"
-	"math/rand"
 	"testing"
 )
 
@@ -66,7 +65,6 @@ func TestIsUrl(t *testing.T) {
 
 func TestGetRandomIntInRange(t *testing.T) {
 	min, max := 10, 20
-	rand.Seed(1)
 	for i := 0; i < 100; i++ {
 		got := GetRandomIntInRange(min, max)
 		if got < min || got > max {
